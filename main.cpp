@@ -82,6 +82,9 @@ void	*handle_connect(int client_socket)
 	char	buffer[4096];
 	size_t	bytes_read;
 	int	msgsize = 0;
+	std::string	response;
+	std::string	r_buffer;
+	std::ifstream	input("website/index.html");
 
 	while ((bytes_read = read(client_socket, buffer + msgsize, sizeof(buffer) - msgsize - 1)) > 0)
 	{
@@ -92,10 +95,19 @@ void	*handle_connect(int client_socket)
 	check(bytes_read);
 	buffer[msgsize - 1] = '\0';
 	std::cout<<buffer<<std::endl;
-	write(client_socket, "HTTP/1.1 200 OK\n", 16);
-	write(client_socket, "Content-Type: text/plain\n", 25);
-	write(client_socket, "Content-Length: 12\n\n", 20);
-	write(client_socket, "Hello World!", 12);
+	response.append("HTTP/1.1 200 OK\n");
+	response.append("Content-Type: Text\n");
+	if (input.is_open())
+	{
+		response.append("<?xml>\n");
+		while (getline(input, r_buffer))
+		{
+			response.append(r_buffer);
+			response.append("\n");
+		}
+	}
+	input.close();
+	write(client_socket, response.c_str(), response.length());
 	close(client_socket);
 	std::cout<<YELLOW<<"Closing connection..."<<RESET<<std::endl;
 	return (NULL);
