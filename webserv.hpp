@@ -32,4 +32,13 @@
 # define RED "\033[1m\033[31m"
 # define YELLOW "\033[1m\033[33m"
 
+void	ctrl_c(int signal, siginfo_t *info, void *context);
+void	ignore(struct sigaction *sa, int signal);
+void	signal_decider(int type);
+void	check(int algo);
+int		setup(short port, int backlog);
+int		new_connection(int server_socket);
+void	make_response(int client_socket, char *buffer);
+void	*handle_connect(int client_socket);
+
 #endif

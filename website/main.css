@@ -2,11 +2,20 @@
 
 body {
 	background-color: darkslateblue;
+}
+
+.maindiv {
 	font-family: Garamond, serif;
 	text-align: center;
 	margin: auto;
 }
 
-h1 {
+.title {
 	color: orange;
+}
+
+body.error-page {
+	background-color: white;
+	text-align: center;
+	margin: auto;
 }
