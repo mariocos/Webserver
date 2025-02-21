@@ -8,6 +8,7 @@
 # include <math.h>
 # include <cmath>
 # include <fstream>
+# include <sstream>
 
 //c
 # include <unistd.h>

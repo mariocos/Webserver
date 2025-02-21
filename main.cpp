@@ -79,12 +79,12 @@ int	new_connection(int server_socket)
 
 void	*handle_connect(int client_socket)
 {
+	int	msgsize = 0;
 	char	buffer[4096];
 	size_t	bytes_read;
-	int	msgsize = 0;
-	std::string	response;
-	std::string	r_buffer;
-	std::ifstream	input("website/index.html");
+	std::string	response, r_buffer, method, requested_file, http_version, path;
+	std::string	type = "text/plain";
+	std::ifstream	input;
 
 	while ((bytes_read = read(client_socket, buffer + msgsize, sizeof(buffer) - msgsize - 1)) > 0)
 	{
@@ -95,11 +95,21 @@ void	*handle_connect(int client_socket)
 	check(bytes_read);
 	buffer[msgsize - 1] = '\0';
 	std::cout<<buffer<<std::endl;
+
+	std::istringstream	request(buffer);
+	request >> method >> requested_file >> http_version;
+	if (requested_file == "/")
+		requested_file = "/index.html";
+	if (requested_file.length() > 5 && requested_file.find(".html") == requested_file.length() - 5)
+		type = "text/html";
+	else if (requested_file.length() > 4 && requested_file.find(".css") == requested_file.length() - 4)
+		type = "text/css";
 	response.append("HTTP/1.1 200 OK\n");
-	response.append("Content-Type: Text\n");
+	response.append("Content-Type: " + type + "\n\n");
+	path = "website" + requested_file;
+	input.open(path.c_str());
 	if (input.is_open())
 	{
-		response.append("<?xml>\n");
 		while (getline(input, r_buffer))
 		{
 			response.append(r_buffer);
