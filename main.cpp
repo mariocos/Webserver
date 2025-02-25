@@ -68,13 +68,17 @@ int	setup(short port, int backlog)
 	return (server_socket);
 }
 
-int	new_connection(int server_socket)
+Client	*new_connection(int server_socket, int epoll_fd)
 {
-	int	client_socket;
+	Client	*client = new Client;
 	struct sockaddr_in clientaddr;
+	struct epoll_event	event;
 	socklen_t	addrlen = sizeof(clientaddr);
-	check((client_socket = accept(server_socket, (sockaddr*)&clientaddr, &addrlen)));
-	return (client_socket);
+	client->setClientSocket(accept(server_socket, (sockaddr*)&clientaddr, &addrlen));
+	event.events = EPOLLIN | EPOLLOUT;
+	event.data.fd = client->getClientSocket();
+	epoll_ctl(epoll_fd, EPOLL_CTL_ADD, event.data.fd, &event);
+	return (client);
 }
 
 void	make_response(int client_socket, char *buffer)
@@ -148,15 +152,87 @@ int	main(int ac, char **av)
 	std::string	config = "default.config";
 	if (ac == 2)
 		config = av[1];
-	int	server_socket = setup(4243, 5);
+	Client	*newClient = NULL;
+	int	server_socket = setup(4243, 10);
 	serverskt = server_socket;
+
+	struct epoll_event	event, events[10];
+	int	epoll_fd = epoll_create(1);
+	int	event_count = 0;
+	event.events = EPOLLIN;
+	event.data.fd = server_socket;
+	epoll_ctl(epoll_fd, EPOLL_CTL_ADD, event.data.fd, &event);
 	while (1)
 	{
 		signal_decider(0);
 		std::cout<<"Waiting..."<<std::endl;
-		int	client_socket = new_connection(server_socket);
-		std::cout<<GREEN<<"Connection successuful"<<RESET<<std::endl;
-		handle_connect(client_socket);
+		event_count = epoll_wait(epoll_fd, events, 10, -1);
+		for (int i = 0; i < event_count; i++)
+		{
+			if (events[i].data.fd == server_socket)
+			{
+				newClient = new_connection(server_socket, epoll_fd);
+				std::cout<<"Socket Number: "<<newClient->getClientSocket()<<std::endl;
+				std::cout<<GREEN<<"Connection successuful"<<RESET<<std::endl;
+			}
+			else
+			{
+				handle_connect(events[i].data.fd);
+				epoll_ctl(epoll_fd, EPOLL_CTL_DEL, events[i].data.fd, &events[i]);
+			}
+		}
 	}
 	return (0);
 }
+
+/* int	main(int ac, char **av)
+{
+	if (ac > 2)
+	{
+		std::cout<<RED<<"Wrong number of arguments"<<RESET<<std::endl;
+		return (1);
+	}
+	std::string	config = "default.config";
+	if (ac == 2)
+		config = av[1];
+	Client	*newClient = NULL;
+	int	server_socket = setup(4243, 10);
+	serverskt = server_socket;
+	//int	server_epoll;
+	//server_epoll = epoll_create(1);
+	fd_set ready_sockets, current_sockets;
+	FD_ZERO(&current_sockets);
+	FD_SET(server_socket, &current_sockets);
+	int	max_fds = server_socket + 1;
+	while (1)
+	{
+		ready_sockets = current_sockets;
+		signal_decider(0);
+		std::cout<<"Waiting..."<<std::endl;
+		check(select(max_fds, &ready_sockets, NULL, NULL, NULL));
+		for (int i = 3; i <= max_fds; i++)
+		{
+			if (FD_ISSET(i, &ready_sockets))
+			{
+				if (i == server_socket)
+				{
+					newClient = new_connection(server_socket);
+					std::cout<<"Socket Number: "<<newClient->getClientSocket()<<std::endl;
+					FD_SET(newClient->getClientSocket(), &current_sockets);
+					if (newClient->getClientSocket() >= max_fds)
+						max_fds = newClient->getClientSocket() + 1;
+					std::cout<<GREEN<<"Connection successuful"<<RESET<<std::endl;
+				}
+			}
+			else
+			{
+				handle_connect(i);
+				FD_CLR(i, &current_sockets);
+				if (newClient)
+					delete newClient;
+				max_fds--;
+			}
+		}
+	}
+	return (0);
+} */
