@@ -28,10 +28,14 @@ request_parse::request_parse(char *request)
 	line1.erase(0, len + 1);
 	this->HTTP_version = line1.substr(0, line1.find('\r'));
 	/*  line 2   */
+
+	/* problema aqui */
 	req.erase(0, req.find('\n') + 1);
 	line1 = req.substr(0, req.find('\n'));
 	this->Host = line1.substr(line1.find(' ') + 1, line1.find('\r'));
-	std::cout << "host take away " << (Host == "localhost:4243") << "[" << Host << "]\n";
+	std::cout << "host take away " << (Host == "localhost:4243") << "[" << Host << "]\n";// a verificar se tirei a parte certa
+
+	/*--------------*/
 
 
 }
