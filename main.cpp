@@ -130,6 +130,8 @@ void	*handle_connect(int client_socket)
 		if (msgsize > 4095 || buffer[msgsize - 1] == '\n')
 			break ;
 	}
+	std::cout << "testing my parse class\n";
+	request_parse p_req(buffer);
 	check(bytes_read);
 	buffer[msgsize - 1] = '\0';
 	std::cout<<buffer<<std::endl;
