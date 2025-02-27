@@ -46,4 +46,29 @@ request_parse::~request_parse()
 {
 }
 
+std::string	request_parse::get_method(void)
+{
+	return (method);
+}
 
+std::string	request_parse::get_host(void)
+{
+	return (Host);
+}
+std::string	request_parse::get_httpversion(void)
+{
+	return (HTTP_version);
+}
+std::string	request_parse::get_user(void)
+{
+	return (User);
+}
+std::string	request_parse::get_accetps(void)
+{
+	return (Accepts);
+}
+
+std::string	request_parse::get_path(void)
+{
+	return (path_to_request);
+}
