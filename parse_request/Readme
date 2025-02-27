@@ -49,7 +49,7 @@ privates
 	Accepts
 public
 	constructor that takes the request as a C string and parses it into the class?
-
+	is_acceptable// it receives a type and checks if its in the acceptable types of the request
 /*----------------------------------------------------------------*/
 
 

@@ -37,8 +37,8 @@ request_parse::request_parse(char *request)
 	this->User = line1.substr(line1.find(' ') + 1, line1.find('\r') - (line1.find(' ') + 1));
 	req.erase(0, req.find('\n') + 1);
 	/* line 4*/
-
-
+	line1 = req.substr(0, req.find('\n'));
+	this->Accepts = line1.substr(line1.find(' ') + 1, line1.find('\r') - (line1.find(' ') + 1));
 }
 
 
