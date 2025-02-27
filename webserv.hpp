@@ -33,6 +33,7 @@
 # define YELLOW "\033[1m\033[33m"
 
 # include "Client.hpp"
+# include "RequestParse.hpp"
 
 void	ctrl_c(int signal, siginfo_t *info, void *context);
 void	ignore(struct sigaction *sa, int signal);

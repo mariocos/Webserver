@@ -83,22 +83,21 @@ Client	*new_connection(int server_socket, int epoll_fd)
 
 void	make_response(int client_socket, char *buffer)
 {
-	std::string	response, r_buffer, method, requested_file, http_version, path, type = "text/plain";
+	std::string	response, r_buffer, path, type = "text/plain";
 	std::ifstream	input;
-	std::istringstream	request(buffer);
+	RequestParse	request(buffer);
 
-	request >> method >> requested_file >> http_version;
-	if (requested_file == "/")
-		requested_file = "/index.html";
-	if (requested_file.length() > 5 && requested_file.find(".html") == requested_file.length() - 5)
+	if (request.get_path() == "/")
+		request.set_path("/index.html");
+	if (request.get_path().length() > 5 && request.get_path().find(".html") == request.get_path().length() - 5)
 		type = "text/html";
-	else if (requested_file.length() > 4 && requested_file.find(".css") == requested_file.length() - 4)
+	else if (request.get_path().length() > 4 && request.get_path().find(".css") == request.get_path().length() - 4)
 		type = "text/css";
 	else
 		type = "text/html";
-	response.append("HTTP/1.1 200 OK\n");
+	response.append(request.get_httpversion() + " 200 OK\n");
 	response.append("Content-Type: " + type + "\n\n");
-	path = "website" + requested_file;
+	path = "website" + request.get_path();
 	input.open(path.c_str());
 	if (input.is_open())
 	{
@@ -149,7 +148,7 @@ int	main(int ac, char **av)
 		std::cout<<RED<<"Wrong number of arguments"<<RESET<<std::endl;
 		return (1);
 	}
-	std::string	config = "default.config";
+	std::string	config("default.config");
 	if (ac == 2)
 		config = av[1];
 	Client	*newClient = NULL;
