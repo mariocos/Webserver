@@ -1,0 +1,55 @@
+/*  Parsing a http request */
+For this project we are going to need to parse http requests in order to reply to them.
+
+I am going to try to do this by creating a request class with a constructor to parse it automatically!
+
+/*---------------------*/
+/* http request syntax */
+/*---------------------*/
+ HTTP/1.1 vs HTTP/2
+	We are going to use HTTP/1.1 because its simpler. the main diference being 1.1 is ascii based (uses letters and words)
+	and 2 is served in binary.
+
+/* a basic http request example */
+GET / HTTP/1.1
+Host: localhost:4243
+User-Agent: curl/7.81.0
+Accept: */*
+/*------------------------------*/
+
+Line 1: GET / HTTP/1.1
+
+[GET] This is the method of the request it specifies what the request is expecting to "do"
+[/] This is the path to the file being requested
+[HTTP/1.1] This reinforces that we are using HTTP/1.1
+
+Line 2: Host: localhost:4243
+
+This line is simple it just tells us where the request is comming from and where we are going to send the response
+
+Line 3: User-Agent: curl/7.81.0
+
+This specifies what type of agent is making the request, im pretty sure its so we can guarantee compatibility with our response
+
+Line 4: Accept: */*
+
+This specifies what type of response is acceptable, in this case its anything!
+*/---------------------------------------------------------------------------/**/
+
+/*-----------*/
+/* the class */
+/*-----------*/
+
+privates
+	method
+	path_to_request
+	HTTP_version (not sure if going to keep this)
+	Host
+	User
+	Accepts
+public
+	constructor that takes the request as a C string and parses it into the class?
+	is_acceptable// it receives a type and checks if its in the acceptable types of the request
+/*----------------------------------------------------------------*/
+
+

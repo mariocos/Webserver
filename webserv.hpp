@@ -1,6 +1,10 @@
 #ifndef WEBSERV_HPP
 # define WEBSERV_HPP
 
+/* classes */
+#include "parse_request/request_parse.hpp"
+
+
 //c++
 # include <iostream>
 # include <string>
