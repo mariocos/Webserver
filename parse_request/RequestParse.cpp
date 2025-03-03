@@ -75,3 +75,80 @@ void	RequestParse::set_path(std::string path)
 {
 	path_to_request = path;
 }
+
+void	RequestParse::execute_response(int client_socket)
+{
+	int i;
+	if (method == "GET")
+		i = 1;
+	else if (method == "POST")
+		i = 2;
+	else if (method == "DELETE")
+		i = 3;
+	else
+		i = -1;
+
+	switch (i)
+	{
+	case 1:
+		GET_response(client_socket);
+		break;
+	case 2:
+		POST_response(client_socket);
+		break;
+	case 3:
+		DELETE_response(client_socket);
+		break;
+	default:
+		break;
+	}
+}
+
+void	RequestParse::GET_response(int client_socket)
+{
+	std::string	response, r_buffer, path, type = "text/plain";
+	std::ifstream	input;
+
+	if (this->get_path() == "/")
+		this->set_path("/index.html");
+	if (this->get_path().length() > 5 && this->get_path().find(".html") == this->get_path().length() - 5)
+		type = "text/html";
+	else if (this->get_path().length() > 4 && this->get_path().find(".css") == this->get_path().length() - 4)
+		type = "text/css";
+	else
+		type = "text/html";
+	response.append(this->get_httpversion() + " 200 OK\n");
+	response.append("Content-Type: " + type + "\n\n");
+	path = "website" + this->get_path();
+	input.open(path.c_str());
+	if (input.is_open())
+	{
+		while (getline(input, r_buffer))
+		{
+			response.append(r_buffer);
+			response.append("\n");
+		}
+	}
+	else
+	{
+		input.open("website/404.html");
+		while (getline(input, r_buffer))
+		{
+			response.append(r_buffer);
+			response.append("\n");
+		}
+	}
+	input.close();
+	write(client_socket, response.c_str(), response.length());
+	close(client_socket);
+}
+
+void	RequestParse::POST_response(int client_socket)
+{
+	(void)client_socket;
+}
+
+void	RequestParse::DELETE_response(int client_socket)
+{
+	(void)client_socket;
+}

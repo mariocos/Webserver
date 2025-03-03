@@ -1,47 +1,5 @@
 #include "webserv.hpp"
 
-int serverskt = 0;
-
-void	ctrl_c(int signal, siginfo_t *info, void *context)
-{
-	(void) info;
-	(void) context;
-	if (signal == SIGINT)
-	{
-		close(serverskt);
-		exit(1);
-	}
-}
-
-void	ignore(struct sigaction *sa, int signal)
-{
-	struct sigaction	original;
-	int					original_flags;
-
-	original_flags = sa->sa_flags;
-	sa->sa_handler = SIG_IGN;
-	sa->sa_flags |= SA_SIGINFO;
-	if (sigemptyset(&sa->sa_mask) != 0)
-		return ;
-	sigaction(signal, sa, &original);
-	sa->sa_flags = original_flags;
-}
-
-void	signal_decider(int type)
-{
-	static struct sigaction	sa;
-
-	if (type == 0)
-	{
-		sa.sa_sigaction = ctrl_c;
-		sa.sa_flags = SA_SIGINFO;
-		if (sigemptyset(&sa.sa_mask) != 0)
-			return ;
-		sigaction(SIGINT, &sa, NULL);
-		ignore(&sa, SIGQUIT);
-	}
-}
-
 void	check(int algo)
 {
 	if (algo == -1)
@@ -68,57 +26,17 @@ int	setup(short port, int backlog)
 	return (server_socket);
 }
 
-Client	*new_connection(int server_socket, int epoll_fd)
+void	new_connection(int server_socket, int epoll_fd)
 {
-	Client	*client = new Client;
 	struct sockaddr_in clientaddr;
 	struct epoll_event	event;
 	socklen_t	addrlen = sizeof(clientaddr);
-	client->setClientSocket(accept(server_socket, (sockaddr*)&clientaddr, &addrlen));
+	int		client_socket;
+	client_socket = accept(server_socket, (sockaddr*)&clientaddr, &addrlen);
 	event.events = EPOLLIN | EPOLLOUT;
-	event.data.fd = client->getClientSocket();
+	event.data.fd = client_socket;
 	epoll_ctl(epoll_fd, EPOLL_CTL_ADD, event.data.fd, &event);
-	return (client);
-}
-
-void	make_response(int client_socket, char *buffer)
-{
-	std::string	response, r_buffer, path, type = "text/plain";
-	std::ifstream	input;
-	RequestParse	request(buffer);
-
-	if (request.get_path() == "/")
-		request.set_path("/index.html");
-	if (request.get_path().length() > 5 && request.get_path().find(".html") == request.get_path().length() - 5)
-		type = "text/html";
-	else if (request.get_path().length() > 4 && request.get_path().find(".css") == request.get_path().length() - 4)
-		type = "text/css";
-	else
-		type = "text/html";
-	response.append(request.get_httpversion() + " 200 OK\n");
-	response.append("Content-Type: " + type + "\n\n");
-	path = "website" + request.get_path();
-	input.open(path.c_str());
-	if (input.is_open())
-	{
-		while (getline(input, r_buffer))
-		{
-			response.append(r_buffer);
-			response.append("\n");
-		}
-	}
-	else
-	{
-		input.open("website/404.html");
-		while (getline(input, r_buffer))
-		{
-			response.append(r_buffer);
-			response.append("\n");
-		}
-	}
-	input.close();
-	write(client_socket, response.c_str(), response.length());
-	close(client_socket);
+	std::cout<<"Socket Number: "<<client_socket<<std::endl;
 }
 
 void	*handle_connect(int client_socket)
@@ -133,12 +51,11 @@ void	*handle_connect(int client_socket)
 		if (msgsize > 4095 || buffer[msgsize - 1] == '\n')
 			break ;
 	}
-	std::cout << "testing my parse class\n";
-	request_parse p_req(buffer);
 	check(bytes_read);
 	buffer[msgsize - 1] = '\0';
 	std::cout<<buffer<<std::endl;
-	make_response(client_socket, buffer);
+	RequestParse	request(buffer);
+	request.execute_response(client_socket);
 	std::cout<<YELLOW<<"Closing connection..."<<RESET<<std::endl;
 	return (NULL);
 }
@@ -153,8 +70,7 @@ int	main(int ac, char **av)
 	std::string	config("default.config");
 	if (ac == 2)
 		config = av[1];
-	Client	*newClient = NULL;
-	int	server_socket = setup(4243, 10);
+	int	server_socket = setup(4243, 200);
 	serverskt = server_socket;
 
 	struct epoll_event	event, events[10];
@@ -172,8 +88,7 @@ int	main(int ac, char **av)
 		{
 			if (events[i].data.fd == server_socket)
 			{
-				newClient = new_connection(server_socket, epoll_fd);
-				std::cout<<"Socket Number: "<<newClient->getClientSocket()<<std::endl;
+				new_connection(server_socket, epoll_fd);
 				std::cout<<GREEN<<"Connection successuful"<<RESET<<std::endl;
 			}
 			else
@@ -185,55 +100,3 @@ int	main(int ac, char **av)
 	}
 	return (0);
 }
-
-/* int	main(int ac, char **av)
-{
-	if (ac > 2)
-	{
-		std::cout<<RED<<"Wrong number of arguments"<<RESET<<std::endl;
-		return (1);
-	}
-	std::string	config = "default.config";
-	if (ac == 2)
-		config = av[1];
-	Client	*newClient = NULL;
-	int	server_socket = setup(4243, 10);
-	serverskt = server_socket;
-	//int	server_epoll;
-	//server_epoll = epoll_create(1);
-	fd_set ready_sockets, current_sockets;
-	FD_ZERO(&current_sockets);
-	FD_SET(server_socket, &current_sockets);
-	int	max_fds = server_socket + 1;
-	while (1)
-	{
-		ready_sockets = current_sockets;
-		signal_decider(0);
-		std::cout<<"Waiting..."<<std::endl;
-		check(select(max_fds, &ready_sockets, NULL, NULL, NULL));
-		for (int i = 3; i <= max_fds; i++)
-		{
-			if (FD_ISSET(i, &ready_sockets))
-			{
-				if (i == server_socket)
-				{
-					newClient = new_connection(server_socket);
-					std::cout<<"Socket Number: "<<newClient->getClientSocket()<<std::endl;
-					FD_SET(newClient->getClientSocket(), &current_sockets);
-					if (newClient->getClientSocket() >= max_fds)
-						max_fds = newClient->getClientSocket() + 1;
-					std::cout<<GREEN<<"Connection successuful"<<RESET<<std::endl;
-				}
-			}
-			else
-			{
-				handle_connect(i);
-				FD_CLR(i, &current_sockets);
-				if (newClient)
-					delete newClient;
-				max_fds--;
-			}
-		}
-	}
-	return (0);
-} */

@@ -15,6 +15,4 @@ public:
 	int	getClientSocket();
 };
 
-Client	*new_connection(int server_socket, int epoll_fd);
-
 #endif

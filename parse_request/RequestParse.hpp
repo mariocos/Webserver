@@ -1,6 +1,6 @@
 #ifndef	RequestParse_HPP
 # define RequestParse_HPP
-# include "webserv.hpp"
+# include "../webserv.hpp"
 
 class RequestParse
 {
@@ -24,7 +24,12 @@ public:
 	std::string	get_user();
 	std::string	get_accetps();
 	std::string	get_path();
+	/*  setters  */
 	void	set_path(std::string path);
+	void	execute_response(int client_socket);
+	void	GET_response(int client_socket);
+	void	POST_response(int client_socket);
+	void	DELETE_response(int client_socket);
 };
 
 #endif

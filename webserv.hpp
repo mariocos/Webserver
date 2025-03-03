@@ -2,7 +2,6 @@
 # define WEBSERV_HPP
 
 /* classes */
-#include "parse_request/request_parse.hpp"
 
 
 //c++
@@ -37,15 +36,22 @@
 # define YELLOW "\033[1m\033[33m"
 
 # include "Client.hpp"
-# include "RequestParse.hpp"
+# include "parse_request/RequestParse.hpp"
 
+extern int serverskt;
+
+class RequestParse;
+
+//main.cpp
+void	check(int algo);
+int		setup(short port, int backlog);
+void	make_response(int client_socket, RequestParse request);
+void	new_connection(int server_socket, int epoll_fd);
+void	*handle_connect(int client_socket);
+
+//signal.cpp
 void	ctrl_c(int signal, siginfo_t *info, void *context);
 void	ignore(struct sigaction *sa, int signal);
 void	signal_decider(int type);
-void	check(int algo);
-int		setup(short port, int backlog);
-//int		new_connection(int server_socket);
-void	make_response(int client_socket, char *buffer);
-void	*handle_connect(int client_socket);
 
 #endif
