@@ -36,6 +36,7 @@
 # define YELLOW "\033[1m\033[33m"
 
 # include "Client.hpp"
+# include "ConfigParser.hpp"
 # include "parse_request/RequestParse.hpp"
 
 extern int serverskt;
@@ -45,7 +46,6 @@ class RequestParse;
 //main.cpp
 void	check(int algo);
 int		setup(short port, int backlog);
-void	make_response(int client_socket, RequestParse request);
 void	new_connection(int server_socket, int epoll_fd);
 void	*handle_connect(int client_socket);
 

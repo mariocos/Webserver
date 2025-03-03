@@ -78,30 +78,14 @@ void	RequestParse::set_path(std::string path)
 
 void	RequestParse::execute_response(int client_socket)
 {
-	int i;
 	if (method == "GET")
-		i = 1;
-	else if (method == "POST")
-		i = 2;
-	else if (method == "DELETE")
-		i = 3;
-	else
-		i = -1;
-
-	switch (i)
-	{
-	case 1:
 		GET_response(client_socket);
-		break;
-	case 2:
+	else if (method.compare("POST"))
 		POST_response(client_socket);
-		break;
-	case 3:
+	else if (method.compare("DELETE"))
 		DELETE_response(client_socket);
-		break;
-	default:
-		break;
-	}
+	else
+		std::cout<<"ERROR"<<std::endl;
 }
 
 void	RequestParse::GET_response(int client_socket)
@@ -110,7 +94,7 @@ void	RequestParse::GET_response(int client_socket)
 	std::ifstream	input;
 
 	if (this->get_path() == "/")
-		this->set_path("/index.html");
+		this->set_path("/dummy.html");
 	if (this->get_path().length() > 5 && this->get_path().find(".html") == this->get_path().length() - 5)
 		type = "text/html";
 	else if (this->get_path().length() > 4 && this->get_path().find(".css") == this->get_path().length() - 4)

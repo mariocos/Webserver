@@ -70,7 +70,7 @@ int	main(int ac, char **av)
 	std::string	config("default.config");
 	if (ac == 2)
 		config = av[1];
-	int	server_socket = setup(4243, 200);
+	int	server_socket = setup(4243, 10);
 	serverskt = server_socket;
 
 	struct epoll_event	event, events[10];
