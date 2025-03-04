@@ -2,6 +2,8 @@
 # define RequestParse_HPP
 # include "../webserv.hpp"
 
+class Client;
+
 class RequestParse
 {
 private:
@@ -26,10 +28,10 @@ public:
 	std::string	get_path();
 	/*  setters  */
 	void	set_path(std::string path);
-	void	execute_response(int client_socket);
-	void	GET_response(int client_socket);
-	void	POST_response(int client_socket);
-	void	DELETE_response(int client_socket);
+	bool	execute_response(int client_socket, Client &client);
+	bool	GET_response(int client_socket, Client &client);
+	bool	POST_response(int client_socket, Client &client);
+	bool	DELETE_response(int client_socket, Client &client);
 };
 
 #endif

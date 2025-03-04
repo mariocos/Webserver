@@ -29,6 +29,7 @@
 # include <fcntl.h>
 # include <signal.h>
 # include <dirent.h>
+# include <stdlib.h>
 
 # define RESET "\033[0m"
 # define GREEN "\033[1m\033[32m"
@@ -46,8 +47,7 @@ class RequestParse;
 //main.cpp
 void	check(int algo);
 int		setup(short port, int backlog);
-void	new_connection(int server_socket, int epoll_fd);
-void	*handle_connect(int client_socket);
+bool	handle_connect(int client_socket, Client &client);
 
 //signal.cpp
 void	ctrl_c(int signal, siginfo_t *info, void *context);
