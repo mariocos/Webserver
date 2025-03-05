@@ -13,6 +13,7 @@ Client::Client(int client_socket) : _clientSocket(client_socket), _request(NULL)
 Client::~Client()
 {
 	delete _request;
+	std::cout<<RED<<"Client Destructor"<<RESET<<std::endl;
 }
 
 void	Client::setClientSocket(int client_socket)
@@ -48,7 +49,7 @@ int	Client::getClientPending()
 
 int	Client::getClientOpenFd()
 {
-	return (this->_openFd);
+	return (_openFd);
 }
 
 RequestParse	*Client::getClientRequest()

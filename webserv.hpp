@@ -39,10 +39,12 @@
 # include "Client.hpp"
 # include "ConfigParser.hpp"
 # include "parse_request/RequestParse.hpp"
+# include "Response.hpp"
 
 extern int serverskt;
 
 class RequestParse;
+class Response;
 
 //main.cpp
 void	check(int algo);
@@ -53,5 +55,10 @@ bool	handle_connect(int client_socket, Client &client);
 void	ctrl_c(int signal, siginfo_t *info, void *context);
 void	ignore(struct sigaction *sa, int signal);
 void	signal_decider(int type);
+
+bool	loadImgResponse(int client_socket, Response response);
+bool	loadErrorPage(int client_socket, Response response);
+bool	loadPage(int client_socket, int fd, Response response, Client *client);
+int 	setNonBlocking(int fd);
 
 #endif

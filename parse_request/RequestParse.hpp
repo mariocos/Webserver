@@ -28,10 +28,10 @@ public:
 	std::string	get_path();
 	/*  setters  */
 	void	set_path(std::string path);
-	bool	execute_response(int client_socket, Client &client);
-	bool	GET_response(int client_socket, Client &client);
-	bool	POST_response(int client_socket, Client &client);
-	bool	DELETE_response(int client_socket, Client &client);
+	bool	execute_response(int client_socket, Client *client);
+	bool	GET_response(int client_socket, Client *client);
+	bool	POST_response(int client_socket, Client *client);
+	bool	DELETE_response(int client_socket, Client *client);
 };
 
 #endif

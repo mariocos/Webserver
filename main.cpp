@@ -26,46 +26,52 @@ int	setup(short port, int backlog)
 	return (server_socket);
 }
 
-Client	new_connection(int server_socket, int epoll_fd)
+Client	*new_connection(int server_socket, int epoll_fd)
 {
 	struct sockaddr_in clientaddr;
 	struct epoll_event	event;
 	socklen_t	addrlen = sizeof(clientaddr);
-	Client	newClient(accept(server_socket, (sockaddr*)&clientaddr, &addrlen));
+	Client	*newClient = new Client(accept(server_socket, (sockaddr*)&clientaddr, &addrlen));
 	event.events = EPOLLIN | EPOLLOUT;
-	event.data.fd = newClient.getClientSocket();
+	event.data.fd = newClient->getClientSocket();
 	epoll_ctl(epoll_fd, EPOLL_CTL_ADD, event.data.fd, &event);
-	std::cout<<"Socket Number: "<<newClient.getClientSocket()<<std::endl;
+	std::cout<<"Socket Number: "<<newClient->getClientSocket()<<std::endl;
 	return (newClient);
 }
 
-bool	handle_connect(int client_socket, Client &client)
+bool	handle_connect(int client_socket, Client *client)
 {
 	int	msgsize = 0;
 	char	buffer[4096];
 	size_t	bytes_read;
 
+	bzero(buffer, sizeof(buffer));
+	std::cout<<std::endl;
+	std::cout<<"client_socket: "<<client_socket<<std::endl;
+	std::cout<<"buffer: "<<buffer<<std::endl;
+	std::cout<<"msgsize: "<<msgsize<<std::endl;
 	while ((bytes_read = read(client_socket, buffer + msgsize, sizeof(buffer) - msgsize - 1)) > 0)
 	{
+		std::cout<<"fuck"<<std::endl;
 		msgsize += bytes_read;
-		if (msgsize > 4095 || buffer[msgsize - 1] == '\n')
+		if (msgsize >= 4095 || buffer[msgsize - 1] == '\n')
 			break ;
 	}
 	check(bytes_read);
 	buffer[msgsize - 1] = '\0';
 	std::cout<<buffer<<std::endl;
 	RequestParse	*request = new RequestParse(buffer);
-	client.setClientRequest(request);
-	client.setClientPending(client.getClientRequest()->execute_response(client_socket, client));
-	if (client.getClientPending() == false)
+	client->setClientRequest(request);
+	client->setClientPending(client->getClientRequest()->execute_response(client_socket, client));
+	if (client->getClientPending() == false)
 		std::cout<<YELLOW<<"Closing connection..."<<RESET<<std::endl;
-	return (client.getClientPending());
+	return (client->getClientPending());
 }
 
-bool	continue_connect(int client_socket, Client &client)
+bool	continue_connect(int client_socket, Client *client)
 {
-	client.setClientPending(client.getClientRequest()->execute_response(client_socket, client));
-	return (client.getClientPending());
+	client->setClientPending(client->getClientRequest()->execute_response(client_socket, client));
+	return (client->getClientPending());
 }
 
 int	main(int ac, char **av)
@@ -84,7 +90,7 @@ int	main(int ac, char **av)
 	struct epoll_event	event, events[10];
 	int	epoll_fd = epoll_create(1);
 	int	event_count = 0;
-	Client	clients[10];
+	Client	*clients[10];
 	event.events = EPOLLIN;
 	event.data.fd = server_socket;
 	epoll_ctl(epoll_fd, EPOLL_CTL_ADD, event.data.fd, &event);
@@ -99,19 +105,31 @@ int	main(int ac, char **av)
 			if (events[i].data.fd == server_socket)
 			{
 				clients[i] = new_connection(server_socket, epoll_fd);
+				//if (setNonBlocking(clients[i].getClientSocket()) == -1)
+				//{
+    			//    std::cerr << "Failed to set non-blocking mode." << std::endl;
+    			//    close(clients[i].getClientSocket());
+    			//    return (0);
+    			//}
 				std::cout<<GREEN<<"Connection successuful"<<RESET<<std::endl;
 			}
-			else if (clients[i].getClientPending() == false)
+			else if (clients[i]->getClientPending() == false)
 			{
-				clients[i].setClientPending(handle_connect(events[i].data.fd, clients[i]));
-				if (clients[i].getClientPending() == false)
+				clients[i]->setClientPending(handle_connect(events[i].data.fd, clients[i]));
+				if (clients[i]->getClientPending() == false)
+				{
 					epoll_ctl(epoll_fd, EPOLL_CTL_DEL, events[i].data.fd, &events[i]);
+					delete clients[i];
+				}
 			}
 			else
 			{
-				clients[i].setClientPending(continue_connect(events[i].data.fd, clients[i]));
-				if (clients[i].getClientPending() == false)
+				clients[i]->setClientPending(continue_connect(events[i].data.fd, clients[i]));
+				if (clients[i]->getClientPending() == false)
+				{
 					epoll_ctl(epoll_fd, EPOLL_CTL_DEL, events[i].data.fd, &events[i]);
+					delete clients[i];
+				}
 			}
 		}
 	}

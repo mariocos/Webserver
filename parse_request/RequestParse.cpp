@@ -42,6 +42,7 @@ RequestParse::RequestParse(const char *request)
 
 RequestParse::~RequestParse()
 {
+	std::cout<<RED<<"Destructor"<<RESET<<std::endl;
 }
 
 std::string	RequestParse::get_method(void)
@@ -76,149 +77,80 @@ void	RequestParse::set_path(std::string path)
 	path_to_request = path;
 }
 
-bool	RequestParse::execute_response(int client_socket, Client &client)
+bool	RequestParse::execute_response(int client_socket, Client *client)
 {
-	if (method == "GET")
+	if (method.compare("GET") == 0)
 		return (GET_response(client_socket, client));
-	else if (method.compare("POST"))
+	else if (method.compare("POST") == 0)
 		return (POST_response(client_socket, client));
-	else if (method.compare("DELETE"))
+	else if (method.compare("DELETE") == 0)
 		return (DELETE_response(client_socket, client));
 	else
 		std::cout<<"ERROR"<<std::endl;
 	return (false);
 }
 
-bool	RequestParse::GET_response(int client_socket, Client &client)
+bool	RequestParse::GET_response(int client_socket, Client *client)
 {
-	std::string	response, r_buffer, path, type = "text/plain";
+	Response	response;
 
-	if (client.getClientPending() == false)
+	if (client->getClientPending() == false)
 	{
 		if (this->get_path() == "/")
 			this->set_path("/dummy.html");
 		if (this->get_path().length() > 5 && this->get_path().find(".html") == this->get_path().length() - 5)
-			type = "text/html";
+			response.setType("text/html");
 		else if (this->get_path().length() > 4 && this->get_path().find(".css") == this->get_path().length() - 4)
-			type = "text/css";
+			response.setType("text/css");
 		else if (this->get_path().length() > 4 && this->get_path().find(".png") == this->get_path().length() - 4)
-			type = "image/png";
+			response.setType("image/png");
 		else
-			type = "text/html";
-		response.append(this->get_httpversion() + " 200 OK\n");
-		response.append("Content-Type: " + type + "\n");
-		if (type != "image/png")
-			response.append("Transfer-Encoding: chunked\n\n");
+			response.setType("text/html");
+		response.setResponse(response.getResponse().append(this->get_httpversion() + " 200 OK\n"));
+		response.setResponse(response.getResponse().append("Content-Type: " + response.getType() + "\n"));
+		if (response.getType() != "image/png")
+			response.setResponse(response.getResponse().append("Transfer-Enconding: chunked\n\n"));
 		else
-			response.append("\n");
-		path = "website" + this->get_path();
+			response.setResponse(response.getResponse().append("\n"));
+		response.setPath("website" + this->get_path());
 	}
 	else
 	{
 		if (this->get_path() == "/")
 			this->set_path("/dummy.html");
 		if (this->get_path().length() > 5 && this->get_path().find(".html") == this->get_path().length() - 5)
-			type = "text/html";
+			response.setType("text/html");
 		else if (this->get_path().length() > 4 && this->get_path().find(".css") == this->get_path().length() - 4)
-			type = "text/css";
+			response.setType("text/css");
 		else
-			type = "text/html";
-		path = "website" + this->get_path();
+			response.setType("text/html");
+		response.setPath("website" + this->get_path());
 	}
-	if (type == "image/png")
-	{
-		std::ifstream	input;
-		input.open(path.c_str());
-		if (input.is_open())
-		{
-			while (getline(input, r_buffer))
-			{
-				response.append(r_buffer);
-				response.append("\n");
-			}
-		}
-		else
-		{
-			input.open("website/404.html");
-			while (getline(input, r_buffer))
-			{
-				response.append(r_buffer);
-				response.append("\n");
-			}
-		}
-		input.close();
-		write(client_socket, response.c_str(), response.length());
-		close(client_socket);
-	}
+	if (response.getType() == "image/png")
+		return (loadImgResponse(client_socket, response));
 	else
 	{
-		int	input;
-		if (client.getClientOpenFd() == -1)
-			input = open(path.c_str(), O_RDONLY);
+		int	fd;
+		if (client->getClientOpenFd() == -1)
+			fd = open(response.getPath().c_str(), O_RDONLY);
 		else
-			input = client.getClientOpenFd();
-		int	msgsize = 0;
-		char	buffer[4096];
-		size_t	bytes_read;
-		std::string	lenght;
-		std::ostringstream	number;
-		if (input == -1)
-		{
-			input = open("website/404.html", O_RDONLY);
-			bzero(buffer, sizeof(buffer));
-			while ((bytes_read = read(input, buffer + msgsize, sizeof(buffer) - msgsize - 1)) > 0)
-			{
-				response.append(buffer);
-				msgsize += bytes_read;
-			}
-			check(bytes_read);
-			number<<msgsize;
-			lenght = number.str();
-			if (response.find("Transfer-Encoding: chunked") != std::string::npos)
-				response.replace(response.find("Transfer-Encoding: chunked"), 27, "Content-lenght: " + lenght + "\n\n");
-			write(client_socket, response.c_str(), response.length());
-			close(client_socket);
-			close(input);
-		}
+			fd = client->getClientOpenFd();
+		if (fd == -1)
+			return (loadErrorPage(client_socket, response));
 		else
-		{
-			bzero(buffer, sizeof(buffer));
-			while ((bytes_read = read(input, buffer + msgsize, sizeof(buffer) - msgsize - 1)) > 0)
-			{
-				msgsize += bytes_read;
-				response.append(buffer);
-				if (msgsize >= 4095)
-					break ;
-			}
-			check(bytes_read);
-			if (msgsize >= 4095)
-			{
-				write(client_socket, response.c_str(), response.length());
-				std::cout<<response<<std::endl;
-				if (client.getClientOpenFd() == -1)
-					client.setClientOpenFd(input);
-				return (true);
-			}
-			number<<msgsize;
-			lenght = number.str();
-			if (response.find("Transfer-Encoding: chunked") != std::string::npos)
-				response.replace(response.find("Transfer-Encoding: chunked"), 27, "Content-lenght: " + lenght + "\n\n");
-			write(client_socket, response.c_str(), response.length());
-			close(client_socket);
-			close(input);
-		}
+			return (loadPage(client_socket, fd, response, client));
 	}
 	return (false);
 }
 
-bool	RequestParse::POST_response(int client_socket, Client &client)
+bool	RequestParse::POST_response(int client_socket, Client *client)
 {
 	(void)client_socket;
-	return (client.getClientPending());
+	return (client->getClientPending());
 }
 
-bool	RequestParse::DELETE_response(int client_socket, Client &client)
+bool	RequestParse::DELETE_response(int client_socket, Client *client)
 {
 	(void)client_socket;
-	return (client.getClientPending());
+	return (client->getClientPending());
 }

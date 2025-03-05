@@ -22,10 +22,10 @@ public:
 	void	setClientOpenFd(int fd);
 	int		getClientSocket();
 	int		getClientPending();
-	int		getClientOpenFd();
+	int	getClientOpenFd();
 	RequestParse	*getClientRequest();
 };
 
-Client	new_connection(int server_socket, int epoll_fd);
+Client	*new_connection(int server_socket, int epoll_fd);
 
 #endif
