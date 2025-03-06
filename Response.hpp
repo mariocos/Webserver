@@ -13,7 +13,7 @@ class Response
 {
 private:
 	std::string	_response;
-	std::string	_r_buffer;
+	std::string	*_buffer;
 	std::string	_path;
 	std::string	_type;
 public:
@@ -22,13 +22,15 @@ public:
 	//Response& operator=(const Response &copy);
 	~Response();
 	std::string	getResponse();
-	std::string	getBuffer();
+	std::string	*getBuffer();
 	std::string	getPath();
 	std::string	getType();
 	void	setResponse(std::string response);
-	void	setBuffer(std::string buffer);
+	void	setBuffer(std::string *buffer);
 	void	setPath(std::string path);
 	void	setType(std::string type);
+	void	addToResponse(std::string info);
+	std::string	*readFromBuffer();
 };
 
 #endif

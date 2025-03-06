@@ -56,9 +56,11 @@ void	ctrl_c(int signal, siginfo_t *info, void *context);
 void	ignore(struct sigaction *sa, int signal);
 void	signal_decider(int type);
 
-bool	loadImgResponse(int client_socket, Response response);
-bool	loadErrorPage(int client_socket, Response response);
-bool	loadPage(int client_socket, int fd, Response response, Client *client);
+bool	loadImgResponse(int client_socket, Response *response, Client *client);
+bool	loadErrorPage(int client_socket, Response *response, Client *client);
+bool	loadPage(int client_socket, int fd, Response *response, Client *client);
 int 	setNonBlocking(int fd);
+void	createHeader(RequestParse *request, Response *response, Client *client);
+void	findType(RequestParse *request, Response *response);
 
 #endif

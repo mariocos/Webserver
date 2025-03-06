@@ -1,10 +1,10 @@
 #include "Client.hpp"
 
-Client::Client() : _clientSocket(0), _request(NULL), _pending(false), _openFd(-1)
+Client::Client() : _clientSocket(0), _request(NULL), _response(NULL), _pending(false), _keepAlive(false), _openFd(-1)
 {
 }
 
-Client::Client(int client_socket) : _clientSocket(client_socket), _request(NULL), _pending(false), _openFd(-1)
+Client::Client(int client_socket) : _clientSocket(client_socket), _request(NULL), _response(NULL), _pending(false), _keepAlive(false),_openFd(-1)
 {
 	std::cout<<GREEN<<"Client constructor called"<<RESET<<std::endl;
 	check(client_socket);
@@ -27,9 +27,19 @@ void	Client::setClientPending(bool pending)
 	this->_pending = pending;
 }
 
+void	Client::setClientConnection(bool connection)
+{
+	this->_keepAlive = connection;
+}
+
 void	Client::setClientRequest(RequestParse *request)
 {
 	this->_request = request;
+}
+
+void	Client::setClientResponse(Response *response)
+{
+	this->_response = response;
 }
 
 void	Client::setClientOpenFd(int fd)
@@ -42,9 +52,14 @@ int	Client::getClientSocket()
 	return (this->_clientSocket);
 }
 
-int	Client::getClientPending()
+bool	Client::getClientPending()
 {
 	return (this->_pending);
+}
+
+bool	Client::getClientConnection()
+{
+	return (this->_keepAlive);
 }
 
 int	Client::getClientOpenFd()
@@ -55,4 +70,9 @@ int	Client::getClientOpenFd()
 RequestParse	*Client::getClientRequest()
 {
 	return (this->_request);
+}
+
+Response	*Client::getClientResponse()
+{
+	return (this->_response);
 }

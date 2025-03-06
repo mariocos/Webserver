@@ -92,53 +92,55 @@ bool	RequestParse::execute_response(int client_socket, Client *client)
 
 bool	RequestParse::GET_response(int client_socket, Client *client)
 {
-	Response	response;
+	Response	*response;
+	bool		ret = false;
 
+	response = new Response;
+	client->setClientRequest(this);
+	client->setClientResponse(response);
 	if (client->getClientPending() == false)
 	{
-		if (this->get_path() == "/")
-			this->set_path("/dummy.html");
-		if (this->get_path().length() > 5 && this->get_path().find(".html") == this->get_path().length() - 5)
-			response.setType("text/html");
-		else if (this->get_path().length() > 4 && this->get_path().find(".css") == this->get_path().length() - 4)
-			response.setType("text/css");
-		else if (this->get_path().length() > 4 && this->get_path().find(".png") == this->get_path().length() - 4)
-			response.setType("image/png");
-		else
-			response.setType("text/html");
-		response.setResponse(response.getResponse().append(this->get_httpversion() + " 200 OK\n"));
-		response.setResponse(response.getResponse().append("Content-Type: " + response.getType() + "\n"));
-		if (response.getType() != "image/png")
-			response.setResponse(response.getResponse().append("Transfer-Enconding: chunked\n\n"));
-		else
-			response.setResponse(response.getResponse().append("\n"));
-		response.setPath("website" + this->get_path());
+		findType(this, response);
+		createHeader(this, response, client);
+	}
+	else
+		findType(this, response);
+	if (response->getType() == "image/png")
+	{
+		ret = loadImgResponse(client_socket, response, client);
+		delete response;
+		return (ret);
 	}
 	else
 	{
-		if (this->get_path() == "/")
-			this->set_path("/dummy.html");
-		if (this->get_path().length() > 5 && this->get_path().find(".html") == this->get_path().length() - 5)
-			response.setType("text/html");
-		else if (this->get_path().length() > 4 && this->get_path().find(".css") == this->get_path().length() - 4)
-			response.setType("text/css");
-		else
-			response.setType("text/html");
-		response.setPath("website" + this->get_path());
-	}
-	if (response.getType() == "image/png")
-		return (loadImgResponse(client_socket, response));
-	else
-	{
-		int	fd;
+		int	fd = -1;
 		if (client->getClientOpenFd() == -1)
-			fd = open(response.getPath().c_str(), O_RDONLY);
+		{
+			fd = open(response->getPath().c_str(), O_RDONLY);
+			std::cout<<"client_socket: "<<client->getClientSocket()<<std::endl;
+			if (fd != -1 && setNonBlocking(fd) == -1)
+			{
+    		    std::cerr << "Failed to set non-blocking mode." << std::endl;
+    		    close(fd);
+				delete response;
+    		    return (ret);
+    		}
+		}
 		else
 			fd = client->getClientOpenFd();
+		std::cout<<"fd: "<<fd<<std::endl;
 		if (fd == -1)
-			return (loadErrorPage(client_socket, response));
+		{
+			ret = loadErrorPage(client_socket, response, client);
+			delete response;
+			return (ret);
+		}
 		else
-			return (loadPage(client_socket, fd, response, client));
+		{
+			ret = loadPage(client_socket, fd, response, client);
+			delete response;
+			return (ret);
+		}
 	}
 	return (false);
 }

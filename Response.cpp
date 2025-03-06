@@ -1,7 +1,7 @@
 #include "Response.hpp"
 
 
-Response::Response() : _type("text/plain")
+Response::Response() : _response(""), _buffer(NULL), _path(""), _type("text/plain")
 {
 	std::cout<<GREEN<<"Response default constructor called"<<RESET<<std::endl;
 }
@@ -21,40 +21,53 @@ Response::~Response()
 
 std::string	Response::getResponse()
 {
-	return (this->_response);
+	return (_response);
 }
 
-std::string	Response::getBuffer()
+std::string	*Response::getBuffer()
 {
-	return (this->_r_buffer);
+	return (_buffer);
 }
 
 std::string	Response::getPath()
 {
-	return (this->_path);
+	return (_path);
 }
 
 std::string	Response::getType()
 {
-	return (this->_type);
+	return (_type);
 }
 
 void	Response::setResponse(std::string response)
 {
-	this->_response = response;
+	_response = response;
 }
 
-void	Response::setBuffer(std::string buffer)
+void	Response::setBuffer(std::string *buffer)
 {
-	this->_r_buffer = buffer;
+	_buffer = buffer;
 }
 
 void	Response::setPath(std::string path)
 {
-	this->_path = path;
+	_path = path;
 }
 
 void	Response::setType(std::string type)
 {
-	this->_type = type;
+	_type = type;
+}
+
+void	Response::addToResponse(std::string info)
+{
+	_response.append(info);
+}
+
+std::string	*Response::readFromBuffer()
+{
+	std::string	*outBuffer = NULL;
+
+	outBuffer->append(*_buffer);
+	return (outBuffer);
 }
