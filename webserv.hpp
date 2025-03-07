@@ -12,6 +12,7 @@
 # include <cmath>
 # include <fstream>
 # include <sstream>
+# include <memory>
 
 //c
 # include <unistd.h>
@@ -29,6 +30,7 @@
 # include <fcntl.h>
 # include <signal.h>
 # include <dirent.h>
+# include <stdlib.h>
 
 # define RESET "\033[0m"
 # define GREEN "\033[1m\033[32m"
@@ -38,20 +40,28 @@
 # include "Client.hpp"
 # include "ConfigParser.hpp"
 # include "parse_request/RequestParse.hpp"
+# include "Response.hpp"
 
 extern int serverskt;
 
 class RequestParse;
+class Response;
 
 //main.cpp
 void	check(int algo);
 int		setup(short port, int backlog);
-void	new_connection(int server_socket, int epoll_fd);
-void	*handle_connect(int client_socket);
+bool	handle_connect(int client_socket, Client &client);
 
 //signal.cpp
 void	ctrl_c(int signal, siginfo_t *info, void *context);
 void	ignore(struct sigaction *sa, int signal);
 void	signal_decider(int type);
+
+bool	loadImgResponse(int client_socket, Response *response, Client *client);
+bool	loadErrorPage(int client_socket, Response *response, Client *client);
+bool	loadPage(int client_socket, int fd, Response *response, Client *client);
+int 	setNonBlocking(int fd);
+void	createHeader(RequestParse *request, Response *response, Client *client);
+void	findType(RequestParse *request, Response *response);
 
 #endif

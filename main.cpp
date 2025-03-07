@@ -26,38 +26,51 @@ int	setup(short port, int backlog)
 	return (server_socket);
 }
 
-void	new_connection(int server_socket, int epoll_fd)
+Client	*new_connection(int server_socket, int epoll_fd)
 {
 	struct sockaddr_in clientaddr;
 	struct epoll_event	event;
 	socklen_t	addrlen = sizeof(clientaddr);
-	int		client_socket;
-	client_socket = accept(server_socket, (sockaddr*)&clientaddr, &addrlen);
-	event.events = EPOLLIN | EPOLLOUT;
-	event.data.fd = client_socket;
+	Client	*newClient = new Client(accept(server_socket, (sockaddr*)&clientaddr, &addrlen));
+	event.events = EPOLLIN | EPOLLET;
+	event.data.fd = newClient->getClientSocket();
 	epoll_ctl(epoll_fd, EPOLL_CTL_ADD, event.data.fd, &event);
-	std::cout<<"Socket Number: "<<client_socket<<std::endl;
+	std::cout<<"Socket Number: "<<newClient->getClientSocket()<<std::endl;
+	return (newClient);
 }
 
-void	*handle_connect(int client_socket)
+bool	handle_connect(int client_socket, Client *client)
 {
-	int	msgsize = 0;
 	char	buffer[4096];
-	size_t	bytes_read;
+	ssize_t	bytes_read;
 
-	while ((bytes_read = read(client_socket, buffer + msgsize, sizeof(buffer) - msgsize - 1)) > 0)
+	bzero(buffer, sizeof(buffer));
+	bytes_read = read(client_socket, buffer, sizeof(buffer));
+	if (bytes_read == -1)
 	{
-		msgsize += bytes_read;
-		if (msgsize > 4095 || buffer[msgsize - 1] == '\n')
-			break ;
+		if (errno == EAGAIN || errno == EWOULDBLOCK)
+			return (true);
+		else
+		{
+			perror("read: ");
+			close(client_socket);
+		}
 	}
-	check(bytes_read);
-	buffer[msgsize - 1] = '\0';
 	std::cout<<buffer<<std::endl;
-	RequestParse	request(buffer);
-	request.execute_response(client_socket);
-	std::cout<<YELLOW<<"Closing connection..."<<RESET<<std::endl;
-	return (NULL);
+	std::string	tmp(buffer);
+	if (tmp.find("Connection: keep-alive") != std::string::npos)
+		client->setClientConnection(true);
+	client->getClientRequest()->buildRequest(buffer);
+	client->setClientPending(client->getClientRequest()->execute_response(client_socket, client));
+	if (client->getClientPending() == false)
+		std::cout<<YELLOW<<"Closing connection..."<<RESET<<std::endl;
+	return (client->getClientPending());
+}
+
+bool	continue_connect(int client_socket, Client *client)
+{
+	client->setClientPending(client->getClientRequest()->execute_response(client_socket, client));
+	return (client->getClientPending());
 }
 
 int	main(int ac, char **av)
@@ -76,6 +89,7 @@ int	main(int ac, char **av)
 	struct epoll_event	event, events[10];
 	int	epoll_fd = epoll_create(1);
 	int	event_count = 0;
+	Client	*clients[10];
 	event.events = EPOLLIN;
 	event.data.fd = server_socket;
 	epoll_ctl(epoll_fd, EPOLL_CTL_ADD, event.data.fd, &event);
@@ -88,13 +102,34 @@ int	main(int ac, char **av)
 		{
 			if (events[i].data.fd == server_socket)
 			{
-				new_connection(server_socket, epoll_fd);
+				clients[i] = new_connection(server_socket, epoll_fd);
+				if (setNonBlocking(clients[i]->getClientSocket()) == -1)
+				{
+    			    std::cerr << "Failed to set non-blocking mode." << std::endl;
+    			    close(clients[i]->getClientSocket());
+    			    return (0);
+    			}
 				std::cout<<GREEN<<"Connection successuful"<<RESET<<std::endl;
+			}
+			else if (clients[i]->getClientPending() == false)
+			{
+				clients[i]->setClientPending(handle_connect(events[i].data.fd, clients[i]));
+				if (clients[i]->getClientPending() == false)
+				{
+					epoll_ctl(epoll_fd, EPOLL_CTL_DEL, events[i].data.fd, &events[i]);
+					if (clients[i]->getClientConnection() == false)
+						delete clients[i];
+				}
 			}
 			else
 			{
-				handle_connect(events[i].data.fd);
-				epoll_ctl(epoll_fd, EPOLL_CTL_DEL, events[i].data.fd, &events[i]);
+				clients[i]->setClientPending(continue_connect(events[i].data.fd, clients[i]));
+				if (clients[i]->getClientPending() == false)
+				{
+					epoll_ctl(epoll_fd, EPOLL_CTL_DEL, events[i].data.fd, &events[i]);
+					if (clients[i]->getClientConnection() == false)
+						delete clients[i];
+				}
 			}
 		}
 	}

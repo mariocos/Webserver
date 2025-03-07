@@ -52,6 +52,7 @@ std::string	get_keyword(std::string req, std::string keyword)
 
 RequestParse::~RequestParse()
 {
+	std::cout<<RED<<"Destructor"<<RESET<<std::endl;
 }
 
 void	RequestParse::set_path(std::string path)
@@ -59,63 +60,80 @@ void	RequestParse::set_path(std::string path)
 	path_to_request = path;
 }
 
-void	RequestParse::execute_response(int client_socket)
+void	RequestParse::setBuffer(std::string *buffer)
 {
-	if (method == "GET")
-		GET_response(client_socket);
-	else if (method.compare("POST"))
-		POST_response(client_socket);
-	else if (method.compare("DELETE"))
-		DELETE_response(client_socket);
+	_buffer = buffer;
+}
+
+void	RequestParse::writeToBuffer(std::string info)
+{
+	adjustBuffer();
+	_buffer->append(info);
+}
+
+void	RequestParse::adjustBuffer()
+{
+	if (_buffer)
+		_buffer->insert(0, *_buffer);
+}
+
+bool	RequestParse::execute_response(int client_socket, Client *client)
+{
+	if (method.compare("GET") == 0)
+		return (GET_response(client_socket, client));
+	else if (method.compare("POST") == 0)
+		return (POST_response(client_socket, client));
+	else if (method.compare("DELETE") == 0)
+		return (DELETE_response(client_socket, client));
 	else
 		std::cout<<"ERROR"<<std::endl;
+	return (false);
 }
 
-void	RequestParse::GET_response(int client_socket)
+bool	RequestParse::GET_response(int client_socket, Client *client)
 {
-	std::string	response, r_buffer, path, type = "text/plain";
-	std::ifstream	input;
-
-	if (this->get_path() == "/")
-		this->set_path("/dummy.html");
-	if (this->get_path().length() > 5 && this->get_path().find(".html") == this->get_path().length() - 5)
-		type = "text/html";
-	else if (this->get_path().length() > 4 && this->get_path().find(".css") == this->get_path().length() - 4)
-		type = "text/css";
-	else
-		type = "text/html";
-	response.append(this->get_httpversion() + " 200 OK\n");
-	response.append("Content-Type: " + type + "\n\n");
-	path = "website" + this->get_path();
-	input.open(path.c_str());
-	if (input.is_open())
+	if (client->getClientPending() == false)
 	{
-		while (getline(input, r_buffer))
-		{
-			response.append(r_buffer);
-			response.append("\n");
-		}
+		findType(this, client->getClientResponse());
+		createHeader(this, client->getClientResponse(), client);
 	}
 	else
+		findType(this, client->getClientResponse());
+	if (client->getClientResponse()->getType() == "image/png")
+		return (loadImgResponse(client_socket, client->getClientResponse(), client));
+	else
 	{
-		input.open("website/404.html");
-		while (getline(input, r_buffer))
+		int	fd = -1;
+		if (client->getClientOpenFd() == -1)
 		{
-			response.append(r_buffer);
-			response.append("\n");
+			fd = open(client->getClientResponse()->getPath().c_str(), O_RDONLY);
+			std::cout<<"client_socket: "<<client->getClientSocket()<<std::endl;
+			if (fd != -1 && setNonBlocking(fd) == -1)
+			{
+    		    std::cerr << "Failed to set non-blocking mode." << std::endl;
+    		    close(fd);
+    		    return (false);
+    		}
 		}
+		else
+			fd = client->getClientOpenFd();
+		std::cout<<"fd: "<<fd<<std::endl;
+		if (fd == -1)
+			return (loadErrorPage(client_socket, client->getClientResponse(), client));
+		else
+			return (loadPage(client_socket, fd, client->getClientResponse(), client));
 	}
-	input.close();
-	write(client_socket, response.c_str(), response.length());
-	close(client_socket);
+	return (false);
 }
 
-void	RequestParse::POST_response(int client_socket)
+bool	RequestParse::POST_response(int client_socket, Client *client)
 {
 	(void)client_socket;
+	return (client->getClientPending());
 }
 
-void	RequestParse::DELETE_response(int client_socket)
+bool	RequestParse::DELETE_response(int client_socket, Client *client)
 {
 	(void)client_socket;
+	return (client->getClientPending());
 }

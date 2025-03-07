@@ -2,6 +2,8 @@
 # define RequestParse_HPP
 # include "../webserv.hpp"
 
+class Client;
+
 class RequestParse
 {
 private:
@@ -12,10 +14,8 @@ private:
 	std::string Host;
 	std::string User;
 	std::string Accepts;
-	std::string	content;
-	std::string	content_length;
-	std::string	content_type;
-	int			error_code;
+	std::string	*_buffer;
+
 public:
 	RequestParse();
 	RequestParse(const char *request);
@@ -30,11 +30,15 @@ public:
 	std::string	get_content_type();
 	std::string	get_content_length();
 	/*  setters  */
+	void	buildRequest(const char *request);
 	void	set_path(std::string path);
-	void	execute_response(int client_socket);
-	void	GET_response(int client_socket);
-	void	POST_response(int client_socket);
-	void	DELETE_response(int client_socket);
+	void	setBuffer(std::string *buffer);
+	void	writeToBuffer(std::string info);
+	void	adjustBuffer();
+	bool	execute_response(int client_socket, Client *client);
+	bool	GET_response(int client_socket, Client *client);
+	bool	POST_response(int client_socket, Client *client);
+	bool	DELETE_response(int client_socket, Client *client);
 };
 
 std::string	get_keyword(std::string req, std::string keyword);
