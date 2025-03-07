@@ -1,0 +1,8 @@
+Post and delete will work based on files pending on if we can fork in order to execve
+we will create and delete files we can read and serve easily
+
+/*---------*/
+/* header  */
+/*---------*/
+
+the header in a post file will be the content type and content length written in http standard

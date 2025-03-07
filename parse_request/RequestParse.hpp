@@ -12,7 +12,10 @@ private:
 	std::string Host;
 	std::string User;
 	std::string Accepts;
-
+	std::string	content;
+	std::string	content_length;
+	std::string	content_type;
+	int			error_code;
 public:
 	RequestParse();
 	RequestParse(const char *request);
@@ -24,6 +27,8 @@ public:
 	std::string	get_user();
 	std::string	get_accetps();
 	std::string	get_path();
+	std::string	get_content_type();
+	std::string	get_content_length();
 	/*  setters  */
 	void	set_path(std::string path);
 	void	execute_response(int client_socket);
@@ -31,5 +36,8 @@ public:
 	void	POST_response(int client_socket);
 	void	DELETE_response(int client_socket);
 };
+
+std::string	get_keyword(std::string req, std::string keyword);
+
 
 #endif
