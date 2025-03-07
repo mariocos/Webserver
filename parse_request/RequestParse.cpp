@@ -1,5 +1,29 @@
 #include "RequestParse.hpp"
 
+char	*ft_strstr(const char *big, const char *little)
+{
+	size_t	j;
+	size_t	i;
+
+	j = 0;
+	i = 0;
+	if (!*little)
+		return ((char *)big);
+	while (*big)
+	{
+		j = 0;
+		while (big[j] && little[j] && big[j] == little[j])
+		{
+			j++;
+		}
+		if (little[j] == '\0')
+			return ((char *)big);
+		big++;
+		i++;
+	}
+	return (0);
+}
+
 RequestParse::RequestParse()
 {
 	std::cout << "Default RequestParse constructor called\n";
@@ -27,8 +51,10 @@ void	RequestParse::buildRequest(const char *request)
 	line1.erase(0, len + 1);
 	len = line1.find(' ');
 	this->path_to_request = line1.substr(0, len);
-	if (path_to_request.find("../"))
+	std::cout << "path to request is: [" << path_to_request << "]\n";
+	if (ft_strstr(path_to_request.c_str(), ".."))
 	{
+		std::cout<< "what is naughty about this [" << path_to_request.find("..") << "]\n";
 		std::cout << "naughty request\n";
 		error_code = 3;
 	}
@@ -41,6 +67,11 @@ void	RequestParse::buildRequest(const char *request)
 	User = get_keyword(req, "User: ");
 	Accepts = get_keyword(req, "Accept: ");
 	connection = get_keyword(req, "Connection: ");
+	if (req.find("\r\n\r\n"))
+	{
+		req.erase(0, req.find("\r\n\r\n") + 4);
+		content = req.substr(0, req.find("\0") + 1);
+	}
 }
 
 

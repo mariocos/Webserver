@@ -14,11 +14,12 @@ private:
 	std::string Host;
 	std::string User;
 	std::string Accepts;
-	std::string	*_buffer;
 	std::string	content_type;
 	std::string	content_length;
 	std::string	connection;
+	std::string	*_buffer;
 	int			error_code;
+	std::string	content;
 public:
 	RequestParse();
 	RequestParse(const char *request);
