@@ -7,6 +7,11 @@ RequestParse::RequestParse()
 
 RequestParse::RequestParse(const char *request)
 {
+	this->buildRequest(request);
+}
+
+void	RequestParse::buildRequest(const char *request)
+{
 	error_code = 0;
 	std::cout << "calling request parse cstring constructor\n";
 	if (!request)
@@ -35,6 +40,7 @@ RequestParse::RequestParse(const char *request)
 	content_type = get_keyword(req, "content-type: ");
 	User = get_keyword(req, "User: ");
 	Accepts = get_keyword(req, "Accept: ");
+	connection = get_keyword(req, "Connection: ");
 }
 
 

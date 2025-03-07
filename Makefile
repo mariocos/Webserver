@@ -2,7 +2,10 @@ CXX = c++
 CXXFLAGS = -std=c++98 -Wall -Wextra -Werror -g
 NAME = webserv
 
-SOURCES =	main.cpp parse_request/RequestParse.cpp signal.cpp Client.cpp Response.cpp create_response.cpp
+SOURCES =	main.cpp \
+			parse_request/RequestParse.cpp \
+			parse_request/request_gets.cpp \
+			signal.cpp Client.cpp Response.cpp create_response.cpp
 OBJS_DIR = obj
 OBJECTS = $(addprefix $(OBJS_DIR)/, $(SOURCES:%.cpp=%.o))
 

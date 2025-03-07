@@ -15,7 +15,10 @@ private:
 	std::string User;
 	std::string Accepts;
 	std::string	*_buffer;
-
+	std::string	content_type;
+	std::string	content_length;
+	std::string	connection;
+	int			error_code;
 public:
 	RequestParse();
 	RequestParse(const char *request);
@@ -29,8 +32,8 @@ public:
 	std::string	get_path();
 	std::string	get_content_type();
 	std::string	get_content_length();
+	void		buildRequest(const char *req);
 	/*  setters  */
-	void	buildRequest(const char *request);
 	void	set_path(std::string path);
 	void	setBuffer(std::string *buffer);
 	void	writeToBuffer(std::string info);
