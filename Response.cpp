@@ -1,7 +1,7 @@
 #include "Response.hpp"
 
 
-Response::Response() : _response(""), _buffer(NULL), _path(""), _type("text/plain")
+Response::Response() : _response(""), _path(""), _type("text/plain")
 {
 	std::cout<<GREEN<<"Response default constructor called"<<RESET<<std::endl;
 }
@@ -64,10 +64,7 @@ void	Response::addToResponse(std::string info)
 	_response.append(info);
 }
 
-std::string	*Response::readFromBuffer()
+std::string	Response::readFromBuffer()
 {
-	std::string	*outBuffer = NULL;
-
-	outBuffer->append(*_buffer);
-	return (outBuffer);
+	return (_buffer ? *_buffer : "");
 }

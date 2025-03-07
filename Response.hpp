@@ -22,15 +22,15 @@ public:
 	//Response& operator=(const Response &copy);
 	~Response();
 	std::string	getResponse();
-	std::string	*getBuffer();
 	std::string	getPath();
 	std::string	getType();
+	std::string	*getBuffer();
 	void	setResponse(std::string response);
 	void	setBuffer(std::string *buffer);
 	void	setPath(std::string path);
 	void	setType(std::string type);
 	void	addToResponse(std::string info);
-	std::string	*readFromBuffer();
+	std::string	readFromBuffer();
 };
 
 #endif

@@ -8,11 +8,17 @@ Client::Client(int client_socket) : _clientSocket(client_socket), _request(NULL)
 {
 	std::cout<<GREEN<<"Client constructor called"<<RESET<<std::endl;
 	check(client_socket);
+	_response = new Response;
+	_request = new RequestParse;
+	std::string *buffer = new std::string;
+	_response->setBuffer(buffer);
+	_request->setBuffer(buffer);
 }
 
 Client::~Client()
 {
 	delete _request;
+	delete _response;
 	std::cout<<RED<<"Client Destructor"<<RESET<<std::endl;
 }
 

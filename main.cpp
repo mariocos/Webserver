@@ -60,8 +60,7 @@ bool	handle_connect(int client_socket, Client *client)
 	std::string	tmp(buffer);
 	if (tmp.find("Connection: keep-alive") != std::string::npos)
 		client->setClientConnection(true);
-	RequestParse	*request = new RequestParse(buffer);
-	client->setClientRequest(request);
+	client->getClientRequest()->buildRequest(buffer);
 	client->setClientPending(client->getClientRequest()->execute_response(client_socket, client));
 	if (client->getClientPending() == false)
 		std::cout<<YELLOW<<"Closing connection..."<<RESET<<std::endl;
@@ -94,7 +93,6 @@ int	main(int ac, char **av)
 	event.events = EPOLLIN;
 	event.data.fd = server_socket;
 	epoll_ctl(epoll_fd, EPOLL_CTL_ADD, event.data.fd, &event);
-	std::string	buffer[1024];
 	while (1)
 	{
 		signal_decider(0);
@@ -115,7 +113,6 @@ int	main(int ac, char **av)
 			}
 			else if (clients[i]->getClientPending() == false)
 			{
-				//clients[i]->getClientResponse()->setBuffer(buffer);
 				clients[i]->setClientPending(handle_connect(events[i].data.fd, clients[i]));
 				if (clients[i]->getClientPending() == false)
 				{

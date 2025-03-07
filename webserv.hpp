@@ -12,6 +12,7 @@
 # include <cmath>
 # include <fstream>
 # include <sstream>
+# include <memory>
 
 //c
 # include <unistd.h>
