@@ -63,7 +63,10 @@ bool	handle_connect(int client_socket, Client *client)
 	client->getClientRequest()->buildRequest(buffer);
 	client->setClientPending(client->getClientRequest()->execute_response(client_socket, client));
 	if (client->getClientPending() == false)
+	{
+		close(client_socket);
 		std::cout<<YELLOW<<"Closing connection..."<<RESET<<std::endl;
+	}
 	return (client->getClientPending());
 }
 
@@ -89,7 +92,7 @@ int	main(int ac, char **av)
 	struct epoll_event	event, events[10];
 	int	epoll_fd = epoll_create(1);
 	int	event_count = 0;
-	Client	*clients[10];
+	Client	*clients[10] = {};
 	event.events = EPOLLIN;
 	event.data.fd = server_socket;
 	epoll_ctl(epoll_fd, EPOLL_CTL_ADD, event.data.fd, &event);
@@ -97,38 +100,89 @@ int	main(int ac, char **av)
 	{
 		signal_decider(0);
 		std::cout<<"Waiting..."<<std::endl;
-		event_count = epoll_wait(epoll_fd, events, 10, -1);
-		for (int i = 0; i < event_count; i++)
+		event_count = epoll_wait(epoll_fd, events, 10, 60);
+		if (event_count == 0)
 		{
-			if (events[i].data.fd == server_socket)
+			int	n = getPendingHole(clients);
+			if (n == -1)
 			{
-				clients[i] = new_connection(server_socket, epoll_fd);
-				if (setNonBlocking(clients[i]->getClientSocket()) == -1)
-				{
-    			    std::cerr << "Failed to set non-blocking mode." << std::endl;
-    			    close(clients[i]->getClientSocket());
-    			    return (0);
-    			}
-				std::cout<<GREEN<<"Connection successuful"<<RESET<<std::endl;
+				event_count = epoll_wait(epoll_fd, events, 10, -1);
+				std::cout<<RED<<"Nothing Pending"<<RESET<<std::endl;
+				continue;
 			}
-			else if (clients[i]->getClientPending() == false)
+			clients[n]->setClientPending(continue_connect(clients[n]->getClientSocket(), clients[n]));
+			if (clients[n]->getClientPending() == false)
 			{
-				clients[i]->setClientPending(handle_connect(events[i].data.fd, clients[i]));
-				if (clients[i]->getClientPending() == false)
+				//epoll_ctl(epoll_fd, EPOLL_CTL_DEL, events[i].data.fd, &events[i]);
+				//if (clients[n]->getClientConnection() == false)
+				//{
+				//	delete clients[n];
+				//	clients[n] = NULL;
+				//}
+				delete clients[n];
+				clients[n] = NULL;
+			}
+		}
+		else
+		{
+			for (int i = 0; i < event_count; i++)
+			{
+				if (events[i].data.fd == server_socket)
 				{
-					epoll_ctl(epoll_fd, EPOLL_CTL_DEL, events[i].data.fd, &events[i]);
-					if (clients[i]->getClientConnection() == false)
-						delete clients[i];
+					int	n = getNewHole(clients);
+					if (n == -1)
+					{
+						epoll_ctl(epoll_fd, EPOLL_CTL_DEL, events[i].data.fd, &events[i]);
+						std::cout<<RED<<"All spaces ocupied"<<RESET<<std::endl;
+						continue;
+					}
+					clients[n] = new_connection(server_socket, epoll_fd);
+					if (setNonBlocking(clients[n]->getClientSocket()) == -1)
+					{
+    				    std::cerr << "Failed to set non-blocking mode." << std::endl;
+    				    close(clients[n]->getClientSocket());
+    				    return (0);
+    				}
+					std::cout<<GREEN<<"Connection successuful"<<RESET<<std::endl;
 				}
-			}
-			else
-			{
-				clients[i]->setClientPending(continue_connect(events[i].data.fd, clients[i]));
-				if (clients[i]->getClientPending() == false)
+				else
 				{
-					epoll_ctl(epoll_fd, EPOLL_CTL_DEL, events[i].data.fd, &events[i]);
-					if (clients[i]->getClientConnection() == false)
-						delete clients[i];
+					int	n = getRightHole(clients, events[i].data.fd);
+					if (n == -1)
+					{
+						std::cout<<RED<<"All spaces ocupied"<<RESET<<std::endl;
+						continue;
+					}
+					else if (clients[n]->getClientPending() == false)
+					{
+						clients[n]->setClientPending(handle_connect(events[i].data.fd, clients[n]));
+						if (clients[n]->getClientPending() == false)
+						{
+							epoll_ctl(epoll_fd, EPOLL_CTL_DEL, events[i].data.fd, &events[i]);
+							//if (clients[n]->getClientConnection() == false)
+							//{
+							//	delete clients[n];
+							//	clients[n] = NULL;
+							//}
+							delete clients[n];
+							clients[n] = NULL;
+						}
+					}
+					else
+					{
+						clients[n]->setClientPending(continue_connect(events[i].data.fd, clients[n]));
+						if (clients[n]->getClientPending() == false)
+						{
+							epoll_ctl(epoll_fd, EPOLL_CTL_DEL, events[i].data.fd, &events[i]);
+							//if (clients[n]->getClientConnection() == false)
+							//{
+							//	delete clients[n];
+							//	clients[n] = NULL;
+							//}
+							delete clients[n];
+							clients[n] = NULL;
+						}
+					}
 				}
 			}
 		}
