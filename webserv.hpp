@@ -64,4 +64,8 @@ int 	setNonBlocking(int fd);
 void	createHeader(RequestParse *request, Response *response, Client *client);
 void	findType(RequestParse *request, Response *response);
 
+int	getNewHole(Client **clients);
+int	getRightHole(Client **clients, int event_fd);
+int	getPendingHole(Client **clients);
+
 #endif

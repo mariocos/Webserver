@@ -17,6 +17,7 @@ Client::Client(int client_socket) : _clientSocket(client_socket), _request(NULL)
 
 Client::~Client()
 {
+	delete _response->getBuffer();
 	delete _request;
 	delete _response;
 	std::cout<<RED<<"Client Destructor"<<RESET<<std::endl;

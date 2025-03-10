@@ -5,7 +5,8 @@ NAME = webserv
 SOURCES =	main.cpp \
 			parse_request/RequestParse.cpp \
 			parse_request/request_gets.cpp \
-			signal.cpp Client.cpp Response.cpp create_response.cpp
+			signal.cpp Client.cpp Response.cpp create_response.cpp \
+			HoleExplorer.cpp
 OBJS_DIR = obj
 OBJECTS = $(addprefix $(OBJS_DIR)/, $(SOURCES:%.cpp=%.o))
 

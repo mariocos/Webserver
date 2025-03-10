@@ -17,13 +17,14 @@ void	findType(RequestParse *request, Response *response)
 
 void	createHeader(RequestParse *request, Response *response, Client *client)
 {
-	response->addToResponse(request->get_httpversion() + "200 OK\n");
+	response->addToResponse(request->get_httpversion() + " 200 OK\n");
 	response->addToResponse("Content-Type: " + response->getType() + "\n");
-	if (response->getType() != "image/png")
-		response->addToResponse("Transfer-Enconding: chunked\n\n");
-	else
-		response->addToResponse("\n");
-	send(client->getClientSocket(), response->getResponse().c_str(), response->getResponse().length(), 0);
+	if (client->getClientConnection() == true)
+		response->addToResponse("Connection: keep-alive\n");
+	response->addToResponse("Transfer-Enconding: chunked\r\n\r\n");
+	std::cout<<"response header:\n"<<response->getResponse();
+	(void) client;
+	send(client->getClientSocket(), response->getResponse().c_str(), response->getResponse().length(), O_NONBLOCK);
 	response->setResponse("");
 }
 
@@ -57,11 +58,12 @@ bool	loadImgResponse(int client_socket, Response *response, Client *client)
 	number<<msgsize;
 	lenght = number.str();
 	if (response->getResponse().find("Transfer-Enconding: chunked") != std::string::npos)
-		response->setResponse(response->getResponse().replace(response->getResponse().find("Transfer-Enconding: chunked"), 28, "Content-lenght: " + lenght + "\n"));
-	send(client_socket, response->getResponse().c_str(), response->getResponse().length(), 0);
+		response->setResponse(response->getResponse().replace(response->getResponse().find("Transfer-Enconding: chunked"), 28, "Content-lenght: " + lenght));
+	send(client_socket, response->getResponse().c_str(), response->getResponse().length(), O_NONBLOCK);
+	response->setResponse("");
 	(void) client;
 	//if (client->getClientConnection() == false)
-		close(client_socket);
+	//	close(client_socket);
 	return (false);
 }
 
@@ -85,14 +87,15 @@ bool	loadErrorPage(int client_socket, Response *response, Client *client)
 		number<<msgsize;
 		lenght = number.str();
 		if (response->getResponse().find("Transfer-Enconding: chunked") != std::string::npos)
-			response->setResponse(response->getResponse().replace(response->getResponse().find("Transfer-Enconding: chunked"), 28, "Content-lenght: " + lenght + "\n"));
-		send(client_socket, response->getResponse().c_str(), response->getResponse().length(), 0);
+			response->setResponse(response->getResponse().replace(response->getResponse().find("Transfer-Enconding: chunked"), 28, "Content-lenght: " + lenght));
+		send(client_socket, response->getResponse().c_str(), response->getResponse().length(), O_NONBLOCK);
+		response->setResponse("");
 	}
 	else
 		std::cout<<"Error oppening the file"<<std::endl;
 	(void) client;
 	//if (client->getClientConnection() == false)
-		close(client_socket);
+	//	close(client_socket);
 	return (false);
 }
 
@@ -119,13 +122,15 @@ bool	loadPage(int client_socket, int input, Response *response, Client *client)
 		bytes_read = read(input, buffer, sizeof(buffer) - 1);
 		if (bytes_read == -1)
 		{
-			if (errno == EAGAIN || errno == EWOULDBLOCK)
-				continue;
-			else
-			{
-				perror("read: ");
-				close(input);
-			}
+			perror("read: ");
+			close(input);
+			//if (errno == EAGAIN || errno == EWOULDBLOCK)
+			//	continue;
+			//else
+			//{
+			//	perror("read: ");
+			//	close(input);
+			//}
 		}
 		if (bytes_read == 0)
 			break ;
@@ -138,21 +143,24 @@ bool	loadPage(int client_socket, int input, Response *response, Client *client)
 	if (msgsize >= 1022)
 	{
 		std::cout<<RED<<"Sent chunk"<<RESET<<std::endl;
-		send(client_socket, response->getResponse().c_str(), response->getResponse().length(), 0);
-		std::cout<<"response: "<<response->getResponse()<<std::endl;
+		send(client_socket, response->getResponse().c_str(), response->getResponse().length(), O_NONBLOCK);
+		std::cout<<"response:\n"<<response->getResponse()<<std::endl;
 		if (client->getClientOpenFd() == -1)
 			client->setClientOpenFd(input);
+		//close(client_socket);
 		return (true);
 	}
 	number<<msgsize;
 	lenght = number.str();
 	if (response->getResponse().find("Transfer-Enconding: chunked") != std::string::npos)
-		response->setResponse(response->getResponse().replace(response->getResponse().find("Transfer-Enconding: chunked"), 28, "Content-lenght: " + lenght + "\n"));
-	send(client_socket, response->getResponse().c_str(), response->getResponse().length(), 0);
+		response->setResponse(response->getResponse().replace(response->getResponse().find("Transfer-Enconding: chunked"), 28, "Content-lenght: " + lenght));
+	send(client_socket, response->getResponse().c_str(), response->getResponse().length(), O_NONBLOCK);
 	std::cout<<RED<<"Sent all the info"<<RESET<<std::endl;
-	std::cout<<"response: "<<response->getResponse()<<std::endl;
-	//if (client->getClientConnection() == false)
-		close(client_socket);
+	std::cout<<"response body:\n"<<response->getResponse();
+	response->setResponse("");
+	std::cout<<RED<<"Closing fd: "<<input<<RESET<<std::endl;
 	close(input);
+	//if (client->getClientConnection() == false)
+	//	close(client_socket);
 	return (false);
 }
