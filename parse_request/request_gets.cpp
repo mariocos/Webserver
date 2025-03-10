@@ -37,3 +37,8 @@ std::string	RequestParse::get_content_type(void)
 {
 	return(content_type);
 }
+
+std::string	RequestParse::get_content(void)
+{
+	return (content);
+}

@@ -33,6 +33,7 @@ public:
 	std::string	get_path();
 	std::string	get_content_type();
 	std::string	get_content_length();
+	std::string	get_content();
 	void		buildRequest(const char *req);
 	/*  setters  */
 	void	set_path(std::string path);

@@ -54,8 +54,7 @@ void	RequestParse::buildRequest(const char *request)
 	std::cout << "path to request is: [" << path_to_request << "]\n";
 	if (ft_strstr(path_to_request.c_str(), ".."))
 	{
-		std::cout<< "what is naughty about this [" << path_to_request.find("..") << "]\n";
-		std::cout << "naughty request\n";
+ 		std::cout << "naughty request\n";
 		error_code = 3;
 	}
 	line1.erase(0, len + 1);
@@ -67,10 +66,10 @@ void	RequestParse::buildRequest(const char *request)
 	User = get_keyword(req, "User: ");
 	Accepts = get_keyword(req, "Accept: ");
 	connection = get_keyword(req, "Connection: ");
-	if (req.find("\r\n\r\n"))
+	if (ft_strstr(req.c_str(), "\r\n\r\n"))
 	{
 		req.erase(0, req.find("\r\n\r\n") + 4);
-		content = req.substr(0, req.find("\0") + 1);
+		content = req.substr(0, req.end());
 	}
 }
 
