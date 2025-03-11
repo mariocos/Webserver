@@ -39,41 +39,39 @@ Client	*new_connection(int server_socket, int epoll_fd)
 	return (newClient);
 }
 
-bool	handle_connect(int client_socket, Client *client)
+int	find_error_hole(int *error_fd)
 {
-	char	buffer[4096];
-	ssize_t	bytes_read;
-
-	bzero(buffer, sizeof(buffer));
-	bytes_read = read(client_socket, buffer, sizeof(buffer));
-	if (bytes_read == -1)
+	for (int i = 0; i < 10; i++)
 	{
-		if (errno == EAGAIN || errno == EWOULDBLOCK)
-			return (true);
-		else
-		{
-			perror("read: ");
-			close(client_socket);
-		}
+		if (error_fd[i] == -1)
+			return (i);
 	}
-	std::cout<<buffer<<std::endl;
-	std::string	tmp(buffer);
-	if (tmp.find("Connection: keep-alive") != std::string::npos)
-		client->setClientConnection(true);
-	client->getClientRequest()->buildRequest(buffer);
-	client->setClientPending(client->getClientRequest()->execute_response(client_socket, client));
-	if (client->getClientPending() == false)
-	{
-		close(client_socket);
-		std::cout<<YELLOW<<"Closing connection..."<<RESET<<std::endl;
-	}
-	return (client->getClientPending());
+	return (-1);
 }
 
-bool	continue_connect(int client_socket, Client *client)
+void	error_handler(int error_socket)
 {
-	client->setClientPending(client->getClientRequest()->execute_response(client_socket, client));
-	return (client->getClientPending());
+	std::string response;
+	response.append("HTTP/1.1 503 Service Unavailable\r\n");
+	response.append("Date: Wed, 06 Mar 2024 12:00:00 GMT\r\n");
+	response.append("Server: WebServ\r\n");
+	response.append("Content-Type: text\r\n");
+	response.append("Content-Lenght: 0\r\n");
+	response.append("Retry-After: 10\r\n\r\n");
+	send(error_socket, response.c_str(), response.length(), O_NONBLOCK);
+	close(error_socket);
+}
+
+int	error_connection(int server_socket, int epoll_fd)
+{
+	struct sockaddr_in clientaddr;
+	struct epoll_event	event;
+	socklen_t	addrlen = sizeof(clientaddr);
+	int	client_socket = accept(server_socket, (sockaddr*)&clientaddr, &addrlen);
+	event.events = EPOLLIN | EPOLLET;
+	event.data.fd = client_socket;
+	epoll_ctl(epoll_fd, EPOLL_CTL_ADD, event.data.fd, &event);
+	return (client_socket);
 }
 
 int	main(int ac, char **av)
@@ -89,10 +87,11 @@ int	main(int ac, char **av)
 	int	server_socket = setup(4243, 10);
 	serverskt = server_socket;
 
-	struct epoll_event	event, events[10];
+	struct epoll_event	event, events[11];
 	int	epoll_fd = epoll_create(1);
 	int	event_count = 0;
 	Client	*clients[10] = {};
+	int	error_socket[10] = {-1,-1,-1,-1,-1,-1,-1,-1,-1,-1};
 	event.events = EPOLLIN;
 	event.data.fd = server_socket;
 	epoll_ctl(epoll_fd, EPOLL_CTL_ADD, event.data.fd, &event);
@@ -110,29 +109,38 @@ int	main(int ac, char **av)
 				std::cout<<RED<<"Nothing Pending"<<RESET<<std::endl;
 				continue;
 			}
-			clients[n]->setClientPending(continue_connect(clients[n]->getClientSocket(), clients[n]));
-			if (clients[n]->getClientPending() == false)
+			while (n != -1)
 			{
-				//epoll_ctl(epoll_fd, EPOLL_CTL_DEL, events[i].data.fd, &events[i]);
-				//if (clients[n]->getClientConnection() == false)
-				//{
-				//	delete clients[n];
-				//	clients[n] = NULL;
-				//}
-				delete clients[n];
-				clients[n] = NULL;
+				clients[n]->handle_connect(clients[n]->getClientSocket());
+				if (clients[n]->getClientWritingFlag() == true)
+				{
+					int	eventnb = findEventFd(clients[n], events);
+					epoll_ctl(epoll_fd, EPOLL_CTL_DEL, events[eventnb].data.fd, &events[eventnb]);
+					delete clients[n];
+					clients[n] = NULL;
+				}
+				n = getNextPendingHole(clients, n);
 			}
 		}
 		else
 		{
 			for (int i = 0; i < event_count; i++)
 			{
+				for (int z = 0; z < 10; z++)
+				{
+					if (events[i].data.fd == error_socket[z])
+					{
+						error_handler(events[i].data.fd);
+						break;
+					}
+				}
 				if (events[i].data.fd == server_socket)
 				{
 					int	n = getNewHole(clients);
 					if (n == -1)
 					{
-						epoll_ctl(epoll_fd, EPOLL_CTL_DEL, events[i].data.fd, &events[i]);
+						int	e = find_error_hole(error_socket);
+						error_socket[e] = error_connection(server_socket, epoll_fd);
 						std::cout<<RED<<"All spaces ocupied"<<RESET<<std::endl;
 						continue;
 					}
@@ -153,32 +161,17 @@ int	main(int ac, char **av)
 						std::cout<<RED<<"All spaces ocupied"<<RESET<<std::endl;
 						continue;
 					}
-					else if (clients[n]->getClientPending() == false)
+					else if (clients[n]->getClientReadingFlag() == false)
 					{
-						clients[n]->setClientPending(handle_connect(events[i].data.fd, clients[n]));
-						if (clients[n]->getClientPending() == false)
-						{
-							epoll_ctl(epoll_fd, EPOLL_CTL_DEL, events[i].data.fd, &events[i]);
-							//if (clients[n]->getClientConnection() == false)
-							//{
-							//	delete clients[n];
-							//	clients[n] = NULL;
-							//}
-							delete clients[n];
-							clients[n] = NULL;
-						}
+						clients[n]->readRequest(clients[n]->getClientSocket());
+						clients[n]->setClientWritingFlag(false);
 					}
 					else
 					{
-						clients[n]->setClientPending(continue_connect(events[i].data.fd, clients[n]));
-						if (clients[n]->getClientPending() == false)
+						clients[n]->handle_connect(events[i].data.fd);
+						if (clients[n]->getClientWritingFlag() == true)
 						{
 							epoll_ctl(epoll_fd, EPOLL_CTL_DEL, events[i].data.fd, &events[i]);
-							//if (clients[n]->getClientConnection() == false)
-							//{
-							//	delete clients[n];
-							//	clients[n] = NULL;
-							//}
 							delete clients[n];
 							clients[n] = NULL;
 						}

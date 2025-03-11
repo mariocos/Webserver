@@ -1,5 +1,19 @@
 #include "webserv.hpp"
 
+int	findEventFd(Client *clients, epoll_event *events)
+{
+	if (!clients || !events)
+		return (-1);
+	for (int i = 0; i < 10; i++)
+	{
+		if (!&events[i])
+			continue;
+		if (clients->getClientSocket() == events[i].data.fd)
+			return (i);
+	}
+	return (-1);
+}
+
 void	findType(RequestParse *request, Response *response)
 {
 	if (request->get_path() == "/")
@@ -22,13 +36,12 @@ void	createHeader(RequestParse *request, Response *response, Client *client)
 	if (client->getClientConnection() == true)
 		response->addToResponse("Connection: keep-alive\n");
 	response->addToResponse("Transfer-Enconding: chunked\r\n\r\n");
-	std::cout<<"response header:\n"<<response->getResponse();
-	(void) client;
+	//std::cout<<"response header:\n"<<response->getResponse();
 	send(client->getClientSocket(), response->getResponse().c_str(), response->getResponse().length(), O_NONBLOCK);
 	response->setResponse("");
 }
 
-bool	loadImgResponse(int client_socket, Response *response, Client *client)
+void	loadImgResponse(int client_socket, Response *response, Client *client)
 {
 	std::ifstream	input;
 	std::string		buffer;
@@ -61,13 +74,11 @@ bool	loadImgResponse(int client_socket, Response *response, Client *client)
 		response->setResponse(response->getResponse().replace(response->getResponse().find("Transfer-Enconding: chunked"), 28, "Content-lenght: " + lenght));
 	send(client_socket, response->getResponse().c_str(), response->getResponse().length(), O_NONBLOCK);
 	response->setResponse("");
-	(void) client;
-	//if (client->getClientConnection() == false)
-	//	close(client_socket);
-	return (false);
+	client->setClientWritingFlag(true);
+	client->setClientPending(false);
 }
 
-bool	loadErrorPage(int client_socket, Response *response, Client *client)
+void	loadErrorPage(int client_socket, Response *response, Client *client)
 {
 	std::ifstream	input;
 	std::string	buffer;
@@ -93,22 +104,16 @@ bool	loadErrorPage(int client_socket, Response *response, Client *client)
 	}
 	else
 		std::cout<<"Error oppening the file"<<std::endl;
-	(void) client;
-	//if (client->getClientConnection() == false)
-	//	close(client_socket);
-	return (false);
+	client->setClientWritingFlag(true);
+	client->setClientPending(false);
 }
 
 int setNonBlocking(int fd)
 {
-    int flags = fcntl(fd, F_GETFL, 0);
-    if (flags == -1) {
-        return (-1); // Error
-    }
-    return (fcntl(fd, F_SETFL, flags | O_NONBLOCK));
+    return (fcntl(fd, F_SETFL, O_NONBLOCK));
 }
 
-bool	loadPage(int client_socket, int input, Response *response, Client *client)
+void	loadPage(int client_socket, int input, Response *response, Client *client)
 {
 	int	msgsize = 0;
 	char	buffer[1024];
@@ -124,31 +129,22 @@ bool	loadPage(int client_socket, int input, Response *response, Client *client)
 		{
 			perror("read: ");
 			close(input);
-			//if (errno == EAGAIN || errno == EWOULDBLOCK)
-			//	continue;
-			//else
-			//{
-			//	perror("read: ");
-			//	close(input);
-			//}
 		}
 		if (bytes_read == 0)
 			break ;
 		msgsize += bytes_read;
-		if (client->getClientPending() == false)
-			response->setResponse(response->getResponse().append(buffer));
-		else
-			response->setResponse(buffer);
+		response->setResponse(buffer);
 	}
 	if (msgsize >= 1022)
 	{
 		std::cout<<RED<<"Sent chunk"<<RESET<<std::endl;
 		send(client_socket, response->getResponse().c_str(), response->getResponse().length(), O_NONBLOCK);
-		std::cout<<"response:\n"<<response->getResponse()<<std::endl;
+		//std::cout<<"response:\n"<<response->getResponse()<<std::endl;
 		if (client->getClientOpenFd() == -1)
 			client->setClientOpenFd(input);
-		//close(client_socket);
-		return (true);
+		client->setClientWritingFlag(false);
+		client->setClientPending(true);
+		return ;
 	}
 	number<<msgsize;
 	lenght = number.str();
@@ -156,11 +152,10 @@ bool	loadPage(int client_socket, int input, Response *response, Client *client)
 		response->setResponse(response->getResponse().replace(response->getResponse().find("Transfer-Enconding: chunked"), 28, "Content-lenght: " + lenght));
 	send(client_socket, response->getResponse().c_str(), response->getResponse().length(), O_NONBLOCK);
 	std::cout<<RED<<"Sent all the info"<<RESET<<std::endl;
-	std::cout<<"response body:\n"<<response->getResponse();
+	//std::cout<<"response body:\n"<<response->getResponse();
 	response->setResponse("");
 	std::cout<<RED<<"Closing fd: "<<input<<RESET<<std::endl;
 	close(input);
-	//if (client->getClientConnection() == false)
-	//	close(client_socket);
-	return (false);
+	client->setClientWritingFlag(true);
+	client->setClientPending(false);
 }

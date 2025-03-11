@@ -27,7 +27,7 @@ void	*stress(void *p)
 	pthread_mutex_t	*lock = (pthread_mutex_t *)p;
 	pthread_mutex_lock(lock);
 	pthread_mutex_unlock(lock);
-	system("curl localhost:4243");
+	system("curl localhost:4243/index.html");
 	return (NULL);
 }
 

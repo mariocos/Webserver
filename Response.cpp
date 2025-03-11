@@ -4,6 +4,7 @@
 Response::Response() : _response(""), _path(""), _type("text/plain")
 {
 	std::cout<<GREEN<<"Response default constructor called"<<RESET<<std::endl;
+	_buffer = NULL;
 }
 
 //Response::Response(const Response &copy)

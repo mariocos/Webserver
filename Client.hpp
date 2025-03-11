@@ -15,6 +15,8 @@ private:
 	bool			_pending;
 	bool			_keepAlive;
 	int				_openFd;
+	bool			_finishedReading;
+	bool			_finishedWriting;
 public:
 	Client();
 	Client(int client_socket);
@@ -25,12 +27,18 @@ public:
 	void	setClientRequest(RequestParse *request);
 	void	setClientResponse(Response *response);
 	void	setClientOpenFd(int fd);
+	void	setClientReadingFlag(bool flag);
+	void	setClientWritingFlag(bool flag);
 	int		getClientSocket();
 	bool	getClientPending();
 	bool	getClientConnection();
+	bool	getClientReadingFlag();
+	bool	getClientWritingFlag();
 	int	getClientOpenFd();
 	RequestParse	*getClientRequest();
 	Response		*getClientResponse();
+	void	readRequest(int client_socket);
+	void	handle_connect(int client_socket);
 };
 
 Client	*new_connection(int server_socket, int epoll_fd);

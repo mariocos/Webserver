@@ -33,16 +33,18 @@ public:
 	std::string	get_path();
 	std::string	get_content_type();
 	std::string	get_content_length();
+	std::string	get_buffer();
 	void		buildRequest(const char *req);
 	/*  setters  */
 	void	set_path(std::string path);
 	void	setBuffer(std::string *buffer);
-	void	writeToBuffer(std::string info);
+	void	writeToBuffer(char *info);
 	void	adjustBuffer();
-	bool	execute_response(int client_socket, Client *client);
-	bool	GET_response(int client_socket, Client *client);
-	bool	POST_response(int client_socket, Client *client);
-	bool	DELETE_response(int client_socket, Client *client);
+	void	readToBuffer(int client_socket, Client *client);
+	void	execute_response(int client_socket, Client *client);
+	void	GET_response(int client_socket, Client *client);
+	void	POST_response(int client_socket, Client *client);
+	void	DELETE_response(int client_socket, Client *client);
 };
 
 std::string	get_keyword(std::string req, std::string keyword);

@@ -50,16 +50,15 @@ class Response;
 //main.cpp
 void	check(int algo);
 int		setup(short port, int backlog);
-bool	handle_connect(int client_socket, Client &client);
 
 //signal.cpp
 void	ctrl_c(int signal, siginfo_t *info, void *context);
 void	ignore(struct sigaction *sa, int signal);
 void	signal_decider(int type);
 
-bool	loadImgResponse(int client_socket, Response *response, Client *client);
-bool	loadErrorPage(int client_socket, Response *response, Client *client);
-bool	loadPage(int client_socket, int fd, Response *response, Client *client);
+void	loadImgResponse(int client_socket, Response *response, Client *client);
+void	loadErrorPage(int client_socket, Response *response, Client *client);
+void	loadPage(int client_socket, int fd, Response *response, Client *client);
 int 	setNonBlocking(int fd);
 void	createHeader(RequestParse *request, Response *response, Client *client);
 void	findType(RequestParse *request, Response *response);
@@ -67,5 +66,7 @@ void	findType(RequestParse *request, Response *response);
 int	getNewHole(Client **clients);
 int	getRightHole(Client **clients, int event_fd);
 int	getPendingHole(Client **clients);
+int	getNextPendingHole(Client **clients, int i);
+int	findEventFd(Client *clients, epoll_event *events);
 
 #endif

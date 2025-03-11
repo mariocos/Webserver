@@ -24,7 +24,7 @@ char	*ft_strstr(const char *big, const char *little)
 	return (0);
 }
 
-RequestParse::RequestParse()
+RequestParse::RequestParse() : _buffer(NULL)
 {
 	std::cout << "Default RequestParse constructor called\n";
 }
@@ -87,6 +87,11 @@ std::string	get_keyword(std::string req, std::string keyword)
 	return (req.substr(req.find(keyword) + keyword.length(), i));
 }
 
+std::string	RequestParse::get_buffer()
+{
+	return (*_buffer);
+}
+
 RequestParse::~RequestParse()
 {
 	std::cout<<RED<<"Destructor"<<RESET<<std::endl;
@@ -102,7 +107,7 @@ void	RequestParse::setBuffer(std::string *buffer)
 	_buffer = buffer;
 }
 
-void	RequestParse::writeToBuffer(std::string info)
+void	RequestParse::writeToBuffer(char *info)
 {
 	adjustBuffer();
 	_buffer->append(info);
@@ -114,30 +119,47 @@ void	RequestParse::adjustBuffer()
 		_buffer->insert(0, *_buffer);
 }
 
-bool	RequestParse::execute_response(int client_socket, Client *client)
+void	RequestParse::readToBuffer(int client_socket, Client *client)
 {
-	if (method.compare("GET") == 0)
-		return (GET_response(client_socket, client));
-	else if (method.compare("POST") == 0)
-		return (POST_response(client_socket, client));
-	else if (method.compare("DELETE") == 0)
-		return (DELETE_response(client_socket, client));
+	ssize_t	bytes_read;
+	char	buffer[1024];
+
+	bytes_read = read(client_socket, buffer, sizeof(buffer));
+	if (bytes_read == -1)
+	{
+		perror("read: ");
+		close(client_socket);
+	}
+	writeToBuffer(buffer);
+	if (bytes_read >= 1022)
+		client->setClientReadingFlag(false);
 	else
-		std::cout<<"ERROR"<<std::endl;
-	return (false);
+		client->setClientReadingFlag(true);
 }
 
-bool	RequestParse::GET_response(int client_socket, Client *client)
+void	RequestParse::execute_response(int client_socket, Client *client)
 {
-	if (client->getClientPending() == false)
+	if (method.compare("GET") == 0)
+		GET_response(client_socket, client);
+	else if (method.compare("POST") == 0)
+		POST_response(client_socket, client);
+	else if (method.compare("DELETE") == 0)
+		DELETE_response(client_socket, client);
+	else
+		std::cout<<"ERROR"<<std::endl;
+}
+
+void	RequestParse::GET_response(int client_socket, Client *client)
+{
+	if (client->getClientWritingFlag() == false && client->getClientPending() == false)
 	{
 		findType(this, client->getClientResponse());
 		createHeader(this, client->getClientResponse(), client);
 	}
-	else
+	else if (client->getClientPending() == true)
 		findType(this, client->getClientResponse());
 	if (client->getClientResponse()->getType() == "image/png")
-		return (loadImgResponse(client_socket, client->getClientResponse(), client));
+		loadImgResponse(client_socket, client->getClientResponse(), client);
 	else
 	{
 		int	fd = -1;
@@ -149,28 +171,27 @@ bool	RequestParse::GET_response(int client_socket, Client *client)
 			{
     		    std::cerr << "Failed to set non-blocking mode." << std::endl;
     		    close(fd);
-    		    return (false);
+    		    return ;
     		}
 		}
 		else
 			fd = client->getClientOpenFd();
 		std::cout<<"fd: "<<fd<<std::endl;
 		if (fd == -1)
-			return (loadErrorPage(client_socket, client->getClientResponse(), client));
+			loadErrorPage(client_socket, client->getClientResponse(), client);
 		else
-			return (loadPage(client_socket, fd, client->getClientResponse(), client));
+			loadPage(client_socket, fd, client->getClientResponse(), client);
 	}
-	return (false);
 }
 
-bool	RequestParse::POST_response(int client_socket, Client *client)
+void	RequestParse::POST_response(int client_socket, Client *client)
 {
 	(void)client_socket;
-	return (client->getClientPending());
+	(void)client;
 }
 
-bool	RequestParse::DELETE_response(int client_socket, Client *client)
+void	RequestParse::DELETE_response(int client_socket, Client *client)
 {
 	(void)client_socket;
-	return (client->getClientPending());
+	(void)client;
 }
