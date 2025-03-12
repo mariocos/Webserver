@@ -1,6 +1,6 @@
 i=1
 
-while [ $i -le 20 ];
+while [ $i -le 2000 ];
 do
 	echo "Request number : $i"
     curl http://localhost:4243/index.html

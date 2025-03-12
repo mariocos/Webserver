@@ -82,7 +82,7 @@ std::string	get_keyword(std::string req, std::string keyword)
 	if (!req.find(keyword))
 		return ("");
 	i = req.find(keyword) + keyword.length();
-	while (req[i] != '\r')
+	while (req[i] && req[i] != '\r')
 		i++;
 	return (req.substr(req.find(keyword) + keyword.length(), i));
 }
@@ -124,12 +124,14 @@ void	RequestParse::readToBuffer(int client_socket, Client *client)
 	ssize_t	bytes_read;
 	char	buffer[1024];
 
+	ft_bzero(buffer, 1024);
 	bytes_read = read(client_socket, buffer, sizeof(buffer));
 	if (bytes_read == -1)
 	{
 		perror("read: ");
 		close(client_socket);
 	}
+	std::cout<<"Buffer:\n"<<buffer<<std::endl;
 	writeToBuffer(buffer);
 	if (bytes_read >= 1022)
 		client->setClientReadingFlag(false);
@@ -146,7 +148,10 @@ void	RequestParse::execute_response(int client_socket, Client *client)
 	else if (method.compare("DELETE") == 0)
 		DELETE_response(client_socket, client);
 	else
+	{
 		std::cout<<"ERROR"<<std::endl;
+		close(client_socket);
+	}
 }
 
 void	RequestParse::GET_response(int client_socket, Client *client)

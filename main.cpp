@@ -10,6 +10,19 @@ void	check(int algo)
 	}
 }
 
+void	ft_bzero(void *s, size_t n)
+{
+	char	*p;
+
+	p = reinterpret_cast<char*>(s);
+	while (n != 0)
+	{
+		*p = 0;
+		p++;
+		n--;
+	}
+}
+
 int	setup(short port, int backlog)
 {
 	int server_socket;
@@ -74,6 +87,32 @@ int	error_connection(int server_socket, int epoll_fd)
 	return (client_socket);
 }
 
+void	initialize_intptr(int *ptr)
+{
+	for (int i = 0; i < 40; i++)
+	{
+		ptr[i] = -1;
+	}
+}
+
+void	error_connection_handler(int event_count, int *error_socket, epoll_event *events)
+{
+	for (int i = 0; i < event_count; i++)
+	{
+		for (int z = 0; z < 40; z++)
+		{
+			if (events[i].data.fd == error_socket[z])
+			{
+				std::cout<<GREEN<<"Error Handler Called"<<RESET<<std::endl;
+				std::cout<<YELLOW<<"Error fd: "<<error_socket[z]<<RESET<<std::endl;
+				error_handler(events[i].data.fd);
+				error_socket[z] = -1;
+				break;
+			}
+		}
+	}
+}
+
 int	main(int ac, char **av)
 {
 	if (ac > 2)
@@ -91,7 +130,8 @@ int	main(int ac, char **av)
 	int	epoll_fd = epoll_create(1);
 	int	event_count = 0;
 	Client	*clients[10] = {};
-	int	error_socket[10] = {-1,-1,-1,-1,-1,-1,-1,-1,-1,-1};
+	int	error_socket[40];
+	initialize_intptr(error_socket);
 	event.events = EPOLLIN;
 	event.data.fd = server_socket;
 	epoll_ctl(epoll_fd, EPOLL_CTL_ADD, event.data.fd, &event);
@@ -126,22 +166,20 @@ int	main(int ac, char **av)
 		{
 			for (int i = 0; i < event_count; i++)
 			{
-				for (int z = 0; z < 10; z++)
-				{
-					if (events[i].data.fd == error_socket[z])
-					{
-						error_handler(events[i].data.fd);
-						break;
-					}
-				}
+				error_connection_handler(event_count, error_socket, events);
 				if (events[i].data.fd == server_socket)
 				{
 					int	n = getNewHole(clients);
 					if (n == -1)
 					{
 						int	e = find_error_hole(error_socket);
+						//if (e == -1)
+						//{
+						//	std::cout<<RED<<"No space left to handle connection"<<RESET<<std::endl;
+						//	continue;
+						//}
 						error_socket[e] = error_connection(server_socket, epoll_fd);
-						std::cout<<RED<<"All spaces ocupied"<<RESET<<std::endl;
+						std::cout<<RED<<"Error connection created"<<RESET<<std::endl;
 						continue;
 					}
 					clients[n] = new_connection(server_socket, epoll_fd);
@@ -163,6 +201,7 @@ int	main(int ac, char **av)
 					}
 					else if (clients[n]->getClientReadingFlag() == false)
 					{
+						std::cout<<"Reading Request"<<std::endl;
 						clients[n]->readRequest(clients[n]->getClientSocket());
 						clients[n]->setClientWritingFlag(false);
 					}

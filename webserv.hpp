@@ -50,6 +50,7 @@ class Response;
 //main.cpp
 void	check(int algo);
 int		setup(short port, int backlog);
+void	ft_bzero(void *s, size_t n);
 
 //signal.cpp
 void	ctrl_c(int signal, siginfo_t *info, void *context);

@@ -36,7 +36,6 @@ void	createHeader(RequestParse *request, Response *response, Client *client)
 	if (client->getClientConnection() == true)
 		response->addToResponse("Connection: keep-alive\n");
 	response->addToResponse("Transfer-Enconding: chunked\r\n\r\n");
-	//std::cout<<"response header:\n"<<response->getResponse();
 	send(client->getClientSocket(), response->getResponse().c_str(), response->getResponse().length(), O_NONBLOCK);
 	response->setResponse("");
 }
@@ -138,7 +137,15 @@ void	loadPage(int client_socket, int input, Response *response, Client *client)
 	if (msgsize >= 1022)
 	{
 		std::cout<<RED<<"Sent chunk"<<RESET<<std::endl;
-		send(client_socket, response->getResponse().c_str(), response->getResponse().length(), O_NONBLOCK);
+		if (send(client_socket, response->getResponse().c_str(), response->getResponse().length(), MSG_NOSIGNAL) == -1)
+		{
+			std::cout<<RED<<"Error sending the chunk"<<RESET<<std::endl;
+			response->setResponse("");
+			close(input);
+			client->setClientWritingFlag(true);
+			client->setClientPending(false);
+			return ;
+		}
 		//std::cout<<"response:\n"<<response->getResponse()<<std::endl;
 		if (client->getClientOpenFd() == -1)
 			client->setClientOpenFd(input);
@@ -150,11 +157,18 @@ void	loadPage(int client_socket, int input, Response *response, Client *client)
 	lenght = number.str();
 	if (response->getResponse().find("Transfer-Enconding: chunked") != std::string::npos)
 		response->setResponse(response->getResponse().replace(response->getResponse().find("Transfer-Enconding: chunked"), 28, "Content-lenght: " + lenght));
-	send(client_socket, response->getResponse().c_str(), response->getResponse().length(), O_NONBLOCK);
+	if (send(client_socket, response->getResponse().c_str(), response->getResponse().length(), MSG_NOSIGNAL) == -1)
+	{
+		std::cout<<RED<<"Error sending the msg"<<RESET<<std::endl;
+		response->setResponse("");
+		close(input);
+		client->setClientWritingFlag(true);
+		client->setClientPending(false);
+		return ;
+	}
 	std::cout<<RED<<"Sent all the info"<<RESET<<std::endl;
 	//std::cout<<"response body:\n"<<response->getResponse();
 	response->setResponse("");
-	std::cout<<RED<<"Closing fd: "<<input<<RESET<<std::endl;
 	close(input);
 	client->setClientWritingFlag(true);
 	client->setClientPending(false);
