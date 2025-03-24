@@ -1,62 +1,42 @@
 #include "webserv.hpp"
 
 //10 tem que ser mudado conforme o config file
-
-int	getNewHole(Client **clients)
+std::vector<Client*>::iterator	getRightHole(std::vector<Client*> &clientList, int event_fd)
 {
-	if (!clients)
-		return (-1);
-	for (int i = 0; i < 10; i++)
+	std::vector<Client*>::iterator	it = clientList.begin();
+	std::vector<Client*>::iterator	end = clientList.end();
+	while (it != end)
 	{
-		if (!clients[i])
-			return (i);
+		if (*it != NULL && (*it)->getClientSocket() == event_fd)
+			return (it);
+		it++;
 	}
-	return (-1);
+	return (end);
 }
 
-int	getRightHole(Client **clients, int event_fd)
+std::vector<Client*>::iterator	getPendingHole(std::vector<Client*> &clientList)
 {
-	if (!clients)
-		return (-1);
-	for (int i = 0; i < 10; i++)
+	std::vector<Client*>::iterator	it = clientList.begin();
+	std::vector<Client*>::iterator	end = clientList.end();
+	while (it != end)
 	{
-		if (!clients[i])
-			continue;
-		if (clients[i]->getClientSocket() == event_fd)
-			return (i);
+		if (*it != NULL && ((*it)->getClientWritingFlag() == false))
+			return (it);
+		it++;
 	}
-	return (-1);
+	return (end);
 }
 
-int	getPendingHole(Client **clients)
+std::vector<Client*>::iterator	getNextPendingHole(std::vector<Client*> &clientList, std::vector<Client*>::iterator it)
 {
-	if (!clients)
-		return (-1);
-	for (int i = 0; i < 10; i++)
+	std::vector<Client*>::iterator	end = clientList.end();
+	if (it != end)
+		it++;
+	while (it != end)
 	{
-		if (!clients[i])
-			continue;
-		if (clients[i]->getClientWritingFlag() == false)
-			return (i);
+		if (*it != NULL && (*it)->getClientWritingFlag() == false)
+			return (it);
+		it++;
 	}
-	return (-1);
-}
-
-int	getNextPendingHole(Client **clients, int i)
-{
-	if (!clients || i == 10)
-		return (-1);
-	i++;
-	while (i < 10)
-	{
-		if (!clients[i])
-		{
-			i++;
-			continue;
-		}
-		if (clients[i]->getClientWritingFlag() == false)
-			return (i);
-		i++;
-	}
-	return (-1);
+	return (end);
 }

@@ -79,7 +79,7 @@ std::string	get_keyword(std::string req, std::string keyword)
 {
 	int	i = 0;
 
-	if (!req.find(keyword))
+	if (!ft_strstr(req.c_str(), keyword.c_str()))
 		return ("");
 	i = req.find(keyword) + keyword.length();
 	while (req[i] && req[i] != '\r')
@@ -150,6 +150,13 @@ void	RequestParse::execute_response(int client_socket, Client *client)
 	else
 	{
 		std::cout<<"ERROR"<<std::endl;
+		std::string response;
+		response.append("HTTP/1.1 400 Bad Request\r\n");
+		response.append("Content-Type: text/plain\r\n");
+		response.append("Connection: close\r\n\r\n");
+		response.append("400 Bad Request - The server could not understand the request\n");
+		send(client_socket, response.c_str(), response.length(), O_NONBLOCK);
+		client->setClientWritingFlag(true);
 		close(client_socket);
 	}
 }

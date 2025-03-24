@@ -31,6 +31,7 @@
 # include <signal.h>
 # include <dirent.h>
 # include <stdlib.h>
+# include <vector>
 
 # define RESET "\033[0m"
 # define GREEN "\033[1m\033[32m"
@@ -41,6 +42,7 @@
 # include "ConfigParser.hpp"
 # include "parse_request/RequestParse.hpp"
 # include "Response.hpp"
+# include "Server.hpp"
 
 extern int serverskt;
 
@@ -64,10 +66,11 @@ int 	setNonBlocking(int fd);
 void	createHeader(RequestParse *request, Response *response, Client *client);
 void	findType(RequestParse *request, Response *response);
 
-int	getNewHole(Client **clients);
-int	getRightHole(Client **clients, int event_fd);
-int	getPendingHole(Client **clients);
-int	getNextPendingHole(Client **clients, int i);
-int	findEventFd(Client *clients, epoll_event *events);
+std::vector<Client*>::iterator	getRightHole(std::vector<Client*> &clientList, int event_fd);
+std::vector<Client*>::iterator	getPendingHole(std::vector<Client*> &clientList);
+std::vector<Client*>::iterator	getNextPendingHole(std::vector<Client*> &clientList, std::vector<Client*>::iterator it);
+int		findEventFd(Client *clients, epoll_event *events);
+void	error_connection_handler(std::vector<int> &errorFds, Server &server);
+int		handlePendingConnections(std::vector<Client*> &clientList, Server &server);
 
 #endif

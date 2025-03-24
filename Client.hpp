@@ -5,6 +5,7 @@
 
 class RequestParse;
 class Response;
+class Server;
 
 class Client
 {
@@ -41,6 +42,6 @@ public:
 	void	handle_connect(int client_socket);
 };
 
-Client	*new_connection(int server_socket, int epoll_fd);
+int	new_connection(std::vector<Client*> &clientList, std::vector<int> &errorFds, Server &server);
 
 #endif

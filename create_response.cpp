@@ -2,7 +2,7 @@
 
 int	findEventFd(Client *clients, epoll_event *events)
 {
-	if (!clients || !events)
+	if (!events)
 		return (-1);
 	for (int i = 0; i < 10; i++)
 	{

@@ -23,43 +23,28 @@ void	ft_bzero(void *s, size_t n)
 	}
 }
 
-int	setup(short port, int backlog)
-{
-	int server_socket;
-	int	option = 1;
-	struct sockaddr_in servaddr;
-
-	check((server_socket = socket(AF_INET, SOCK_STREAM, 0)));
-	servaddr.sin_family = AF_INET;
-	servaddr.sin_addr.s_addr = INADDR_ANY;
-	servaddr.sin_port = htons(port);
-	setsockopt(server_socket, SOL_SOCKET, SO_REUSEADDR, &option, 4);
-	check(bind(server_socket, (const sockaddr *)&servaddr, sizeof(servaddr)));
-	check(listen(server_socket, backlog));
-	return (server_socket);
-}
-
-Client	*new_connection(int server_socket, int epoll_fd)
+int	new_connection(std::vector<Client*> &clientList, std::vector<int> &errorFds, Server &server)
 {
 	struct sockaddr_in clientaddr;
-	struct epoll_event	event;
 	socklen_t	addrlen = sizeof(clientaddr);
-	Client	*newClient = new Client(accept(server_socket, (sockaddr*)&clientaddr, &addrlen));
-	event.events = EPOLLIN | EPOLLET;
-	event.data.fd = newClient->getClientSocket();
-	epoll_ctl(epoll_fd, EPOLL_CTL_ADD, event.data.fd, &event);
-	std::cout<<"Socket Number: "<<newClient->getClientSocket()<<std::endl;
-	return (newClient);
-}
-
-int	find_error_hole(int *error_fd)
-{
-	for (int i = 0; i < 10; i++)
+	Client	*newClient = new Client(accept(server.getServerSocket(), (sockaddr*)&clientaddr, &addrlen));
+	server.addNewSocket(newClient->getClientSocket());
+	if (clientList.size() < 60)
+		clientList.push_back(newClient);
+	else
 	{
-		if (error_fd[i] == -1)
-			return (i);
+		errorFds.push_back(newClient->getClientSocket());
+		delete	newClient;
+		return (0);
 	}
-	return (-1);
+	std::cout<<"Socket Number: "<<newClient->getClientSocket()<<std::endl;
+	if (setNonBlocking(newClient->getClientSocket()) == -1)
+	{
+        std::cerr << "Failed to set non-blocking mode." << std::endl;
+        close(newClient->getClientSocket());
+        return (-1);
+    }
+	return (0);
 }
 
 void	error_handler(int error_socket)
@@ -75,42 +60,48 @@ void	error_handler(int error_socket)
 	close(error_socket);
 }
 
-int	error_connection(int server_socket, int epoll_fd)
+void	error_connection_handler(std::vector<int> &errorFds, Server &server)
 {
-	struct sockaddr_in clientaddr;
-	struct epoll_event	event;
-	socklen_t	addrlen = sizeof(clientaddr);
-	int	client_socket = accept(server_socket, (sockaddr*)&clientaddr, &addrlen);
-	event.events = EPOLLIN | EPOLLET;
-	event.data.fd = client_socket;
-	epoll_ctl(epoll_fd, EPOLL_CTL_ADD, event.data.fd, &event);
-	return (client_socket);
-}
-
-void	initialize_intptr(int *ptr)
-{
-	for (int i = 0; i < 40; i++)
+	std::vector<int>::iterator	it = errorFds.begin();
+	std::vector<int>::iterator	end = errorFds.end();
+	for (int i = 0; i < server.getEpollCount(); i++)
 	{
-		ptr[i] = -1;
-	}
-}
-
-void	error_connection_handler(int event_count, int *error_socket, epoll_event *events)
-{
-	for (int i = 0; i < event_count; i++)
-	{
-		for (int z = 0; z < 40; z++)
+		it = errorFds.begin();
+		while (it != end)
 		{
-			if (events[i].data.fd == error_socket[z])
+			if (*it != 0 && *it == server.getEpollIndex(i).data.fd)
 			{
-				std::cout<<GREEN<<"Error Handler Called"<<RESET<<std::endl;
-				std::cout<<YELLOW<<"Error fd: "<<error_socket[z]<<RESET<<std::endl;
-				error_handler(events[i].data.fd);
-				error_socket[z] = -1;
+				error_handler((*it));
+				server.removeFromEpoll((*it), i);
+				errorFds.erase(it);
 				break;
 			}
-		}
+			it++;
+		}	
 	}
+}
+
+int	handlePendingConnections(std::vector<Client*> &clientList, Server &server)
+{
+	std::vector<Client*>::iterator	it;
+	it = getPendingHole(clientList);
+	if (it == clientList.end())
+	{
+		std::cout<<RED<<"Nothing Pending"<<RESET<<std::endl;
+		return (-1);
+	}
+	while (it != clientList.end())
+	{
+		(*it)->handle_connect((*it)->getClientSocket());
+		if ((*it)->getClientWritingFlag() == true)
+		{
+			int	eventnb = findEventFd(*it, server.getEpollEventArray());
+			server.removeFromEpoll((*it)->getClientSocket(), eventnb);
+			clientList.erase(it);
+		}
+		it = getNextPendingHole(clientList, it);
+	}
+	return (0);
 }
 
 int	main(int ac, char **av)
@@ -123,101 +114,19 @@ int	main(int ac, char **av)
 	std::string	config("default.config");
 	if (ac == 2)
 		config = av[1];
-	int	server_socket = setup(4243, 10);
-	serverskt = server_socket;
-
-	struct epoll_event	event, events[11];
-	int	epoll_fd = epoll_create(1);
-	int	event_count = 0;
-	Client	*clients[10] = {};
-	int	error_socket[40];
-	initialize_intptr(error_socket);
-	event.events = EPOLLIN;
-	event.data.fd = server_socket;
-	epoll_ctl(epoll_fd, EPOLL_CTL_ADD, event.data.fd, &event);
+	Server	server(4243, 10);
+	serverskt = server.getServerSocket();
+	std::vector<Client*>	clientList;
+	std::vector<int>	errorFds;
 	while (1)
 	{
 		signal_decider(0);
 		std::cout<<"Waiting..."<<std::endl;
-		event_count = epoll_wait(epoll_fd, events, 10, 60);
-		if (event_count == 0)
-		{
-			int	n = getPendingHole(clients);
-			if (n == -1)
-			{
-				event_count = epoll_wait(epoll_fd, events, 10, -1);
-				std::cout<<RED<<"Nothing Pending"<<RESET<<std::endl;
-				continue;
-			}
-			while (n != -1)
-			{
-				clients[n]->handle_connect(clients[n]->getClientSocket());
-				if (clients[n]->getClientWritingFlag() == true)
-				{
-					int	eventnb = findEventFd(clients[n], events);
-					epoll_ctl(epoll_fd, EPOLL_CTL_DEL, events[eventnb].data.fd, &events[eventnb]);
-					delete clients[n];
-					clients[n] = NULL;
-				}
-				n = getNextPendingHole(clients, n);
-			}
-		}
-		else
-		{
-			for (int i = 0; i < event_count; i++)
-			{
-				error_connection_handler(event_count, error_socket, events);
-				if (events[i].data.fd == server_socket)
-				{
-					int	n = getNewHole(clients);
-					if (n == -1)
-					{
-						int	e = find_error_hole(error_socket);
-						//if (e == -1)
-						//{
-						//	std::cout<<RED<<"No space left to handle connection"<<RESET<<std::endl;
-						//	continue;
-						//}
-						error_socket[e] = error_connection(server_socket, epoll_fd);
-						std::cout<<RED<<"Error connection created"<<RESET<<std::endl;
-						continue;
-					}
-					clients[n] = new_connection(server_socket, epoll_fd);
-					if (setNonBlocking(clients[n]->getClientSocket()) == -1)
-					{
-    				    std::cerr << "Failed to set non-blocking mode." << std::endl;
-    				    close(clients[n]->getClientSocket());
-    				    return (0);
-    				}
-					std::cout<<GREEN<<"Connection successuful"<<RESET<<std::endl;
-				}
-				else
-				{
-					int	n = getRightHole(clients, events[i].data.fd);
-					if (n == -1)
-					{
-						std::cout<<RED<<"All spaces ocupied"<<RESET<<std::endl;
-						continue;
-					}
-					else if (clients[n]->getClientReadingFlag() == false)
-					{
-						std::cout<<"Reading Request"<<std::endl;
-						clients[n]->readRequest(clients[n]->getClientSocket());
-						clients[n]->setClientWritingFlag(false);
-					}
-					else
-					{
-						clients[n]->handle_connect(events[i].data.fd);
-						if (clients[n]->getClientWritingFlag() == true)
-						{
-							epoll_ctl(epoll_fd, EPOLL_CTL_DEL, events[i].data.fd, &events[i]);
-							delete clients[n];
-							clients[n] = NULL;
-						}
-					}
-				}
-			}
-		}
+		server.setEpollCount(epoll_wait(server.getEpollFd(), server.getEpollEventArray(), 60, 100));
+		if (server.getEpollCount() == 0 && handlePendingConnections(clientList, server) == -1)
+			continue;
+		else if (server.handle_connections(clientList, errorFds) == -1)
+			return (0);
 	}
 	return (0);
 }
