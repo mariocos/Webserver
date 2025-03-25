@@ -1,5 +1,13 @@
 #include "webserv.hpp"
 
+bool	run;
+
+void	stopRunning(int signal)
+{
+	(void)signal;
+	run = false;
+}
+
 void	check(int algo)
 {
 	if (algo == -1)
@@ -72,7 +80,7 @@ void	error_connection_handler(std::vector<int> &errorFds, Server &server)
 			if (*it != 0 && *it == server.getEpollIndex(i).data.fd)
 			{
 				error_handler((*it));
-				server.removeFromEpoll((*it), i);
+				server.removeFromEpoll((*it));
 				errorFds.erase(it);
 				break;
 			}
@@ -81,27 +89,23 @@ void	error_connection_handler(std::vector<int> &errorFds, Server &server)
 	}
 }
 
-int	handlePendingConnections(std::vector<Client*> &clientList, Server &server)
+void	handlePendingConnections(std::vector<Client*> &clientList, Server &server)
 {
 	std::vector<Client*>::iterator	it;
 	it = getPendingHole(clientList);
 	if (it == clientList.end())
-	{
-		std::cout<<RED<<"Nothing Pending"<<RESET<<std::endl;
-		return (-1);
-	}
+		throw NoPendingConnectionsException();
 	while (it != clientList.end())
 	{
 		(*it)->handle_connect((*it)->getClientSocket());
 		if ((*it)->getClientWritingFlag() == true)
 		{
-			int	eventnb = findEventFd(*it, server.getEpollEventArray());
-			server.removeFromEpoll((*it)->getClientSocket(), eventnb);
+			server.removeFromEpoll((*it)->getClientSocket());
+			delete (*it);
 			clientList.erase(it);
 		}
 		it = getNextPendingHole(clientList, it);
 	}
-	return (0);
 }
 
 int	main(int ac, char **av)
@@ -114,19 +118,46 @@ int	main(int ac, char **av)
 	std::string	config("default.config");
 	if (ac == 2)
 		config = av[1];
-	Server	server(4243, 10);
-	serverskt = server.getServerSocket();
-	std::vector<Client*>	clientList;
-	std::vector<int>	errorFds;
-	while (1)
+	try
 	{
-		signal_decider(0);
-		std::cout<<"Waiting..."<<std::endl;
-		server.setEpollCount(epoll_wait(server.getEpollFd(), server.getEpollEventArray(), 60, 100));
-		if (server.getEpollCount() == 0 && handlePendingConnections(clientList, server) == -1)
-			continue;
-		else if (server.handle_connections(clientList, errorFds) == -1)
-			return (0);
+		Server	server(4243, 60);
+		std::vector<Client*>	clientList;
+		std::vector<int>	errorFds;
+		run = true;
+		signal(SIGINT, stopRunning);
+		while (run)
+		{
+			std::cout<<"Waiting..."<<std::endl;
+			server.setEpollCount(epoll_wait(server.getEpollFd(), server.getEpollEventArray(), server.getMaxEvents(), 100));
+			if (server.getEpollCount() == -1)
+			{
+				cleaner(server, clientList);
+				return (1);
+			}
+			try
+			{
+				handlePendingConnections(clientList, server);
+			}
+			catch(const std::exception& e)
+			{
+				std::cerr << RED << e.what() << RESET << '\n';
+			}
+			try
+			{
+				server.handle_connections(clientList, errorFds);
+			}
+			catch(const std::exception& e)
+			{
+				std::cerr << e.what() << '\n';
+				cleaner(server, clientList);
+				return (1);
+			}
+		}
+		cleaner(server, clientList);
+	}
+	catch(const std::exception& e)
+	{
+		std::cerr << e.what() << '\n';
 	}
 	return (0);
 }

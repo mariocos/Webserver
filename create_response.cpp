@@ -1,19 +1,5 @@
 #include "webserv.hpp"
 
-int	findEventFd(Client *clients, epoll_event *events)
-{
-	if (!events)
-		return (-1);
-	for (int i = 0; i < 10; i++)
-	{
-		if (!&events[i])
-			continue;
-		if (clients->getClientSocket() == events[i].data.fd)
-			return (i);
-	}
-	return (-1);
-}
-
 void	findType(RequestParse *request, Response *response)
 {
 	if (request->get_path() == "/")

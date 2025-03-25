@@ -4,95 +4,106 @@ Server::Server() : _serverSocket(-1)
 {
 }
 
-Server::Server(int port, int backlog)
+Server::Server(int port, int backlog) : _maxEvents(backlog)
 {
 	int	option = 1;
 	struct sockaddr_in servaddr;
+	struct epoll_event	event;
 
-	check((_serverSocket = socket(AF_INET, SOCK_STREAM, 0)));
+	this->_serverSocket = socket(AF_INET, SOCK_STREAM, 0);
+	if (this->_serverSocket == -1)
+		throw SocketCreationException();
 	servaddr.sin_family = AF_INET;
 	servaddr.sin_addr.s_addr = INADDR_ANY;
 	servaddr.sin_port = htons(port);
-	setsockopt(_serverSocket, SOL_SOCKET, SO_REUSEADDR, &option, 4);
-	check(bind(_serverSocket, (const sockaddr *)&servaddr, sizeof(servaddr)));
-	check(listen(_serverSocket, backlog));
-	_epoll_fd = epoll_create(1);
-	_event.events = EPOLLIN;
-	_event.data.fd = _serverSocket;
-	epoll_ctl(_epoll_fd, EPOLL_CTL_ADD, _event.data.fd, &_event);
+	if (setsockopt(this->_serverSocket, SOL_SOCKET, SO_REUSEADDR, &option, 4) == -1)
+		throw SocketBindException();
+	if (bind(this->_serverSocket, (const sockaddr *)&servaddr, sizeof(servaddr)) == -1)
+		throw SocketBindException();
+	if (listen(_serverSocket, backlog) == -1)
+		throw SocketBindException();
+	this->_epoll_fd = epoll_create(1);
+	if (this->_epoll_fd == -1)
+		throw EpollCreationException();
+	event.events = EPOLLIN;
+	event.data.fd = _serverSocket;
+	if (epoll_ctl(this->_epoll_fd, EPOLL_CTL_ADD, event.data.fd, &event) == -1)
+		throw EpollCtlException();
+	this->_events = new epoll_event[this->_maxEvents];
 }
 
 Server::~Server()
 {
+	if (this->_events)
+		delete[] this->_events;
 }
 
 void	Server::setEpollCount(int count)
 {
-	_epoll_count = count;
+	this->_epoll_count = count;
 }
 
 int	Server::getServerSocket()
 {
-	return (_serverSocket);
+	return (this->_serverSocket);
 }
 
 int	Server::getEpollFd()
 {
-	return (_epoll_fd);
+	return (this->_epoll_fd);
 }
 
 int	Server::getEpollCount()
 {
-	return (_epoll_count);
+	return (this->_epoll_count);
 }
 
-epoll_event	Server::getEpollEvent()
+int	Server::getMaxEvents()
 {
-	return (_event);
+	return (this->_maxEvents);
 }
 
 epoll_event	*Server::getEpollEventArray()
 {
-	return (_events);
+	return (this->_events);
 }
 
 epoll_event	Server::getEpollIndex(int index)
 {
-	return (_events[index]);
+	return (this->_events[index]);
 }
 
 void	Server::addNewSocket(int fd)
 {
-	_event.events = EPOLLIN | EPOLLET;
-	_event.data.fd = fd;
-	epoll_ctl(_epoll_fd, EPOLL_CTL_ADD, _event.data.fd, &_event);
+	struct epoll_event	event;
+	event.events = EPOLLIN | EPOLLET;
+	event.data.fd = fd;
+	epoll_ctl(this->_epoll_fd, EPOLL_CTL_ADD, event.data.fd, &event);
 }
 
-void	Server::addToEpollIndex(int fd, int event_number)
+void	Server::removeFromEpoll(int fd)
 {
-	epoll_ctl(_epoll_fd, EPOLL_CTL_ADD, fd, &_events[event_number]);
+	epoll_ctl(this->_epoll_fd, EPOLL_CTL_DEL, fd, NULL);
 }
 
-void	Server::removeFromEpoll(int fd, int event_number)
+void	Server::handle_connections(std::vector<Client*> &clientList, std::vector<int> &errorFds)
 {
-	epoll_ctl(_epoll_fd, EPOLL_CTL_DEL, fd, &_events[event_number]);
-}
-
-int	Server::handle_connections(std::vector<Client*> &clientList, std::vector<int> &errorFds)
-{
+	if (this->_epoll_count == 0)
+		return;
 	std::vector<Client*>::iterator	it;
-	for (int i = 0; i < _epoll_count; i++)
+	for (int i = 0; i < this->_epoll_count; i++)
 	{
+		struct epoll_event	&event = this->_events[i];
 		error_connection_handler(errorFds, *this);
-		if (_events[i].data.fd == _serverSocket)
+		if (event.data.fd == this->_serverSocket)
 		{
 			if (new_connection(clientList, errorFds, *this) == -1)
-				return (-1);
+				throw NewConnectionCreationException();
 			std::cout<<GREEN<<"Connection successuful"<<RESET<<std::endl;
 		}
 		else
 		{
-			it = getRightHole(clientList, _events[i].data.fd);
+			it = getRightHole(clientList, event.data.fd);
 			if (it == clientList.end())
 			{
 				std::cout<<RED<<"All spaces ocupied"<<RESET<<std::endl;
@@ -106,14 +117,13 @@ int	Server::handle_connections(std::vector<Client*> &clientList, std::vector<int
 			}
 			else
 			{
-				(*it)->handle_connect(_events[i].data.fd);
+				(*it)->handle_connect(event.data.fd);
 				if ((*it)->getClientWritingFlag() == true)
 				{
-					this->removeFromEpoll((*it)->getClientSocket(), i);
+					this->removeFromEpoll((*it)->getClientSocket());
 					clientList.erase(it);
 				}
 			}
 		}
 	}
-	return (0);
 }

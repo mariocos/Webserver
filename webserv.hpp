@@ -44,20 +44,18 @@
 # include "Response.hpp"
 # include "Server.hpp"
 
-extern int serverskt;
+extern bool	run;
 
 class RequestParse;
 class Response;
 
 //main.cpp
 void	check(int algo);
-int		setup(short port, int backlog);
 void	ft_bzero(void *s, size_t n);
 
 //signal.cpp
-void	ctrl_c(int signal, siginfo_t *info, void *context);
-void	ignore(struct sigaction *sa, int signal);
-void	signal_decider(int type);
+void	stopRunning(int signal);
+void	cleaner(Server &server, std::vector<Client*> &clientList);
 
 void	loadImgResponse(int client_socket, Response *response, Client *client);
 void	loadErrorPage(int client_socket, Response *response, Client *client);
@@ -69,8 +67,16 @@ void	findType(RequestParse *request, Response *response);
 std::vector<Client*>::iterator	getRightHole(std::vector<Client*> &clientList, int event_fd);
 std::vector<Client*>::iterator	getPendingHole(std::vector<Client*> &clientList);
 std::vector<Client*>::iterator	getNextPendingHole(std::vector<Client*> &clientList, std::vector<Client*>::iterator it);
-int		findEventFd(Client *clients, epoll_event *events);
 void	error_connection_handler(std::vector<int> &errorFds, Server &server);
-int		handlePendingConnections(std::vector<Client*> &clientList, Server &server);
+void	handlePendingConnections(std::vector<Client*> &clientList, Server &server);
+
+class	NoPendingConnectionsException : public std::exception
+{
+	public:
+		virtual const char	*what() const throw()
+		{
+			return ("Nothing Pending");
+		}
+};
 
 #endif
