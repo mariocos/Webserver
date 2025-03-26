@@ -23,6 +23,7 @@ void	createHeader(RequestParse *request, Response *response, Client *client)
 		response->addToResponse("Connection: keep-alive\n");
 	response->addToResponse("Transfer-Enconding: chunked\r\n\r\n");
 	send(client->getClientSocket(), response->getResponse().c_str(), response->getResponse().length(), O_NONBLOCK);
+	//std::cout<<"response head:\n"<<response->getResponse();
 	response->setResponse("");
 }
 
@@ -132,7 +133,6 @@ void	loadPage(int client_socket, int input, Response *response, Client *client)
 			client->setClientPending(false);
 			return ;
 		}
-		//std::cout<<"response:\n"<<response->getResponse()<<std::endl;
 		if (client->getClientOpenFd() == -1)
 			client->setClientOpenFd(input);
 		client->setClientWritingFlag(false);

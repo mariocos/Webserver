@@ -13,6 +13,7 @@
 # include <fstream>
 # include <sstream>
 # include <memory>
+# include <stdexcept>
 
 //c
 # include <unistd.h>
@@ -43,6 +44,7 @@
 # include "parse_request/RequestParse.hpp"
 # include "Response.hpp"
 # include "Server.hpp"
+# include "Errors.hpp"
 
 extern bool	run;
 
@@ -70,13 +72,16 @@ std::vector<Client*>::iterator	getNextPendingHole(std::vector<Client*> &clientLi
 void	error_connection_handler(std::vector<int> &errorFds, Server &server);
 void	handlePendingConnections(std::vector<Client*> &clientList, Server &server);
 
-class	NoPendingConnectionsException : public std::exception
+class	NoPendingConnectionsException : public std::runtime_error
 {
 	public:
-		virtual const char	*what() const throw()
-		{
-			return ("Nothing Pending");
-		}
+		NoPendingConnectionsException();
+};
+
+class	NewConnectionCreationException : public std::runtime_error
+{
+	public:
+		NewConnectionCreationException(Server &server, std::vector<Client*> &clientList);
 };
 
 #endif

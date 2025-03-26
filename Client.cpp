@@ -114,7 +114,14 @@ void	Client::readRequest(int client_socket)
 
 void	Client::handle_connect(int client_socket)
 {
-	this->getClientRequest()->execute_response(client_socket, this);
+	try
+	{
+		this->getClientRequest()->execute_response(client_socket, this);
+	}
+	catch(const std::exception& e)
+	{
+		std::cerr << e.what() << '\n';
+	}
 	if (this->getClientWritingFlag() == true)
 	{
 		close(client_socket);

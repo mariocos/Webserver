@@ -30,45 +30,25 @@ public:
 	void	handle_connections(std::vector<Client*> &clientList, std::vector<int> &errorFds);
 	void	addNewSocket(int fd);
 	void	removeFromEpoll(int fd);
-	class	SocketCreationException : public std::exception
+	class	SocketCreationException : public std::runtime_error
 	{
 		public:
-			virtual const char	*what() const throw()
-			{
-				return ("Error creating the socket");
-			}
+			SocketCreationException();
 	};
-	class	SocketBindException : public std::exception
+	class	SocketBindException : public std::runtime_error
 	{
 		public:
-			virtual const char	*what() const throw()
-			{
-				return ("Error binding the socket");
-			}
+			SocketBindException();
 	};
-	class	EpollCreationException : public std::exception
+	class	EpollCreationException : public std::runtime_error
 	{
 		public:
-			virtual const char	*what() const throw()
-			{
-				return ("Error creating the epoll_fd");
-			}
+			EpollCreationException();
 	};
-	class	EpollCtlException : public std::exception
+	class	EpollCtlException : public std::runtime_error
 	{
 		public:
-			virtual const char	*what() const throw()
-			{
-				return ("Error managing the epoll");
-			}
-	};
-	class	NewConnectionCreationException : public std::exception
-	{
-		public:
-			virtual const char	*what() const throw()
-			{
-				return ("Error adding a new client");
-			}
+			EpollCtlException();
 	};
 };
 

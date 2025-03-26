@@ -76,7 +76,7 @@ epoll_event	Server::getEpollIndex(int index)
 void	Server::addNewSocket(int fd)
 {
 	struct epoll_event	event;
-	event.events = EPOLLIN | EPOLLET;
+	event.events = EPOLLIN | EPOLLET | EPOLLRDHUP;
 	event.data.fd = fd;
 	epoll_ctl(this->_epoll_fd, EPOLL_CTL_ADD, event.data.fd, &event);
 }
@@ -97,9 +97,15 @@ void	Server::handle_connections(std::vector<Client*> &clientList, std::vector<in
 		error_connection_handler(errorFds, *this);
 		if (event.data.fd == this->_serverSocket)
 		{
-			if (new_connection(clientList, errorFds, *this) == -1)
-				throw NewConnectionCreationException();
-			std::cout<<GREEN<<"Connection successuful"<<RESET<<std::endl;
+			try
+			{
+				new_connection(clientList, errorFds, *this);
+				std::cout<<GREEN<<"Connection successuful"<<RESET<<std::endl;
+			}
+			catch(const std::exception& e)
+			{
+				std::cerr << e.what() << '\n';
+			}
 		}
 		else
 		{
@@ -109,9 +115,15 @@ void	Server::handle_connections(std::vector<Client*> &clientList, std::vector<in
 				std::cout<<RED<<"All spaces ocupied"<<RESET<<std::endl;
 				continue;
 			}
+			else if (event.events & EPOLLRDHUP)
+			{
+				std::cout<<YELLOW<<"Client Disconnected"<<RESET<<std::endl;
+				this->removeFromEpoll((*it)->getClientSocket());
+				delete (*it);
+				clientList.erase(it);
+			}
 			else if ((*it)->getClientReadingFlag() == false)
 			{
-				std::cout<<"Reading Request"<<std::endl;
 				(*it)->readRequest((*it)->getClientSocket());
 				(*it)->setClientWritingFlag(false);
 			}
@@ -121,9 +133,22 @@ void	Server::handle_connections(std::vector<Client*> &clientList, std::vector<in
 				if ((*it)->getClientWritingFlag() == true)
 				{
 					this->removeFromEpoll((*it)->getClientSocket());
+					delete (*it);
 					clientList.erase(it);
 				}
 			}
 		}
 	}
 }
+
+Server::SocketCreationException::SocketCreationException() :
+runtime_error("Error creating the socket") {}
+
+Server::SocketBindException::SocketBindException() :
+runtime_error("Error binding the socket") {}
+
+Server::EpollCreationException::EpollCreationException() :
+runtime_error("Error creating the epoll_fd") {}
+
+Server::EpollCtlException::EpollCtlException() :
+runtime_error("Error managing the epoll") {}

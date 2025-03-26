@@ -2,6 +2,15 @@
 
 bool	run;
 
+NoPendingConnectionsException::NoPendingConnectionsException() :
+runtime_error("Nothing Pending") {}
+
+NewConnectionCreationException::NewConnectionCreationException(Server &server, std::vector<Client*> &clientList) :
+runtime_error("Error adding a new client")
+{
+	cleaner(server, clientList);
+}
+
 void	stopRunning(int signal)
 {
 	(void)signal;
@@ -31,7 +40,7 @@ void	ft_bzero(void *s, size_t n)
 	}
 }
 
-int	new_connection(std::vector<Client*> &clientList, std::vector<int> &errorFds, Server &server)
+void	new_connection(std::vector<Client*> &clientList, std::vector<int> &errorFds, Server &server)
 {
 	struct sockaddr_in clientaddr;
 	socklen_t	addrlen = sizeof(clientaddr);
@@ -41,31 +50,18 @@ int	new_connection(std::vector<Client*> &clientList, std::vector<int> &errorFds,
 		clientList.push_back(newClient);
 	else
 	{
+		std::cout<<RED<<"SERVER OCUPIED"<<RESET<<std::endl;
 		errorFds.push_back(newClient->getClientSocket());
 		delete	newClient;
-		return (0);
+		return ;
 	}
 	std::cout<<"Socket Number: "<<newClient->getClientSocket()<<std::endl;
 	if (setNonBlocking(newClient->getClientSocket()) == -1)
 	{
         std::cerr << "Failed to set non-blocking mode." << std::endl;
         close(newClient->getClientSocket());
-        return (-1);
+        throw NewConnectionCreationException(server, clientList);
     }
-	return (0);
-}
-
-void	error_handler(int error_socket)
-{
-	std::string response;
-	response.append("HTTP/1.1 503 Service Unavailable\r\n");
-	response.append("Date: Wed, 06 Mar 2024 12:00:00 GMT\r\n");
-	response.append("Server: WebServ\r\n");
-	response.append("Content-Type: text\r\n");
-	response.append("Content-Lenght: 0\r\n");
-	response.append("Retry-After: 10\r\n\r\n");
-	send(error_socket, response.c_str(), response.length(), O_NONBLOCK);
-	close(error_socket);
 }
 
 void	error_connection_handler(std::vector<int> &errorFds, Server &server)
@@ -79,7 +75,7 @@ void	error_connection_handler(std::vector<int> &errorFds, Server &server)
 		{
 			if (*it != 0 && *it == server.getEpollIndex(i).data.fd)
 			{
-				error_handler((*it));
+				loadError503((*it));
 				server.removeFromEpoll((*it));
 				errorFds.erase(it);
 				break;
@@ -120,9 +116,9 @@ int	main(int ac, char **av)
 		config = av[1];
 	try
 	{
-		Server	server(4243, 60);
+		Server	server(4243, 10);
 		std::vector<Client*>	clientList;
-		std::vector<int>	errorFds;
+		std::vector<int>		errorFds;
 		run = true;
 		signal(SIGINT, stopRunning);
 		while (run)
@@ -149,7 +145,6 @@ int	main(int ac, char **av)
 			catch(const std::exception& e)
 			{
 				std::cerr << e.what() << '\n';
-				cleaner(server, clientList);
 				return (1);
 			}
 		}

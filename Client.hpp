@@ -42,6 +42,6 @@ public:
 	void	handle_connect(int client_socket);
 };
 
-int	new_connection(std::vector<Client*> &clientList, std::vector<int> &errorFds, Server &server);
+void	new_connection(std::vector<Client*> &clientList, std::vector<int> &errorFds, Server &server);
 
 #endif

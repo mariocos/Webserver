@@ -148,17 +148,7 @@ void	RequestParse::execute_response(int client_socket, Client *client)
 	else if (method.compare("DELETE") == 0)
 		DELETE_response(client_socket, client);
 	else
-	{
-		std::cout<<"ERROR"<<std::endl;
-		std::string response;
-		response.append("HTTP/1.1 400 Bad Request\r\n");
-		response.append("Content-Type: text/plain\r\n");
-		response.append("Connection: close\r\n\r\n");
-		response.append("400 Bad Request - The server could not understand the request\n");
-		send(client_socket, response.c_str(), response.length(), O_NONBLOCK);
-		client->setClientWritingFlag(true);
-		close(client_socket);
-	}
+		throw Error400Exception(client_socket, client);
 }
 
 void	RequestParse::GET_response(int client_socket, Client *client)
@@ -188,9 +178,9 @@ void	RequestParse::GET_response(int client_socket, Client *client)
 		}
 		else
 			fd = client->getClientOpenFd();
-		std::cout<<"fd: "<<fd<<std::endl;
+		//std::cout<<"fd: "<<fd<<std::endl;
 		if (fd == -1)
-			loadErrorPage(client_socket, client->getClientResponse(), client);
+			throw Error404Exception(client_socket, client->getClientResponse(), client);
 		else
 			loadPage(client_socket, fd, client->getClientResponse(), client);
 	}
