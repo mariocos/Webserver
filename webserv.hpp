@@ -33,6 +33,7 @@
 # include <dirent.h>
 # include <stdlib.h>
 # include <vector>
+# include <ctime>
 
 # define RESET "\033[0m"
 # define GREEN "\033[1m\033[32m"
@@ -40,7 +41,6 @@
 # define YELLOW "\033[1m\033[33m"
 
 # include "Client.hpp"
-# include "ConfigParser.hpp"
 # include "parse_request/RequestParse.hpp"
 # include "Response.hpp"
 # include "Server.hpp"
@@ -60,7 +60,6 @@ void	stopRunning(int signal);
 void	cleaner(Server &server, std::vector<Client*> &clientList);
 
 void	loadImgResponse(int client_socket, Response *response, Client *client);
-void	loadErrorPage(int client_socket, Response *response, Client *client);
 void	loadPage(int client_socket, int fd, Response *response, Client *client);
 int 	setNonBlocking(int fd);
 void	createHeader(RequestParse *request, Response *response, Client *client);

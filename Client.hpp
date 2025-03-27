@@ -18,6 +18,7 @@ private:
 	int				_openFd;
 	bool			_finishedReading;
 	bool			_finishedWriting;
+	time_t			_startTime;
 public:
 	Client();
 	Client(int client_socket);
@@ -30,11 +31,13 @@ public:
 	void	setClientOpenFd(int fd);
 	void	setClientReadingFlag(bool flag);
 	void	setClientWritingFlag(bool flag);
+	void	setStartingTime();
 	int		getClientSocket();
 	bool	getClientPending();
 	bool	getClientConnection();
 	bool	getClientReadingFlag();
 	bool	getClientWritingFlag();
+	bool	connectionExpired(int timeoutSec);
 	int	getClientOpenFd();
 	RequestParse	*getClientRequest();
 	Response		*getClientResponse();

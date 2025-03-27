@@ -40,12 +40,34 @@ void	ft_bzero(void *s, size_t n)
 	}
 }
 
+
+//trying to close connections after a timeout of inactivity
+void	searchDeadConnections(std::vector<Client*> &clientList, Server &server)
+{
+	//(void)server;
+	std::vector<Client*>::iterator	it;
+	it = clientList.begin();
+	while (it != clientList.end())
+	{
+		if (*it != NULL && (*it)->connectionExpired(5) == true)
+		{
+			std::cout<<RED<<"Connection Expired"<<RESET<<std::endl;
+			close((*it)->getClientSocket());
+			server.removeFromEpoll((*it)->getClientSocket());
+			//delete (*it);
+			clientList.erase(it);
+		}
+		it++;
+	}
+}
+
 void	new_connection(std::vector<Client*> &clientList, std::vector<int> &errorFds, Server &server)
 {
 	struct sockaddr_in clientaddr;
 	socklen_t	addrlen = sizeof(clientaddr);
 	Client	*newClient = new Client(accept(server.getServerSocket(), (sockaddr*)&clientaddr, &addrlen));
 	server.addNewSocket(newClient->getClientSocket());
+	newClient->setStartingTime();
 	if (clientList.size() < 60)
 		clientList.push_back(newClient);
 	else
@@ -58,7 +80,7 @@ void	new_connection(std::vector<Client*> &clientList, std::vector<int> &errorFds
 	std::cout<<"Socket Number: "<<newClient->getClientSocket()<<std::endl;
 	if (setNonBlocking(newClient->getClientSocket()) == -1)
 	{
-        std::cerr << "Failed to set non-blocking mode." << std::endl;
+		std::cerr << "Failed to set non-blocking mode." << std::endl;
         close(newClient->getClientSocket());
         throw NewConnectionCreationException(server, clientList);
     }
@@ -87,18 +109,24 @@ void	error_connection_handler(std::vector<int> &errorFds, Server &server)
 
 void	handlePendingConnections(std::vector<Client*> &clientList, Server &server)
 {
+	(void)server;
 	std::vector<Client*>::iterator	it;
 	it = getPendingHole(clientList);
 	if (it == clientList.end())
 		throw NoPendingConnectionsException();
 	while (it != clientList.end())
 	{
-		(*it)->handle_connect((*it)->getClientSocket());
-		if ((*it)->getClientWritingFlag() == true)
+		if ((*it)->getClientReadingFlag() == false)
+			(*it)->readRequest((*it)->getClientSocket());
+		else
 		{
-			server.removeFromEpoll((*it)->getClientSocket());
-			delete (*it);
-			clientList.erase(it);
+			(*it)->handle_connect((*it)->getClientSocket());
+			if ((*it)->getClientWritingFlag() == true)
+			{
+				server.removeFromEpoll((*it)->getClientSocket());
+				delete (*it);
+				clientList.erase(it);
+			}
 		}
 		it = getNextPendingHole(clientList, it);
 	}
@@ -129,6 +157,15 @@ int	main(int ac, char **av)
 			{
 				cleaner(server, clientList);
 				return (1);
+			}
+			try
+			{
+				//this still does nothing because the socket is closed after its use
+				searchDeadConnections(clientList, server);
+			}
+			catch(const std::exception& e)
+			{
+				std::cerr << e.what() << '\n';
 			}
 			try
 			{

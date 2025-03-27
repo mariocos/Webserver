@@ -122,20 +122,10 @@ void	Server::handle_connections(std::vector<Client*> &clientList, std::vector<in
 				delete (*it);
 				clientList.erase(it);
 			}
-			else if ((*it)->getClientReadingFlag() == false)
+			else
 			{
 				(*it)->readRequest((*it)->getClientSocket());
 				(*it)->setClientWritingFlag(false);
-			}
-			else
-			{
-				(*it)->handle_connect(event.data.fd);
-				if ((*it)->getClientWritingFlag() == true)
-				{
-					this->removeFromEpoll((*it)->getClientSocket());
-					delete (*it);
-					clientList.erase(it);
-				}
 			}
 		}
 	}

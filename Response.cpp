@@ -1,7 +1,7 @@
 #include "Response.hpp"
 
 
-Response::Response() : _response(""), _path(""), _type("text/plain")
+Response::Response() : _response(""), _path(""), _type("text/plain"), _totalResponseLenght(0)
 {
 	std::cout<<GREEN<<"Response default constructor called"<<RESET<<std::endl;
 	_buffer = NULL;
@@ -22,50 +22,86 @@ Response::~Response()
 
 std::string	Response::getResponse()
 {
-	return (_response);
+	return (this->_response);
 }
 
 std::string	*Response::getBuffer()
 {
-	return (_buffer);
+	return (this->_buffer);
 }
 
 std::string	Response::getPath()
 {
-	return (_path);
+	return (this->_path);
 }
 
 std::string	Response::getType()
 {
-	return (_type);
+	return (this->_type);
+}
+
+std::string	Response::getResponseLenghtAsString()
+{
+	std::ostringstream	number;
+	std::string	lenght;
+
+	number << this->_totalResponseLenght;
+	lenght = number.str();
+	return (lenght);
+}
+
+unsigned int Response::getResponseLenght()
+{
+	return (this->_totalResponseLenght);
 }
 
 void	Response::setResponse(std::string response)
 {
-	_response = response;
+	this->_response = response;
 }
 
 void	Response::setBuffer(std::string *buffer)
 {
-	_buffer = buffer;
+	this->_buffer = buffer;
 }
 
 void	Response::setPath(std::string path)
 {
-	_path = path;
+	this->_path = path;
 }
 
 void	Response::setType(std::string type)
 {
-	_type = type;
+	this->_type = type;
 }
 
 void	Response::addToResponse(std::string info)
 {
-	_response.append(info);
+	this->_response.append(info);
+}
+
+void	Response::addToResponseLenght(unsigned int bytes)
+{
+	this->_totalResponseLenght += bytes;
 }
 
 std::string	Response::readFromBuffer()
 {
-	return (_buffer ? *_buffer : "");
+	return (this->_buffer ? *_buffer : "");
+}
+
+void	Response::checkHowManyBytesToSend(int client_socket, Client *client)
+{
+	std::ifstream	input;
+	std::string		buffer;
+
+	input.open(_path.c_str());
+	if (input.is_open())
+	{
+		while (getline(input, buffer))
+			addToResponseLenght(buffer.length());
+	}
+	else
+		throw Error404Exception(client_socket, this, client);
+	input.close();
 }

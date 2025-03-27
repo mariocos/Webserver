@@ -17,13 +17,17 @@ void	findType(RequestParse *request, Response *response)
 
 void	createHeader(RequestParse *request, Response *response, Client *client)
 {
-	response->addToResponse(request->get_httpversion() + " 200 OK\n");
-	response->addToResponse("Content-Type: " + response->getType() + "\n");
+	response->addToResponse(request->get_httpversion() + " 200 OK\r\n");
+	response->addToResponse("Content-Type: " + response->getType() + "\r\n");
 	if (client->getClientConnection() == true)
-		response->addToResponse("Connection: keep-alive\n");
-	response->addToResponse("Transfer-Enconding: chunked\r\n\r\n");
+	{
+		response->addToResponse("Connection: keep-alive\r\n");
+		response->addToResponse("Keep-Alive: timeout=5, max=100\r\n");
+	}
+	response->addToResponse("Content-lenght: " + response->getResponseLenghtAsString() + "\r\n\r\n");
+	//response->addToResponse("Transfer-Enconding: chunked\r\n\r\n");
 	send(client->getClientSocket(), response->getResponse().c_str(), response->getResponse().length(), O_NONBLOCK);
-	//std::cout<<"response head:\n"<<response->getResponse();
+	std::cout<<"response head:\n"<<response->getResponse();
 	response->setResponse("");
 }
 
@@ -31,65 +35,18 @@ void	loadImgResponse(int client_socket, Response *response, Client *client)
 {
 	std::ifstream	input;
 	std::string		buffer;
-	ssize_t	msgsize = 0;
-	std::string	lenght;
-	std::ostringstream	number;
 
 	input.open(response->getPath().c_str());
 	if (input.is_open())
 	{
 		while (getline(input, buffer))
-		{
 			response->setResponse(response->getResponse().append(buffer + "\n"));
-			msgsize += buffer.length();
-		}
 	}
 	else
-	{
-		input.open("website/404.html");
-		while (getline(input, buffer))
-		{
-			response->setResponse(response->getResponse().append(buffer + "\n"));
-			msgsize += buffer.length();
-		}
-	}
+		throw Error404Exception(client_socket, response, client);
 	input.close();
-	number<<msgsize;
-	lenght = number.str();
-	if (response->getResponse().find("Transfer-Enconding: chunked") != std::string::npos)
-		response->setResponse(response->getResponse().replace(response->getResponse().find("Transfer-Enconding: chunked"), 28, "Content-lenght: " + lenght));
 	send(client_socket, response->getResponse().c_str(), response->getResponse().length(), O_NONBLOCK);
 	response->setResponse("");
-	client->setClientWritingFlag(true);
-	client->setClientPending(false);
-}
-
-void	loadErrorPage(int client_socket, Response *response, Client *client)
-{
-	std::ifstream	input;
-	std::string	buffer;
-	ssize_t	msgsize = 0;
-	std::string	lenght;
-	std::ostringstream	number;
-
-	input.open("website/404.html");
-	if (input.is_open())
-	{
-		while (getline(input, buffer))
-		{
-			response->setResponse(response->getResponse().append(buffer + "\n"));
-			msgsize += buffer.length();
-		}
-		input.close();
-		number<<msgsize;
-		lenght = number.str();
-		if (response->getResponse().find("Transfer-Enconding: chunked") != std::string::npos)
-			response->setResponse(response->getResponse().replace(response->getResponse().find("Transfer-Enconding: chunked"), 28, "Content-lenght: " + lenght));
-		send(client_socket, response->getResponse().c_str(), response->getResponse().length(), O_NONBLOCK);
-		response->setResponse("");
-	}
-	else
-		std::cout<<"Error oppening the file"<<std::endl;
 	client->setClientWritingFlag(true);
 	client->setClientPending(false);
 }
@@ -102,13 +59,11 @@ int setNonBlocking(int fd)
 void	loadPage(int client_socket, int input, Response *response, Client *client)
 {
 	int	msgsize = 0;
-	char	buffer[1024];
+	char	buffer[7];
 	ssize_t	bytes_read = -1;
-	std::string	lenght;
-	std::ostringstream	number;
 
 	bzero(buffer, sizeof(buffer));
-	while (bytes_read == -1)
+	while (bytes_read == -1 && msgsize < 5)
 	{
 		bytes_read = read(input, buffer, sizeof(buffer) - 1);
 		if (bytes_read == -1)
@@ -121,7 +76,7 @@ void	loadPage(int client_socket, int input, Response *response, Client *client)
 		msgsize += bytes_read;
 		response->setResponse(buffer);
 	}
-	if (msgsize >= 1022)
+	if (msgsize >= 5)
 	{
 		std::cout<<RED<<"Sent chunk"<<RESET<<std::endl;
 		if (send(client_socket, response->getResponse().c_str(), response->getResponse().length(), MSG_NOSIGNAL) == -1)
@@ -139,10 +94,6 @@ void	loadPage(int client_socket, int input, Response *response, Client *client)
 		client->setClientPending(true);
 		return ;
 	}
-	number<<msgsize;
-	lenght = number.str();
-	if (response->getResponse().find("Transfer-Enconding: chunked") != std::string::npos)
-		response->setResponse(response->getResponse().replace(response->getResponse().find("Transfer-Enconding: chunked"), 28, "Content-lenght: " + lenght));
 	if (send(client_socket, response->getResponse().c_str(), response->getResponse().length(), MSG_NOSIGNAL) == -1)
 	{
 		std::cout<<RED<<"Error sending the msg"<<RESET<<std::endl;

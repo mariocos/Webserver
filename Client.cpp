@@ -64,6 +64,11 @@ void	Client::setClientWritingFlag(bool flag)
 	this->_finishedWriting = flag;
 }
 
+void	Client::setStartingTime()
+{
+	this->_startTime = time(NULL);
+}
+
 int	Client::getClientSocket()
 {
 	return (this->_clientSocket);
@@ -89,6 +94,14 @@ bool	Client::getClientWritingFlag()
 	return (this->_finishedWriting);
 }
 
+bool	Client::connectionExpired(int timeoutSec)
+{
+	time_t	now = time(NULL);
+	if (now - this->_startTime >= timeoutSec)
+		return (true);
+	return (false);
+}
+
 int	Client::getClientOpenFd()
 {
 	return (_openFd);
@@ -106,6 +119,7 @@ Response	*Client::getClientResponse()
 
 void	Client::readRequest(int client_socket)
 {
+	this->setStartingTime();
 	this->getClientRequest()->readToBuffer(client_socket, this);
 	if (this->getClientRequest()->get_buffer().find("Connection: keep-alive") != std::string::npos)
 		this->setClientConnection(true);
@@ -116,6 +130,7 @@ void	Client::handle_connect(int client_socket)
 {
 	try
 	{
+		this->setStartingTime();
 		this->getClientRequest()->execute_response(client_socket, this);
 	}
 	catch(const std::exception& e)
@@ -124,6 +139,7 @@ void	Client::handle_connect(int client_socket)
 	}
 	if (this->getClientWritingFlag() == true)
 	{
+		//still trying to handle the keep alive connections
 		close(client_socket);
 		std::cout<<YELLOW<<"Closing connection..."<<RESET<<std::endl;
 	}

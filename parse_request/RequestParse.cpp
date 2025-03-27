@@ -156,6 +156,7 @@ void	RequestParse::GET_response(int client_socket, Client *client)
 	if (client->getClientWritingFlag() == false && client->getClientPending() == false)
 	{
 		findType(this, client->getClientResponse());
+		client->getClientResponse()->checkHowManyBytesToSend(client_socket, client);
 		createHeader(this, client->getClientResponse(), client);
 	}
 	else if (client->getClientPending() == true)
@@ -178,7 +179,6 @@ void	RequestParse::GET_response(int client_socket, Client *client)
 		}
 		else
 			fd = client->getClientOpenFd();
-		//std::cout<<"fd: "<<fd<<std::endl;
 		if (fd == -1)
 			throw Error404Exception(client_socket, client->getClientResponse(), client);
 		else
