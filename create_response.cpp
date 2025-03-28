@@ -21,12 +21,15 @@ void	createHeader(RequestParse *request, Response *response, Client *client)
 	response->addToResponse("Content-Type: " + response->getType() + "\r\n");
 	if (client->getClientConnection() == true)
 	{
-		response->addToResponse("Connection: keep-alive\r\n");
-		response->addToResponse("Keep-Alive: timeout=5, max=100\r\n");
+		response->addToResponse("Connection: close\r\n");
+		//response->addToResponse("Keep-Alive: timeout=5, max=100\r\n");
 	}
+	//if (response->getType() != "image/png" && response->getResponseLenght() > 5)
+	//	response->addToResponse("Transfer-Enconding: chunked\r\n\r\n");
+	//else
+	//	response->addToResponse("Content-lenght: " + response->getResponseLenghtAsString() + "\r\n\r\n");
 	response->addToResponse("Content-lenght: " + response->getResponseLenghtAsString() + "\r\n\r\n");
-	//response->addToResponse("Transfer-Enconding: chunked\r\n\r\n");
-	send(client->getClientSocket(), response->getResponse().c_str(), response->getResponse().length(), O_NONBLOCK);
+	send(client->getClientSocket(), response->getResponse().c_str(), response->getResponse().length(), MSG_NOSIGNAL);
 	std::cout<<"response head:\n"<<response->getResponse();
 	response->setResponse("");
 }
@@ -45,7 +48,17 @@ void	loadImgResponse(int client_socket, Response *response, Client *client)
 	else
 		throw Error404Exception(client_socket, response, client);
 	input.close();
-	send(client_socket, response->getResponse().c_str(), response->getResponse().length(), O_NONBLOCK);
+	if (send(client_socket, response->getResponse().c_str(), response->getResponse().length(), MSG_NOSIGNAL) == -1)
+	{
+		std::cout<<RED<<"Error sending the image"<<RESET<<std::endl;
+		response->setResponse("");
+		client->setClientWritingFlag(true);
+		client->setClientPending(false);
+		return ;
+	}
+	//response->addToBytesSent(send(client_socket, response->getResponse().c_str(), response->getResponse().length(), MSG_NOSIGNAL));
+	//std::cout<<"Bytes that was supposed to send: "<<response->getResponseLenght()<<std::endl;
+	//std::cout<<"Bytes sent: "<<response->getBytesSent()<<std::endl;
 	response->setResponse("");
 	client->setClientWritingFlag(true);
 	client->setClientPending(false);
@@ -79,6 +92,8 @@ void	loadPage(int client_socket, int input, Response *response, Client *client)
 	if (msgsize >= 5)
 	{
 		std::cout<<RED<<"Sent chunk"<<RESET<<std::endl;
+		//std::cout<<"response body:\n"<<response->getResponse();
+		//response->addToBytesSent(send(client_socket, response->getResponse().c_str(), response->getResponse().length(), MSG_NOSIGNAL));
 		if (send(client_socket, response->getResponse().c_str(), response->getResponse().length(), MSG_NOSIGNAL) == -1)
 		{
 			std::cout<<RED<<"Error sending the chunk"<<RESET<<std::endl;
@@ -103,8 +118,11 @@ void	loadPage(int client_socket, int input, Response *response, Client *client)
 		client->setClientPending(false);
 		return ;
 	}
+	//response->addToBytesSent(send(client_socket, response->getResponse().c_str(), response->getResponse().length(), MSG_NOSIGNAL));
 	std::cout<<RED<<"Sent all the info"<<RESET<<std::endl;
 	//std::cout<<"response body:\n"<<response->getResponse();
+	//std::cout<<"Bytes that was supposed to send: "<<response->getResponseLenght()<<std::endl;
+	//std::cout<<"Bytes sent: "<<response->getBytesSent()<<std::endl;
 	response->setResponse("");
 	close(input);
 	client->setClientWritingFlag(true);

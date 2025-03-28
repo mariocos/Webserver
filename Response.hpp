@@ -18,6 +18,7 @@ private:
 	std::string	_path;
 	std::string	_type;
 	unsigned int	_totalResponseLenght;
+	ssize_t		_bytesSent;
 public:
 	Response();
 	//Response(const Response &copy);
@@ -29,12 +30,14 @@ public:
 	std::string	*getBuffer();
 	std::string	getResponseLenghtAsString();
 	unsigned int getResponseLenght();
+	ssize_t		getBytesSent();
 	void	setResponse(std::string response);
 	void	setBuffer(std::string *buffer);
 	void	setPath(std::string path);
 	void	setType(std::string type);
 	void	addToResponse(std::string info);
 	void	addToResponseLenght(unsigned int bytes);
+	void	addToBytesSent(ssize_t bytes);
 	std::string	readFromBuffer();
 	void	checkHowManyBytesToSend(int client_socket, Client *client);
 };

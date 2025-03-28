@@ -14,9 +14,9 @@ Server::Server(int port, int backlog) : _maxEvents(backlog)
 	if (this->_serverSocket == -1)
 		throw SocketCreationException();
 	servaddr.sin_family = AF_INET;
-	servaddr.sin_addr.s_addr = INADDR_ANY;
+	servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
 	servaddr.sin_port = htons(port);
-	if (setsockopt(this->_serverSocket, SOL_SOCKET, SO_REUSEADDR, &option, 4) == -1)
+	if (setsockopt(this->_serverSocket, SOL_SOCKET, SO_REUSEADDR, &option, sizeof(option)) == -1)
 		throw SocketBindException();
 	if (bind(this->_serverSocket, (const sockaddr *)&servaddr, sizeof(servaddr)) == -1)
 		throw SocketBindException();
@@ -36,6 +36,7 @@ Server::~Server()
 {
 	if (this->_events)
 		delete[] this->_events;
+	close(this->_epoll_fd);
 }
 
 void	Server::setEpollCount(int count)
@@ -76,7 +77,7 @@ epoll_event	Server::getEpollIndex(int index)
 void	Server::addNewSocket(int fd)
 {
 	struct epoll_event	event;
-	event.events = EPOLLIN | EPOLLET | EPOLLRDHUP;
+	event.events = EPOLLIN | EPOLLRDHUP | EPOLLET;
 	event.data.fd = fd;
 	epoll_ctl(this->_epoll_fd, EPOLL_CTL_ADD, event.data.fd, &event);
 }
@@ -88,8 +89,6 @@ void	Server::removeFromEpoll(int fd)
 
 void	Server::handle_connections(std::vector<Client*> &clientList, std::vector<int> &errorFds)
 {
-	if (this->_epoll_count == 0)
-		return;
 	std::vector<Client*>::iterator	it;
 	for (int i = 0; i < this->_epoll_count; i++)
 	{

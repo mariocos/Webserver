@@ -44,20 +44,22 @@ void	ft_bzero(void *s, size_t n)
 //trying to close connections after a timeout of inactivity
 void	searchDeadConnections(std::vector<Client*> &clientList, Server &server)
 {
-	//(void)server;
-	std::vector<Client*>::iterator	it;
-	it = clientList.begin();
-	while (it != clientList.end())
+	std::vector<Client*>::iterator	it = clientList.begin();
+	std::vector<Client*>::iterator	end = clientList.end();
+	while (it != end)
 	{
 		if (*it != NULL && (*it)->connectionExpired(5) == true)
 		{
-			std::cout<<RED<<"Connection Expired"<<RESET<<std::endl;
-			close((*it)->getClientSocket());
 			server.removeFromEpoll((*it)->getClientSocket());
-			//delete (*it);
+			close((*it)->getClientSocket());
+			delete (*it);
 			clientList.erase(it);
+			std::cout<<RED<<"Connection Expired"<<RESET<<std::endl;
+			it = clientList.begin();
+			end = clientList.end();
 		}
-		it++;
+		else
+			it++;
 	}
 }
 
@@ -65,7 +67,9 @@ void	new_connection(std::vector<Client*> &clientList, std::vector<int> &errorFds
 {
 	struct sockaddr_in clientaddr;
 	socklen_t	addrlen = sizeof(clientaddr);
-	Client	*newClient = new Client(accept(server.getServerSocket(), (sockaddr*)&clientaddr, &addrlen));
+	Client	*newClient = new Client(accept(server.getServerSocket(), (struct sockaddr*)&clientaddr, &addrlen));
+	if (newClient->getClientSocket() == -1)
+		throw NewConnectionCreationException(server, clientList);
 	server.addNewSocket(newClient->getClientSocket());
 	newClient->setStartingTime();
 	if (clientList.size() < 60)
@@ -78,12 +82,6 @@ void	new_connection(std::vector<Client*> &clientList, std::vector<int> &errorFds
 		return ;
 	}
 	std::cout<<"Socket Number: "<<newClient->getClientSocket()<<std::endl;
-	if (setNonBlocking(newClient->getClientSocket()) == -1)
-	{
-		std::cerr << "Failed to set non-blocking mode." << std::endl;
-        close(newClient->getClientSocket());
-        throw NewConnectionCreationException(server, clientList);
-    }
 }
 
 void	error_connection_handler(std::vector<int> &errorFds, Server &server)
@@ -123,6 +121,8 @@ void	handlePendingConnections(std::vector<Client*> &clientList, Server &server)
 			(*it)->handle_connect((*it)->getClientSocket());
 			if ((*it)->getClientWritingFlag() == true)
 			{
+				close((*it)->getClientSocket());
+				(*it)->setClientOpenFd(-1);
 				server.removeFromEpoll((*it)->getClientSocket());
 				delete (*it);
 				clientList.erase(it);

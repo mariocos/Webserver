@@ -7,7 +7,12 @@ Client::Client() : _clientSocket(0), _request(NULL), _response(NULL), _pending(f
 Client::Client(int client_socket) : _clientSocket(client_socket), _request(NULL), _response(NULL), _pending(false), _keepAlive(false),_openFd(-1), _finishedReading(false), _finishedWriting(true)
 {
 	std::cout<<GREEN<<"Client constructor called"<<RESET<<std::endl;
-	check(client_socket);
+	if (setNonBlocking(this->_clientSocket) == -1)
+	{
+		std::cerr << "Failed to set non-blocking mode." << std::endl;
+		close(this->_clientSocket);
+		this->_clientSocket = -1;
+	}
 	_response = new Response;
 	_request = new RequestParse;
 	std::string *buffer = new std::string;
@@ -140,7 +145,7 @@ void	Client::handle_connect(int client_socket)
 	if (this->getClientWritingFlag() == true)
 	{
 		//still trying to handle the keep alive connections
-		close(client_socket);
+		//close(client_socket);
 		std::cout<<YELLOW<<"Closing connection..."<<RESET<<std::endl;
 	}
 }

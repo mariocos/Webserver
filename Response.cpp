@@ -1,7 +1,7 @@
 #include "Response.hpp"
 
 
-Response::Response() : _response(""), _path(""), _type("text/plain"), _totalResponseLenght(0)
+Response::Response() : _response(""), _path(""), _type("text/plain"), _totalResponseLenght(0), _bytesSent(0)
 {
 	std::cout<<GREEN<<"Response default constructor called"<<RESET<<std::endl;
 	_buffer = NULL;
@@ -55,6 +55,11 @@ unsigned int Response::getResponseLenght()
 	return (this->_totalResponseLenght);
 }
 
+ssize_t	Response::getBytesSent()
+{
+	return (this->_bytesSent);
+}
+
 void	Response::setResponse(std::string response)
 {
 	this->_response = response;
@@ -85,6 +90,11 @@ void	Response::addToResponseLenght(unsigned int bytes)
 	this->_totalResponseLenght += bytes;
 }
 
+void	Response::addToBytesSent(ssize_t bytes)
+{
+	this->_bytesSent += bytes;
+}
+
 std::string	Response::readFromBuffer()
 {
 	return (this->_buffer ? *_buffer : "");
@@ -92,16 +102,20 @@ std::string	Response::readFromBuffer()
 
 void	Response::checkHowManyBytesToSend(int client_socket, Client *client)
 {
-	std::ifstream	input;
-	std::string		buffer;
+	int	input;
+	char	buffer[1000000];
+	ssize_t	bytes = 1;
 
-	input.open(_path.c_str());
-	if (input.is_open())
+	input = open(this->_path.c_str(), O_RDONLY);
+	if (input != -1)
 	{
-		while (getline(input, buffer))
-			addToResponseLenght(buffer.length());
+		while (bytes > 0)
+		{
+			bytes = read(input, buffer, sizeof(buffer) - 1);
+			addToResponseLenght(bytes);
+		}
 	}
 	else
 		throw Error404Exception(client_socket, this, client);
-	input.close();
+	close(input);
 }
