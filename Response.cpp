@@ -103,19 +103,26 @@ std::string	Response::readFromBuffer()
 void	Response::checkHowManyBytesToSend(int client_socket, Client *client)
 {
 	int	input;
-	char	buffer[1000000];
+	char	buffer[1000];
 	ssize_t	bytes = 1;
 
-	input = open(this->_path.c_str(), O_RDONLY);
+	input = client->getClientFile()->getFd();
 	if (input != -1)
 	{
 		while (bytes > 0)
 		{
 			bytes = read(input, buffer, sizeof(buffer) - 1);
+			if (bytes <= 0)
+				break ;
+			//std::cout<<"buffer: "<<buffer<<std::endl;
 			addToResponseLenght(bytes);
 		}
 	}
 	else
 		throw Error404Exception(client_socket, this, client);
 	close(input);
+	client->getClientFile()->setCheckingSizeFlag(false);
+	int fd = open(client->getClientResponse()->getPath().c_str(), O_RDONLY | O_NONBLOCK);
+	std::cout<<"fd: "<<fd<<std::endl;
+	client->getClientFile()->setFd(fd);
 }

@@ -32,6 +32,8 @@ void	createHeader(RequestParse *request, Response *response, Client *client)
 	send(client->getClientSocket(), response->getResponse().c_str(), response->getResponse().length(), MSG_NOSIGNAL);
 	std::cout<<"response head:\n"<<response->getResponse();
 	response->setResponse("");
+	client->getClientFile()->setReading(true);
+	client->getClientFile()->setWriting(false);
 }
 
 void	loadImgResponse(int client_socket, Response *response, Client *client)
@@ -69,27 +71,13 @@ int setNonBlocking(int fd)
     return (fcntl(fd, F_SETFL, O_NONBLOCK));
 }
 
-void	loadPage(int client_socket, int input, Response *response, Client *client)
+void	loadPage(int client_socket, Response *response, Client *client)
 {
-	int	msgsize = 0;
-	char	buffer[7];
-	ssize_t	bytes_read = -1;
-
-	bzero(buffer, sizeof(buffer));
-	while (bytes_read == -1 && msgsize < 5)
-	{
-		bytes_read = read(input, buffer, sizeof(buffer) - 1);
-		if (bytes_read == -1)
-		{
-			perror("read: ");
-			close(input);
-		}
-		if (bytes_read == 0)
-			break ;
-		msgsize += bytes_read;
-		response->setResponse(buffer);
-	}
-	if (msgsize >= 5)
+	response->setResponse(client->getClientFile()->readFromBuffer());
+	client->getClientFile()->clearBuffer();
+	client->getClientFile()->setReading(true);
+	client->getClientFile()->setWriting(false);
+	if (client->getClientFile()->getBytesRead() >= 1022)
 	{
 		std::cout<<RED<<"Sent chunk"<<RESET<<std::endl;
 		//std::cout<<"response body:\n"<<response->getResponse();
@@ -98,13 +86,11 @@ void	loadPage(int client_socket, int input, Response *response, Client *client)
 		{
 			std::cout<<RED<<"Error sending the chunk"<<RESET<<std::endl;
 			response->setResponse("");
-			close(input);
 			client->setClientWritingFlag(true);
 			client->setClientPending(false);
+			client->getClientFile()->setReading(false);
 			return ;
 		}
-		if (client->getClientOpenFd() == -1)
-			client->setClientOpenFd(input);
 		client->setClientWritingFlag(false);
 		client->setClientPending(true);
 		return ;
@@ -113,9 +99,9 @@ void	loadPage(int client_socket, int input, Response *response, Client *client)
 	{
 		std::cout<<RED<<"Error sending the msg"<<RESET<<std::endl;
 		response->setResponse("");
-		close(input);
 		client->setClientWritingFlag(true);
 		client->setClientPending(false);
+		client->getClientFile()->setReading(false);
 		return ;
 	}
 	//response->addToBytesSent(send(client_socket, response->getResponse().c_str(), response->getResponse().length(), MSG_NOSIGNAL));
@@ -124,7 +110,6 @@ void	loadPage(int client_socket, int input, Response *response, Client *client)
 	//std::cout<<"Bytes that was supposed to send: "<<response->getResponseLenght()<<std::endl;
 	//std::cout<<"Bytes sent: "<<response->getBytesSent()<<std::endl;
 	response->setResponse("");
-	close(input);
 	client->setClientWritingFlag(true);
 	client->setClientPending(false);
 }

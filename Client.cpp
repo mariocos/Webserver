@@ -15,6 +15,8 @@ Client::Client(int client_socket) : _clientSocket(client_socket), _request(NULL)
 	}
 	_response = new Response;
 	_request = new RequestParse;
+	_file = new File;
+	_file->setClient(this);
 	std::string *buffer = new std::string;
 	_response->setBuffer(buffer);
 	_request->setBuffer(buffer);
@@ -25,6 +27,7 @@ Client::~Client()
 	delete _response->getBuffer();
 	delete _request;
 	delete _response;
+	delete _file;
 	std::cout<<RED<<"Client Destructor"<<RESET<<std::endl;
 }
 
@@ -52,6 +55,11 @@ void	Client::setClientRequest(RequestParse *request)
 void	Client::setClientResponse(Response *response)
 {
 	this->_response = response;
+}
+
+void	Client::setClientFile(File *file)
+{
+	this->_file = file;
 }
 
 void	Client::setClientOpenFd(int fd)
@@ -122,6 +130,11 @@ Response	*Client::getClientResponse()
 	return (this->_response);
 }
 
+File	*Client::getClientFile()
+{
+	return (this->_file);
+}
+
 void	Client::readRequest(int client_socket)
 {
 	this->setStartingTime();
@@ -131,12 +144,12 @@ void	Client::readRequest(int client_socket)
 	this->getClientRequest()->buildRequest(this->getClientRequest()->get_buffer().c_str());
 }
 
-void	Client::handle_connect(int client_socket)
+void	Client::handle_connect(int client_socket, Server &server)
 {
 	try
 	{
 		this->setStartingTime();
-		this->getClientRequest()->execute_response(client_socket, this);
+		this->getClientRequest()->execute_response(client_socket, this, server);
 	}
 	catch(const std::exception& e)
 	{

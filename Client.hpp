@@ -6,6 +6,8 @@
 class RequestParse;
 class Response;
 class Server;
+class File;
+class Server;
 
 class Client
 {
@@ -13,6 +15,7 @@ private:
 	int				_clientSocket;
 	RequestParse	*_request;
 	Response		*_response;
+	File			*_file;
 	bool			_pending;
 	bool			_keepAlive;
 	int				_openFd;
@@ -31,6 +34,7 @@ public:
 	void	setClientOpenFd(int fd);
 	void	setClientReadingFlag(bool flag);
 	void	setClientWritingFlag(bool flag);
+	void	setClientFile(File *file);
 	void	setStartingTime();
 	int		getClientSocket();
 	bool	getClientPending();
@@ -41,8 +45,9 @@ public:
 	int	getClientOpenFd();
 	RequestParse	*getClientRequest();
 	Response		*getClientResponse();
+	File			*getClientFile();
 	void	readRequest(int client_socket);
-	void	handle_connect(int client_socket);
+	void	handle_connect(int client_socket, Server &server);
 };
 
 void	new_connection(std::vector<Client*> &clientList, std::vector<int> &errorFds, Server &server);

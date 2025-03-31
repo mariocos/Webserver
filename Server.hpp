@@ -50,6 +50,11 @@ public:
 		public:
 			EpollCtlException();
 	};
+	class	NoFileToReadException : public std::runtime_error
+	{
+		public:
+			NoFileToReadException();
+	};
 };
 
 #endif

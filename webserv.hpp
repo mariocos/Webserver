@@ -45,6 +45,7 @@
 # include "Response.hpp"
 # include "Server.hpp"
 # include "Errors.hpp"
+# include "File.hpp"
 
 extern bool	run;
 
@@ -60,7 +61,7 @@ void	stopRunning(int signal);
 void	cleaner(Server &server, std::vector<Client*> &clientList);
 
 void	loadImgResponse(int client_socket, Response *response, Client *client);
-void	loadPage(int client_socket, int fd, Response *response, Client *client);
+void	loadPage(int client_socket, Response *response, Client *client);
 int 	setNonBlocking(int fd);
 void	createHeader(RequestParse *request, Response *response, Client *client);
 void	findType(RequestParse *request, Response *response);
@@ -68,6 +69,7 @@ void	findType(RequestParse *request, Response *response);
 std::vector<Client*>::iterator	getRightHole(std::vector<Client*> &clientList, int event_fd);
 std::vector<Client*>::iterator	getPendingHole(std::vector<Client*> &clientList);
 std::vector<Client*>::iterator	getNextPendingHole(std::vector<Client*> &clientList, std::vector<Client*>::iterator it);
+std::vector<Client *>::iterator	getFileHole(std::vector<Client*> &clientList, int event_fd);
 void	error_connection_handler(std::vector<int> &errorFds, Server &server);
 void	handlePendingConnections(std::vector<Client*> &clientList, Server &server);
 

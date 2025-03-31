@@ -114,11 +114,12 @@ void	handlePendingConnections(std::vector<Client*> &clientList, Server &server)
 		throw NoPendingConnectionsException();
 	while (it != clientList.end())
 	{
+		std::cout<<YELLOW<<"fd: "<<(*it)->getClientSocket()<<RESET<<std::endl;
 		if ((*it)->getClientReadingFlag() == false)
 			(*it)->readRequest((*it)->getClientSocket());
 		else
 		{
-			(*it)->handle_connect((*it)->getClientSocket());
+			(*it)->handle_connect((*it)->getClientSocket(), server);
 			if ((*it)->getClientWritingFlag() == true)
 			{
 				close((*it)->getClientSocket());
@@ -158,7 +159,7 @@ int	main(int ac, char **av)
 				cleaner(server, clientList);
 				return (1);
 			}
-			try
+			/* try
 			{
 				//this still does nothing because the socket is closed after its use
 				searchDeadConnections(clientList, server);
@@ -166,15 +167,7 @@ int	main(int ac, char **av)
 			catch(const std::exception& e)
 			{
 				std::cerr << e.what() << '\n';
-			}
-			try
-			{
-				handlePendingConnections(clientList, server);
-			}
-			catch(const std::exception& e)
-			{
-				std::cerr << RED << e.what() << RESET << '\n';
-			}
+			} */
 			try
 			{
 				server.handle_connections(clientList, errorFds);
@@ -183,6 +176,14 @@ int	main(int ac, char **av)
 			{
 				std::cerr << e.what() << '\n';
 				return (1);
+			}
+			try
+			{
+				handlePendingConnections(clientList, server);
+			}
+			catch(const std::exception& e)
+			{
+				std::cerr << RED << e.what() << RESET << '\n';
 			}
 		}
 		cleaner(server, clientList);

@@ -139,10 +139,10 @@ void	RequestParse::readToBuffer(int client_socket, Client *client)
 		client->setClientReadingFlag(true);
 }
 
-void	RequestParse::execute_response(int client_socket, Client *client)
+void	RequestParse::execute_response(int client_socket, Client *client, Server &server)
 {
 	if (method.compare("GET") == 0)
-		GET_response(client_socket, client);
+		GET_response(client_socket, client, server);
 	else if (method.compare("POST") == 0)
 		POST_response(client_socket, client);
 	else if (method.compare("DELETE") == 0)
@@ -151,38 +151,35 @@ void	RequestParse::execute_response(int client_socket, Client *client)
 		throw Error400Exception(client_socket, client);
 }
 
-void	RequestParse::GET_response(int client_socket, Client *client)
+void	RequestParse::GET_response(int client_socket, Client *client, Server &server)
 {
-	if (client->getClientWritingFlag() == false && client->getClientPending() == false)
+	(void)server;
+	if (client->getClientWritingFlag() == false && client->getClientPending() == false && client->getClientFile()->getFd() == -1)
 	{
 		findType(this, client->getClientResponse());
-		client->getClientResponse()->checkHowManyBytesToSend(client_socket, client);
-		createHeader(this, client->getClientResponse(), client);
-	}
-	else if (client->getClientPending() == true)
-		findType(this, client->getClientResponse());
-	if (client->getClientResponse()->getType() == "image/png")
-		loadImgResponse(client_socket, client->getClientResponse(), client);
-	else
-	{
-		int	fd = -1;
-		if (client->getClientOpenFd() == -1)
-		{
-			fd = open(client->getClientResponse()->getPath().c_str(), O_RDONLY);
-			std::cout<<"client_socket: "<<client->getClientSocket()<<std::endl;
-			if (fd != -1 && setNonBlocking(fd) == -1)
-			{
-    		    std::cerr << "Failed to set non-blocking mode." << std::endl;
-    		    close(fd);
-    		    return ;
-    		}
-		}
-		else
-			fd = client->getClientOpenFd();
-		if (fd == -1)
+		int fd = open(client->getClientResponse()->getPath().c_str(), O_RDONLY | O_NONBLOCK);
+		client->getClientFile()->setFd(fd);
+		if (client->getClientFile()->getFd() == -1)
 			throw Error404Exception(client_socket, client->getClientResponse(), client);
-		else
-			loadPage(client_socket, fd, client->getClientResponse(), client);
+		std::cout<<"open fd: "<<client->getClientFile()->getFd()<<std::endl;
+		return ;
+	}
+	else if (client->getClientFile()->getCheckingSizeFlag() == true)
+		client->getClientResponse()->checkHowManyBytesToSend(client_socket, client);
+	else if (client->getClientFile()->getCheckingSizeFlag() == false && client->getClientFile()->isReading() == false
+			&& client->getClientFile()->isWriting() == false)
+		createHeader(this, client->getClientResponse(), client);
+
+	//reading/write operations
+	if (client->getClientFile()->isReading() == true)
+	{
+		std::cout<<YELLOW<<"Is Reading From the file"<<RESET<<std::endl;
+		client->getClientFile()->readFromFd();
+	}
+	else if (client->getClientFile()->isWriting() == true)
+	{
+		std::cout<<YELLOW<<"Is Writing to the socket"<<RESET<<std::endl;
+		loadPage(client_socket, client->getClientResponse(), client);
 	}
 }
 

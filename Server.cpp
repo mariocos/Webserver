@@ -141,3 +141,6 @@ runtime_error("Error creating the epoll_fd") {}
 
 Server::EpollCtlException::EpollCtlException() :
 runtime_error("Error managing the epoll") {}
+
+Server::NoFileToReadException::NoFileToReadException() :
+runtime_error("No File Pending") {}
