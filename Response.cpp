@@ -1,4 +1,4 @@
-#include "Response.hpp"
+#include "includes/Response.hpp"
 
 
 Response::Response() : _response(""), _path(""), _type("text/plain"), _totalResponseLenght(0), _bytesSent(0)
@@ -103,18 +103,18 @@ std::string	Response::readFromBuffer()
 void	Response::checkHowManyBytesToSend(int client_socket, Client *client)
 {
 	int	input;
-	char	buffer[1000];
+	std::string	buffer(4096, '\0');
 	ssize_t	bytes = 1;
 
 	input = client->getClientFile()->getFd();
 	if (input != -1)
 	{
+		std::cout<<YELLOW<<"Checking how many Bytes to send"<<RESET<<std::endl;
 		while (bytes > 0)
 		{
-			bytes = read(input, buffer, sizeof(buffer) - 1);
+			bytes = read(input, &buffer[0], 4096);
 			if (bytes <= 0)
 				break ;
-			//std::cout<<"buffer: "<<buffer<<std::endl;
 			addToResponseLenght(bytes);
 		}
 	}
@@ -122,7 +122,5 @@ void	Response::checkHowManyBytesToSend(int client_socket, Client *client)
 		throw Error404Exception(client_socket, this, client);
 	close(input);
 	client->getClientFile()->setCheckingSizeFlag(false);
-	int fd = open(client->getClientResponse()->getPath().c_str(), O_RDONLY | O_NONBLOCK);
-	std::cout<<"fd: "<<fd<<std::endl;
-	client->getClientFile()->setFd(fd);
+	client->getClientFile()->setFd(open(client->getClientResponse()->getPath().c_str(), O_RDONLY | O_NONBLOCK));
 }

@@ -41,7 +41,7 @@
 # define YELLOW "\033[1m\033[33m"
 
 # include "Client.hpp"
-# include "parse_request/RequestParse.hpp"
+# include "../parse_request/RequestParse.hpp"
 # include "Response.hpp"
 # include "Server.hpp"
 # include "Errors.hpp"
@@ -53,25 +53,27 @@ class RequestParse;
 class Response;
 
 //main.cpp
-void	check(int algo);
+void	stopRunning(int signal);
 void	ft_bzero(void *s, size_t n);
+void	searchDeadConnections(std::vector<Client*> &clientList, Server &server);
+void	error_connection_handler(std::vector<int> &errorFds, Server &server);
+void	handlePendingConnections(std::vector<Client*> &clientList, Server &server);
 
 //signal.cpp
-void	stopRunning(int signal);
 void	cleaner(Server &server, std::vector<Client*> &clientList);
 
-void	loadImgResponse(int client_socket, Response *response, Client *client);
-void	loadPage(int client_socket, Response *response, Client *client);
-int 	setNonBlocking(int fd);
-void	createHeader(RequestParse *request, Response *response, Client *client);
+//create_response.cpp
 void	findType(RequestParse *request, Response *response);
+void	createHeader(RequestParse *request, Response *response, Client *client);
+int 	setNonBlocking(int fd);
+void	loadPage(int client_socket, unsigned int buffer_size, Response *response, Client *client);
+void	sendMsgToSocket(int client_socket, Client *client, Response *response);
 
+//HoleExplorer.cpp
 std::vector<Client*>::iterator	getRightHole(std::vector<Client*> &clientList, int event_fd);
 std::vector<Client*>::iterator	getPendingHole(std::vector<Client*> &clientList);
 std::vector<Client*>::iterator	getNextPendingHole(std::vector<Client*> &clientList, std::vector<Client*>::iterator it);
 std::vector<Client *>::iterator	getFileHole(std::vector<Client*> &clientList, int event_fd);
-void	error_connection_handler(std::vector<int> &errorFds, Server &server);
-void	handlePendingConnections(std::vector<Client*> &clientList, Server &server);
 
 class	NoPendingConnectionsException : public std::runtime_error
 {
@@ -83,6 +85,12 @@ class	NewConnectionCreationException : public std::runtime_error
 {
 	public:
 		NewConnectionCreationException(Server &server, std::vector<Client*> &clientList);
+};
+
+class	SendException : public std::runtime_error
+{
+	public:
+		SendException(Client *client, Response *response);
 };
 
 #endif

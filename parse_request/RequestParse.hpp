@@ -1,6 +1,6 @@
 #ifndef	RequestParse_HPP
 # define RequestParse_HPP
-# include "../webserv.hpp"
+# include "../includes/webserv.hpp"
 
 class Client;
 class Server;
@@ -42,8 +42,8 @@ public:
 	void	writeToBuffer(char *info);
 	void	adjustBuffer();
 	void	readToBuffer(int client_socket, Client *client);
-	void	execute_response(int client_socket, Client *client, Server &server);
-	void	GET_response(int client_socket, Client *client, Server &server);
+	void	execute_response(int client_socket, Client *client);
+	void	GET_response(int client_socket, Client *client);
 	void	POST_response(int client_socket, Client *client);
 	void	DELETE_response(int client_socket, Client *client);
 };

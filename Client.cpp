@@ -1,4 +1,4 @@
-#include "Client.hpp"
+#include "includes/Client.hpp"
 
 Client::Client() : _clientSocket(0), _request(NULL), _response(NULL), _pending(false), _keepAlive(false), _openFd(-1), _finishedReading(false), _finishedWriting(true)
 {
@@ -13,28 +13,29 @@ Client::Client(int client_socket) : _clientSocket(client_socket), _request(NULL)
 		close(this->_clientSocket);
 		this->_clientSocket = -1;
 	}
-	_response = new Response;
-	_request = new RequestParse;
-	_file = new File;
-	_file->setClient(this);
+	this->_response = new Response;
+	this->_request = new RequestParse;
+	this->_file = new File;
+	this->_file->setClient(this);
 	std::string *buffer = new std::string;
-	_response->setBuffer(buffer);
-	_request->setBuffer(buffer);
+	this->_response->setBuffer(buffer);
+	this->_request->setBuffer(buffer);
 }
 
 Client::~Client()
 {
-	delete _response->getBuffer();
-	delete _request;
-	delete _response;
-	delete _file;
+	if (this->_clientSocket != -1)
+		close(this->_clientSocket);
+	delete this->_response->getBuffer();
+	delete this->_request;
+	delete this->_response;
+	delete this->_file;
 	std::cout<<RED<<"Client Destructor"<<RESET<<std::endl;
 }
 
 void	Client::setClientSocket(int client_socket)
 {
 	this->_clientSocket = client_socket;
-	check(_clientSocket);
 }
 
 void	Client::setClientPending(bool pending)
@@ -144,12 +145,12 @@ void	Client::readRequest(int client_socket)
 	this->getClientRequest()->buildRequest(this->getClientRequest()->get_buffer().c_str());
 }
 
-void	Client::handle_connect(int client_socket, Server &server)
+void	Client::handle_connect(int client_socket)
 {
 	try
 	{
 		this->setStartingTime();
-		this->getClientRequest()->execute_response(client_socket, this, server);
+		this->getClientRequest()->execute_response(client_socket, this);
 	}
 	catch(const std::exception& e)
 	{

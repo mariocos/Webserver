@@ -1,4 +1,4 @@
-#include "webserv.hpp"
+#include "includes/webserv.hpp"
 
 void	findType(RequestParse *request, Response *response)
 {
@@ -29,41 +29,11 @@ void	createHeader(RequestParse *request, Response *response, Client *client)
 	//else
 	//	response->addToResponse("Content-lenght: " + response->getResponseLenghtAsString() + "\r\n\r\n");
 	response->addToResponse("Content-lenght: " + response->getResponseLenghtAsString() + "\r\n\r\n");
-	send(client->getClientSocket(), response->getResponse().c_str(), response->getResponse().length(), MSG_NOSIGNAL);
+	sendMsgToSocket(client->getClientSocket(), client, response);
 	std::cout<<"response head:\n"<<response->getResponse();
 	response->setResponse("");
 	client->getClientFile()->setReading(true);
 	client->getClientFile()->setWriting(false);
-}
-
-void	loadImgResponse(int client_socket, Response *response, Client *client)
-{
-	std::ifstream	input;
-	std::string		buffer;
-
-	input.open(response->getPath().c_str());
-	if (input.is_open())
-	{
-		while (getline(input, buffer))
-			response->setResponse(response->getResponse().append(buffer + "\n"));
-	}
-	else
-		throw Error404Exception(client_socket, response, client);
-	input.close();
-	if (send(client_socket, response->getResponse().c_str(), response->getResponse().length(), MSG_NOSIGNAL) == -1)
-	{
-		std::cout<<RED<<"Error sending the image"<<RESET<<std::endl;
-		response->setResponse("");
-		client->setClientWritingFlag(true);
-		client->setClientPending(false);
-		return ;
-	}
-	//response->addToBytesSent(send(client_socket, response->getResponse().c_str(), response->getResponse().length(), MSG_NOSIGNAL));
-	//std::cout<<"Bytes that was supposed to send: "<<response->getResponseLenght()<<std::endl;
-	//std::cout<<"Bytes sent: "<<response->getBytesSent()<<std::endl;
-	response->setResponse("");
-	client->setClientWritingFlag(true);
-	client->setClientPending(false);
 }
 
 int setNonBlocking(int fd)
@@ -71,40 +41,25 @@ int setNonBlocking(int fd)
     return (fcntl(fd, F_SETFL, O_NONBLOCK));
 }
 
-void	loadPage(int client_socket, Response *response, Client *client)
+void	loadPage(int client_socket, unsigned int buffer_size, Response *response, Client *client)
 {
 	response->setResponse(client->getClientFile()->readFromBuffer());
 	client->getClientFile()->clearBuffer();
 	client->getClientFile()->setReading(true);
 	client->getClientFile()->setWriting(false);
-	if (client->getClientFile()->getBytesRead() >= 1022)
+	if (client->getClientFile()->getBytesRead() >= buffer_size - 1)
 	{
 		std::cout<<RED<<"Sent chunk"<<RESET<<std::endl;
 		//std::cout<<"response body:\n"<<response->getResponse();
-		//response->addToBytesSent(send(client_socket, response->getResponse().c_str(), response->getResponse().length(), MSG_NOSIGNAL));
-		if (send(client_socket, response->getResponse().c_str(), response->getResponse().length(), MSG_NOSIGNAL) == -1)
-		{
-			std::cout<<RED<<"Error sending the chunk"<<RESET<<std::endl;
-			response->setResponse("");
-			client->setClientWritingFlag(true);
-			client->setClientPending(false);
-			client->getClientFile()->setReading(false);
-			return ;
-		}
+		//response->addToBytesSent(send(client_socket, response->getResponse().c_str(), client->getClientFile()->getBytesRead(), MSG_NOSIGNAL));
+		//std::cout<<"Bytes sent until now: "<<response->getBytesSent()<<std::endl;
+		sendMsgToSocket(client_socket, client, response);
 		client->setClientWritingFlag(false);
 		client->setClientPending(true);
 		return ;
 	}
-	if (send(client_socket, response->getResponse().c_str(), response->getResponse().length(), MSG_NOSIGNAL) == -1)
-	{
-		std::cout<<RED<<"Error sending the msg"<<RESET<<std::endl;
-		response->setResponse("");
-		client->setClientWritingFlag(true);
-		client->setClientPending(false);
-		client->getClientFile()->setReading(false);
-		return ;
-	}
-	//response->addToBytesSent(send(client_socket, response->getResponse().c_str(), response->getResponse().length(), MSG_NOSIGNAL));
+	sendMsgToSocket(client_socket, client, response);
+	//response->addToBytesSent(send(client_socket, response->getResponse().c_str(), client->getClientFile()->getBytesRead(), MSG_NOSIGNAL));
 	std::cout<<RED<<"Sent all the info"<<RESET<<std::endl;
 	//std::cout<<"response body:\n"<<response->getResponse();
 	//std::cout<<"Bytes that was supposed to send: "<<response->getResponseLenght()<<std::endl;
@@ -112,4 +67,10 @@ void	loadPage(int client_socket, Response *response, Client *client)
 	response->setResponse("");
 	client->setClientWritingFlag(true);
 	client->setClientPending(false);
+}
+
+void	sendMsgToSocket(int client_socket, Client *client, Response *response)
+{
+	if (send(client_socket, response->getResponse().c_str(), response->getResponse().length(), MSG_NOSIGNAL) == -1)
+		throw SendException(client, response);
 }

@@ -1,4 +1,4 @@
-#include "Server.hpp"
+#include "includes/Server.hpp"
 
 Server::Server() : _serverSocket(-1)
 {
@@ -117,6 +117,7 @@ void	Server::handle_connections(std::vector<Client*> &clientList, std::vector<in
 			else if (event.events & EPOLLRDHUP)
 			{
 				std::cout<<YELLOW<<"Client Disconnected"<<RESET<<std::endl;
+				std::cout<<YELLOW<<"Socket that disconect was: "<<(*it)->getClientSocket()<<RESET<<std::endl;
 				this->removeFromEpoll((*it)->getClientSocket());
 				delete (*it);
 				clientList.erase(it);

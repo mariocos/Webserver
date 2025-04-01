@@ -1,4 +1,4 @@
-#include "webserv.hpp"
+#include "includes/webserv.hpp"
 
 bool	run;
 
@@ -11,20 +11,19 @@ runtime_error("Error adding a new client")
 	cleaner(server, clientList);
 }
 
+SendException::SendException(Client *client, Response *response) :
+runtime_error("Error while sending")
+{
+	response->setResponse("");
+	client->setClientWritingFlag(true);
+	client->setClientPending(false);
+	client->getClientFile()->setReading(false);
+}
+
 void	stopRunning(int signal)
 {
 	(void)signal;
 	run = false;
-}
-
-void	check(int algo)
-{
-	if (algo == -1)
-	{
-		perror("");
-		std::cerr<<RED<<"Error msg"<<RESET<<std::endl;
-		exit(1);
-	}
 }
 
 void	ft_bzero(void *s, size_t n)
@@ -107,19 +106,17 @@ void	error_connection_handler(std::vector<int> &errorFds, Server &server)
 
 void	handlePendingConnections(std::vector<Client*> &clientList, Server &server)
 {
-	(void)server;
 	std::vector<Client*>::iterator	it;
 	it = getPendingHole(clientList);
 	if (it == clientList.end())
 		throw NoPendingConnectionsException();
 	while (it != clientList.end())
 	{
-		std::cout<<YELLOW<<"fd: "<<(*it)->getClientSocket()<<RESET<<std::endl;
 		if ((*it)->getClientReadingFlag() == false)
 			(*it)->readRequest((*it)->getClientSocket());
 		else
 		{
-			(*it)->handle_connect((*it)->getClientSocket(), server);
+			(*it)->handle_connect((*it)->getClientSocket());
 			if ((*it)->getClientWritingFlag() == true)
 			{
 				close((*it)->getClientSocket());

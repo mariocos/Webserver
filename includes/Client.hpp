@@ -47,7 +47,7 @@ public:
 	Response		*getClientResponse();
 	File			*getClientFile();
 	void	readRequest(int client_socket);
-	void	handle_connect(int client_socket, Server &server);
+	void	handle_connect(int client_socket);
 };
 
 void	new_connection(std::vector<Client*> &clientList, std::vector<int> &errorFds, Server &server);

@@ -1,18 +1,17 @@
-#include "File.hpp"
+#include "includes/File.hpp"
 
-File::File() : _fd(-1), _client(NULL), _checkingSize(true), _isReading(false), _isWriting(false)
+File::File() : _fd(-1), _bytesRead(0), _client(NULL), _buffer(""), _checkingSize(true), _isReading(false), _isWriting(false)
 {
-	this->_buffer = new std::string;
 }
 
-File::File(int fd, Client *client) : _fd(fd), _client(client), _checkingSize(true), _isReading(false), _isWriting(false)
+File::File(int fd, Client *client) : _fd(fd), _bytesRead(0), _client(client), _buffer(""), _checkingSize(true), _isReading(false), _isWriting(false)
 {
-	this->_buffer = new std::string;
 }
 
 File::~File()
 {
-	delete this->_buffer;
+	if (this->_fd != -1)
+		close(this->_fd);
 }
 
 int	File::getFd()
@@ -27,7 +26,7 @@ Client	*File::getClient()
 
 std::string File::readFromBuffer()
 {
-	return (this->_buffer ? *_buffer : "");
+	return (this->_buffer);
 }
 
 bool	File::getCheckingSizeFlag()
@@ -77,33 +76,32 @@ void	File::setWriting(bool flag)
 
 void	File::clearBuffer()
 {
-	this->_buffer->clear();
+	this->_buffer.clear();
 }
 
 void	File::writeToBuffer(char *info)
 {
 	adjustBuffer();
-	this->_buffer->append(info);
+	this->_buffer.append(info);
 }
 
 void	File::adjustBuffer()
 {
-	if (this->_buffer)
-		this->_buffer->insert(0, *this->_buffer);
+	if (!this->_buffer.empty())
+		this->_buffer.insert(0, this->_buffer);
 }
 
-void	File::readFromFd()
+void	File::readFromFd(unsigned int buffer_size)
 {
-	if (this->_buffer->empty())
+	if (this->_buffer.empty())
 	{
-		char	buffer[1024];
-		this->_bytesRead = 1;
-		ft_bzero(buffer, sizeof(buffer));
-		_bytesRead = read(this->_fd, buffer, sizeof(buffer));
+		std::string	binaryBuffer(buffer_size, '\0');
+
+		this->_bytesRead = read(this->_fd, &binaryBuffer[0], buffer_size);
 		//std::cout<<"Read From fd Buffer: \n"<<buffer<<std::endl;
-		std::cout<<"Bytes read: \n"<<_bytesRead<<std::endl;
-		this->writeToBuffer(buffer);
-		if (_bytesRead >= 1022)
+		//std::cout<<"Bytes read: \n"<<_bytesRead<<std::endl;
+		this->_buffer = binaryBuffer;
+		if (this->_bytesRead >= buffer_size)
 			this->getClient()->setClientOpenFd(this->_fd);
 		this->_isReading = false;
 		this->_isWriting = true;

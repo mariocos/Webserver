@@ -1,4 +1,4 @@
-#include "Errors.hpp"
+#include "includes/Errors.hpp"
 
 Error400Exception::Error400Exception(int client_socket, Client *client) :
 runtime_error("Error 400 found") 
