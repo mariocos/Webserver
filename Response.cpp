@@ -99,28 +99,3 @@ std::string	Response::readFromBuffer()
 {
 	return (this->_buffer ? *_buffer : "");
 }
-
-void	Response::checkHowManyBytesToSend(int client_socket, Client *client)
-{
-	int	input;
-	std::string	buffer(4096, '\0');
-	ssize_t	bytes = 1;
-
-	input = client->getClientFile()->getFd();
-	if (input != -1)
-	{
-		std::cout<<YELLOW<<"Checking how many Bytes to send"<<RESET<<std::endl;
-		while (bytes > 0)
-		{
-			bytes = read(input, &buffer[0], 4096);
-			if (bytes <= 0)
-				break ;
-			addToResponseLenght(bytes);
-		}
-	}
-	else
-		throw Error404Exception(client_socket, this, client);
-	close(input);
-	client->getClientFile()->setCheckingSizeFlag(false);
-	client->getClientFile()->setFd(open(client->getClientResponse()->getPath().c_str(), O_RDONLY | O_NONBLOCK));
-}

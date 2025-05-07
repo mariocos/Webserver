@@ -40,18 +40,3 @@ std::vector<Client*>::iterator	getNextPendingHole(std::vector<Client*> &clientLi
 	}
 	return (end);
 }
-
-std::vector<Client *>::iterator	getFileHole(std::vector<Client*> &clientList, int event_fd)
-{
-	std::vector<Client*>::iterator	it = clientList.begin();
-	std::vector<Client*>::iterator	end = clientList.end();
-	while (it != end)
-	{
-		if (*it != NULL && (*it)->getClientFile()->getFd() == event_fd)
-			return (it);
-		it++;
-	}
-	if (it == end)
-		throw NoPendingConnectionsException();
-	return (end);
-}

@@ -1,22 +1,27 @@
 #include "includes/File.hpp"
 
-File::File() : _fd(-1), _bytesRead(0), _client(NULL), _buffer(""), _checkingSize(true), _isReading(false), _isWriting(false)
+File::File() : _bytesRead(0), _client(NULL), _buffer(""), _checkingSize(true), _isReading(false), _isWriting(false)
 {
 }
 
-File::File(int fd, Client *client) : _fd(fd), _bytesRead(0), _client(client), _buffer(""), _checkingSize(true), _isReading(false), _isWriting(false)
+File::File(Client *client) : _bytesRead(0), _client(client), _buffer(""), _checkingSize(true), _isReading(false), _isWriting(false)
 {
 }
 
 File::~File()
 {
-	if (this->_fd != -1)
-		close(this->_fd);
+	if (this->_file.is_open())
+		this->_file.close();
 }
 
-int	File::getFd()
+std::fstream	*File::getFile()
 {
-	return (this->_fd);
+	return (&this->_file);
+}
+
+struct stat	*File::getFileStats()
+{
+	return (&this->_fileStats);
 }
 
 Client	*File::getClient()
@@ -47,11 +52,6 @@ bool	File::isWriting()
 unsigned int	File::getBytesRead()
 {
 	return (this->_bytesRead);
-}
-
-void	File::setFd(int fd)
-{
-	this->_fd = fd;
 }
 
 void	File::setClient(Client *client)
@@ -97,12 +97,11 @@ void	File::readFromFd(unsigned int buffer_size)
 	{
 		std::string	binaryBuffer(buffer_size, '\0');
 
-		this->_bytesRead = read(this->_fd, &binaryBuffer[0], buffer_size);
+		this->_file.read(&binaryBuffer[0], buffer_size);
+		this->_bytesRead = this->_file.gcount();
 		//std::cout<<"Read From fd Buffer: \n"<<buffer<<std::endl;
 		//std::cout<<"Bytes read: \n"<<_bytesRead<<std::endl;
 		this->_buffer = binaryBuffer;
-		if (this->_bytesRead >= buffer_size)
-			this->getClient()->setClientOpenFd(this->_fd);
 		this->_isReading = false;
 		this->_isWriting = true;
 	}

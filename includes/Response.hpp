@@ -39,7 +39,6 @@ public:
 	void	addToResponseLenght(unsigned int bytes);
 	void	addToBytesSent(ssize_t bytes);
 	std::string	readFromBuffer();
-	void	checkHowManyBytesToSend(int client_socket, Client *client);
 };
 
 #endif

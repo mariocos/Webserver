@@ -19,6 +19,7 @@ void	createHeader(RequestParse *request, Response *response, Client *client)
 {
 	response->addToResponse(request->get_httpversion() + " 200 OK\r\n");
 	response->addToResponse("Content-Type: " + response->getType() + "\r\n");
+	response->addToResponseLenght(client->getClientFile()->getFileStats()->st_size);
 	if (client->getClientConnection() == true)
 	{
 		response->addToResponse("Connection: close\r\n");

@@ -8,7 +8,8 @@ class Client;
 class File
 {
 private:
-	int				_fd;
+	std::fstream	_file;
+	struct stat		_fileStats;
 	unsigned int	_bytesRead;
 	Client 			*_client;
 	std::string		_buffer;
@@ -17,16 +18,16 @@ private:
 	bool			_isWriting;
 public:
 	File();
-	File(int fd, Client *client);
+	File(Client *client);
 	~File();
-	int				getFd();
+	std::fstream	*getFile();
+	struct stat			*getFileStats();
 	Client			*getClient();
 	std::string		readFromBuffer();
 	bool			getCheckingSizeFlag();
 	bool			isReading();
 	bool			isWriting();
 	unsigned int	getBytesRead();
-	void			setFd(int fd);
 	void			setClient(Client *client);
 	void			setCheckingSizeFlag(bool flag);
 	void			setReading(bool flag);

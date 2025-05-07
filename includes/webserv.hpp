@@ -73,7 +73,6 @@ void	sendMsgToSocket(int client_socket, Client *client, Response *response);
 std::vector<Client*>::iterator	getRightHole(std::vector<Client*> &clientList, int event_fd);
 std::vector<Client*>::iterator	getPendingHole(std::vector<Client*> &clientList);
 std::vector<Client*>::iterator	getNextPendingHole(std::vector<Client*> &clientList, std::vector<Client*>::iterator it);
-std::vector<Client *>::iterator	getFileHole(std::vector<Client*> &clientList, int event_fd);
 
 class	NoPendingConnectionsException : public std::runtime_error
 {
