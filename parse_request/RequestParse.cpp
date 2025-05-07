@@ -156,16 +156,7 @@ void	RequestParse::GET_response(int client_socket, Client *client)
 	if (!client->getClientWritingFlag() && !client->getClientPending() && !client->getClientFile()->getFile()->is_open())
 	{
 		findType(this, client->getClientResponse());
-		client->getClientFile()->getFile()->open(client->getClientResponse()->getPath().c_str(), std::ios::in);
-		if (!client->getClientFile()->getFile()->is_open())
-			throw Error404Exception(client_socket, client->getClientResponse(), client);
-		if (!client->getClientFile()->getFile()->good())
-		{
-			client->getClientFile()->getFile()->close();
-			throw Error404Exception(client_socket, client->getClientResponse(), client);
-		}
-		if (stat(client->getClientResponse()->getPath().c_str(), client->getClientFile()->getFileStats()))
-			throw Error404Exception(client_socket, client->getClientResponse(), client);
+		client->getClientFile()->openFile(client->getClientResponse()->getPath().c_str(), client_socket);
 		client->getClientFile()->setCheckingSizeFlag(false);
 		return ;
 	}

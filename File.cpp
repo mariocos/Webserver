@@ -106,3 +106,17 @@ void	File::readFromFd(unsigned int buffer_size)
 		this->_isWriting = true;
 	}
 }
+
+void	File::openFile(const char *path, int client_socket)
+{
+	this->_file.open(this->_client->getClientResponse()->getPath().c_str(), std::ios::in);
+	if (!this->_file.is_open())
+		throw Error404Exception(client_socket, this->_client->getClientResponse(), this->_client);
+	if (!this->_file.good())
+	{
+		this->_file.close();
+		throw Error404Exception(client_socket, this->_client->getClientResponse(), this->_client);
+	}
+	if (stat(path, &this->_fileStats))
+		throw Error404Exception(client_socket, this->_client->getClientResponse(), this->_client);
+}

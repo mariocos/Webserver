@@ -36,6 +36,7 @@ public:
 	void			writeToBuffer(char *info);
 	void			adjustBuffer();
 	void			readFromFd(unsigned int buffer_size);
+	void			openFile(const char *path, int client_socket);
 };
 
 #endif
