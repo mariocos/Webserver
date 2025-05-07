@@ -142,7 +142,13 @@ int	main(int ac, char **av)
 		config = av[1];
 	try
 	{
-		Server	server(4243, 10);
+		//std::vector<yaml>		configs;
+		std::vector<int>	ports;
+		ports.push_back(4243);
+		ports.push_back(8080);
+		ports.push_back(3000);
+		//Server	server(ports, 10);
+		Server		server(4243, 10);
 		std::vector<Client*>	clientList;
 		std::vector<int>		errorFds;
 		run = true;

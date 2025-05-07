@@ -67,7 +67,7 @@ void	findType(RequestParse *request, Response *response);
 void	createHeader(RequestParse *request, Response *response, Client *client);
 int 	setNonBlocking(int fd);
 void	loadPage(int client_socket, unsigned int buffer_size, Response *response, Client *client);
-void	sendMsgToSocket(int client_socket, Client *client, Response *response);
+void	sendMsgToSocket(int client_socket, int lenght, Client *client, Response *response);
 
 //HoleExplorer.cpp
 std::vector<Client*>::iterator	getRightHole(std::vector<Client*> &clientList, int event_fd);

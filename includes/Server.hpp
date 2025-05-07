@@ -12,6 +12,7 @@ class Server
 {
 private:
 	int	_serverSocket;
+	std::vector<int>	_serverSockets;
 	int	_epoll_fd;
 	int	_epoll_count;
 	int	_maxEvents;

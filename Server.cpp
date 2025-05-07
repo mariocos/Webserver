@@ -3,13 +3,36 @@
 Server::Server() : _serverSocket(-1)
 {
 }
-
+//Server::Server(std::vector<int> ports, int backlog) : _maxEvents(backlog)
 Server::Server(int port, int backlog) : _maxEvents(backlog)
 {
 	int	option = 1;
 	struct sockaddr_in servaddr;
 	struct epoll_event	event;
 
+	this->_epoll_fd = epoll_create(1);
+	if (this->_epoll_fd == -1)
+		throw EpollCreationException();
+	/* for (int i = 0; i < ports.size(); i++)
+	{
+		this->_serverSockets[i] = socket(AF_INET, SOCK_STREAM, 0);
+		if (this->_serverSockets[i] == -1)
+			throw SocketCreationException();
+		servaddr.sin_family = AF_INET;
+		servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
+		servaddr.sin_port = htons(ports[i]);
+		if (setsockopt(this->_serverSockets[i], SOL_SOCKET, SO_REUSEADDR, &option, sizeof(option)) == -1)
+			throw SocketBindException();
+		if (bind(this->_serverSockets[i], (const sockaddr *)&servaddr, sizeof(servaddr)) == -1)
+			throw SocketBindException();
+		if (listen(this->_serverSockets[i], backlog) == -1)
+			throw SocketBindException();
+		event.events = EPOLLIN;
+		event.data.fd = this->_serverSockets[i];
+		if (epoll_ctl(this->_epoll_fd, EPOLL_CTL_ADD, event.data.fd, &event) == -1)
+			throw EpollCtlException();
+	} */
+	
 	this->_serverSocket = socket(AF_INET, SOCK_STREAM, 0);
 	if (this->_serverSocket == -1)
 		throw SocketCreationException();
@@ -22,11 +45,8 @@ Server::Server(int port, int backlog) : _maxEvents(backlog)
 		throw SocketBindException();
 	if (listen(_serverSocket, backlog) == -1)
 		throw SocketBindException();
-	this->_epoll_fd = epoll_create(1);
-	if (this->_epoll_fd == -1)
-		throw EpollCreationException();
 	event.events = EPOLLIN;
-	event.data.fd = _serverSocket;
+	event.data.fd = this->_serverSocket;
 	if (epoll_ctl(this->_epoll_fd, EPOLL_CTL_ADD, event.data.fd, &event) == -1)
 		throw EpollCtlException();
 	this->_events = new epoll_event[this->_maxEvents];
@@ -94,6 +114,46 @@ void	Server::handle_connections(std::vector<Client*> &clientList, std::vector<in
 	{
 		struct epoll_event	&event = this->_events[i];
 		error_connection_handler(errorFds, *this);
+		/* size_t	x = 0;
+		while (x < this->_serverSockets.size())
+		{
+			if (event.data.fd == this->_serverSockets[i])
+			{
+				try
+				{
+					new_connection(clientList, errorFds, *this);
+					std::cout<<GREEN<<"Connection successuful"<<RESET<<std::endl;
+				}
+				catch(const std::exception& e)
+				{
+					std::cerr << e.what() << '\n';
+				}
+				break;
+			}
+			x++;
+		}
+		if (x == this->_serverSockets.size())
+		{
+			it = getRightHole(clientList, event.data.fd);
+			if (it == clientList.end())
+			{
+				std::cout<<RED<<"All spaces ocupied"<<RESET<<std::endl;
+				continue;
+			}
+			else if (event.events & EPOLLRDHUP)
+			{
+				std::cout<<YELLOW<<"Client Disconnected"<<RESET<<std::endl;
+				std::cout<<YELLOW<<"Socket that disconect was: "<<(*it)->getClientSocket()<<RESET<<std::endl;
+				this->removeFromEpoll((*it)->getClientSocket());
+				delete (*it);
+				clientList.erase(it);
+			}
+			else
+			{
+				(*it)->readRequest((*it)->getClientSocket());
+				(*it)->setClientWritingFlag(false);
+			}
+		} */
 		if (event.data.fd == this->_serverSocket)
 		{
 			try

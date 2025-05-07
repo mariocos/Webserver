@@ -21,16 +21,9 @@ void	createHeader(RequestParse *request, Response *response, Client *client)
 	response->addToResponse("Content-Type: " + response->getType() + "\r\n");
 	response->addToResponseLenght(client->getClientFile()->getFileStats()->st_size);
 	if (client->getClientConnection() == true)
-	{
 		response->addToResponse("Connection: close\r\n");
-		//response->addToResponse("Keep-Alive: timeout=5, max=100\r\n");
-	}
-	//if (response->getType() != "image/png" && response->getResponseLenght() > 5)
-	//	response->addToResponse("Transfer-Enconding: chunked\r\n\r\n");
-	//else
-	//	response->addToResponse("Content-lenght: " + response->getResponseLenghtAsString() + "\r\n\r\n");
 	response->addToResponse("Content-lenght: " + response->getResponseLenghtAsString() + "\r\n\r\n");
-	sendMsgToSocket(client->getClientSocket(), client, response);
+	sendMsgToSocket(client->getClientSocket(), response->getResponse().length(), client, response);
 	std::cout<<"response head:\n"<<response->getResponse();
 	response->setResponse("");
 	client->getClientFile()->setReading(true);
@@ -54,12 +47,12 @@ void	loadPage(int client_socket, unsigned int buffer_size, Response *response, C
 		//std::cout<<"response body:\n"<<response->getResponse();
 		//response->addToBytesSent(send(client_socket, response->getResponse().c_str(), client->getClientFile()->getBytesRead(), MSG_NOSIGNAL));
 		//std::cout<<"Bytes sent until now: "<<response->getBytesSent()<<std::endl;
-		sendMsgToSocket(client_socket, client, response);
+		sendMsgToSocket(client_socket, buffer_size, client, response);
 		client->setClientWritingFlag(false);
 		client->setClientPending(true);
 		return ;
 	}
-	sendMsgToSocket(client_socket, client, response);
+	sendMsgToSocket(client_socket, client->getClientResponse()->getResponseLenght(), client, response);
 	//response->addToBytesSent(send(client_socket, response->getResponse().c_str(), client->getClientFile()->getBytesRead(), MSG_NOSIGNAL));
 	std::cout<<RED<<"Sent all the info"<<RESET<<std::endl;
 	//std::cout<<"response body:\n"<<response->getResponse();
@@ -70,8 +63,8 @@ void	loadPage(int client_socket, unsigned int buffer_size, Response *response, C
 	client->setClientPending(false);
 }
 
-void	sendMsgToSocket(int client_socket, Client *client, Response *response)
+void	sendMsgToSocket(int client_socket, int lenght, Client *client, Response *response)
 {
-	if (send(client_socket, response->getResponse().c_str(), response->getResponse().length(), MSG_NOSIGNAL) == -1)
+	if (send(client_socket, response->getResponse().c_str(), lenght, MSG_NOSIGNAL) == -1)
 		throw SendException(client, response);
 }
