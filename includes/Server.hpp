@@ -11,7 +11,6 @@
 class Server
 {
 private:
-	int	_serverSocket;
 	std::vector<int>	_serverSockets;
 	int	_epoll_fd;
 	int	_epoll_count;
@@ -19,13 +18,14 @@ private:
 	epoll_event	*_events;
 public:
 	Server();
-	Server(int port, int backlog);
+	Server(std::vector<int> ports, int backlog);
 	~Server();
 	void	setEpollCount(int count);
-	int	getServerSocket();
 	int	getEpollFd();
 	int	getEpollCount();
 	int	getMaxEvents();
+	int	getServerSocketTriggered(int fd);
+	std::vector<int>	getServerSockets();
 	epoll_event	*getEpollEventArray();
 	epoll_event	getEpollIndex(int index);
 	void	handle_connections(std::vector<Client*> &clientList, std::vector<int> &errorFds);

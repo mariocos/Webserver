@@ -12,5 +12,8 @@ void	cleaner(Server &server, std::vector<Client*> &clientList)
 		delete (*clientIt);
 		clientIt++;
 	}
-	close(server.getServerSocket());
+	for (size_t i = 0; i < server.getServerSockets().size(); i++)
+	{
+		close(server.getServerSockets()[i]);
+	}
 }

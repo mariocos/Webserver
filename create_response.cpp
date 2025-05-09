@@ -52,7 +52,7 @@ void	loadPage(int client_socket, unsigned int buffer_size, Response *response, C
 		client->setClientPending(true);
 		return ;
 	}
-	sendMsgToSocket(client_socket, client->getClientResponse()->getResponseLenght(), client, response);
+	sendMsgToSocket(client_socket, client->getClientFile()->getBytesRead(), client, response);
 	//response->addToBytesSent(send(client_socket, response->getResponse().c_str(), client->getClientFile()->getBytesRead(), MSG_NOSIGNAL));
 	std::cout<<RED<<"Sent all the info"<<RESET<<std::endl;
 	//std::cout<<"response body:\n"<<response->getResponse();

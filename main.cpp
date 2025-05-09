@@ -62,11 +62,11 @@ void	searchDeadConnections(std::vector<Client*> &clientList, Server &server)
 	}
 }
 
-void	new_connection(std::vector<Client*> &clientList, std::vector<int> &errorFds, Server &server)
+void	new_connection(std::vector<Client*> &clientList, std::vector<int> &errorFds, Server &server, int serverFd)
 {
 	struct sockaddr_in clientaddr;
 	socklen_t	addrlen = sizeof(clientaddr);
-	Client	*newClient = new Client(accept(server.getServerSocket(), (struct sockaddr*)&clientaddr, &addrlen));
+	Client	*newClient = new Client(accept(serverFd, (struct sockaddr*)&clientaddr, &addrlen));
 	if (newClient->getClientSocket() == -1)
 		throw NewConnectionCreationException(server, clientList);
 	server.addNewSocket(newClient->getClientSocket());
@@ -147,8 +147,7 @@ int	main(int ac, char **av)
 		ports.push_back(4243);
 		ports.push_back(8080);
 		ports.push_back(3000);
-		//Server	server(ports, 10);
-		Server		server(4243, 10);
+		Server	server(ports, 10);
 		std::vector<Client*>	clientList;
 		std::vector<int>		errorFds;
 		run = true;
