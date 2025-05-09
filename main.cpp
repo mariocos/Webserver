@@ -173,14 +173,6 @@ int	main(int ac, char **av)
 			try
 			{
 				server.handle_connections(clientList, errorFds);
-			}
-			catch(const std::exception& e)
-			{
-				std::cerr << e.what() << '\n';
-				return (1);
-			}
-			try
-			{
 				handlePendingConnections(clientList, server);
 			}
 			catch(const std::exception& e)

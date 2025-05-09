@@ -6,10 +6,10 @@ runtime_error("Error 400 found")
 	loadError400(client_socket, client);
 }
 
-Error403Exception::Error403Exception() :
+Error403Exception::Error403Exception(int client_socket, Response *response, Client *client) :
 runtime_error("Error 403 found") 
 {
-	loadError403();
+	loadError403(client_socket, response, client);
 }
 
 Error404Exception::Error404Exception(int client_socket, Response *response, Client *client) :
@@ -18,10 +18,10 @@ runtime_error("Error 404 found")
 	loadError404(client_socket, response, client);
 }
 
-Error405Exception::Error405Exception() :
+Error405Exception::Error405Exception(int client_socket, Client *client) :
 runtime_error("Error 405 found") 
 {
-	loadError405();
+	loadError405(client_socket, client);
 }
 
 Error503Exception::Error503Exception(Client *errorClient, Server &server) :

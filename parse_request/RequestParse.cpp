@@ -148,7 +148,7 @@ void	RequestParse::execute_response(int client_socket, Client *client)
 	else if (method.compare("DELETE") == 0)
 		DELETE_response(client_socket, client);
 	else
-		throw Error400Exception(client_socket, client);
+		throw Error405Exception(client_socket, client);
 }
 
 void	RequestParse::GET_response(int client_socket, Client *client)

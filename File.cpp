@@ -109,14 +109,43 @@ void	File::readFromFd(unsigned int buffer_size)
 
 void	File::openFile(const char *path, int client_socket)
 {
+	if (!this->checkFileInfo(path, client_socket))
+		return ;
 	this->_file.open(this->_client->getClientResponse()->getPath().c_str(), std::ios::in);
 	if (!this->_file.is_open())
-		throw Error404Exception(client_socket, this->_client->getClientResponse(), this->_client);
+	{
+		if (errno == EACCES || errno == EPERM)
+			throw Error403Exception(client_socket, this->_client->getClientResponse(), this->_client);
+		else
+			throw Error404Exception(client_socket, this->_client->getClientResponse(), this->_client);
+	}
 	if (!this->_file.good())
 	{
 		this->_file.close();
 		throw Error404Exception(client_socket, this->_client->getClientResponse(), this->_client);
 	}
+}
+
+bool	File::checkFileInfo(const char *path, int client_socket)
+{
 	if (stat(path, &this->_fileStats))
-		throw Error404Exception(client_socket, this->_client->getClientResponse(), this->_client);
+	{
+		if (errno == EACCES || errno == EPERM)
+			throw Error403Exception(client_socket, this->_client->getClientResponse(), this->_client);
+		else
+			throw Error404Exception(client_socket, this->_client->getClientResponse(), this->_client);
+	}
+	if (S_ISDIR(this->_fileStats.st_mode))
+	{
+		this->_file.open("website/index.html", std::ios::in);
+		if (!this->_file.is_open())
+		{
+			if (errno == EACCES || errno == EPERM)
+				throw Error403Exception(client_socket, this->_client->getClientResponse(), this->_client);
+			else
+				throw Error404Exception(client_socket, this->_client->getClientResponse(), this->_client);
+		}
+		return (false);
+	}
+	return (true);
 }
