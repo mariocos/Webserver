@@ -23,7 +23,7 @@ void	createHeader(RequestParse *request, Response *response, Client *client)
 	if (client->getClientConnection() == true)
 		response->addToResponse("Connection: close\r\n");
 	response->addToResponse("Content-lenght: " + response->getResponseLenghtAsString() + "\r\n\r\n");
-	sendMsgToSocket(client->getClientSocket(), response->getResponse().length(), client, response);
+	sendMsgToSocket(client->getSocketFd(), response->getResponse().length(), client, response);
 	std::cout<<"response head:\n"<<response->getResponse();
 	response->setResponse("");
 	client->getClientFile()->setReading(true);

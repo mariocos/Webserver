@@ -7,7 +7,7 @@ std::vector<Client*>::iterator	getRightHole(std::vector<Client*> &clientList, in
 	std::vector<Client*>::iterator	end = clientList.end();
 	while (it != end)
 	{
-		if (*it != NULL && (*it)->getClientSocket() == event_fd)
+		if (*it != NULL && (*it)->getSocketFd() == event_fd)
 			return (it);
 		it++;
 	}

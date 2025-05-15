@@ -46,6 +46,8 @@
 # include "Server.hpp"
 # include "Errors.hpp"
 # include "File.hpp"
+# include "WebSocket.hpp"
+# include "ServerBlock.hpp"
 
 extern bool	run;
 
@@ -55,7 +57,6 @@ class Response;
 //main.cpp
 void	stopRunning(int signal);
 void	ft_bzero(void *s, size_t n);
-void	searchDeadConnections(std::vector<Client*> &clientList, Server &server);
 void	error_connection_handler(std::vector<int> &errorFds, Server &server);
 void	handlePendingConnections(std::vector<Client*> &clientList, Server &server);
 

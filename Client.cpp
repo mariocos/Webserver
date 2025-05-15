@@ -1,17 +1,17 @@
 #include "includes/Client.hpp"
 
-Client::Client() : _clientSocket(0), _request(NULL), _response(NULL), _pending(false), _keepAlive(false), _openFd(-1), _finishedReading(false), _finishedWriting(true)
+Client::Client() : WebSocket(-1), _request(NULL), _response(NULL), _pending(false), _keepAlive(false), _openFd(-1), _finishedReading(false), _finishedWriting(true)
 {
 }
 
-Client::Client(int client_socket) : _clientSocket(client_socket), _request(NULL), _response(NULL), _pending(false), _keepAlive(false),_openFd(-1), _finishedReading(false), _finishedWriting(true)
+Client::Client(int client_socket) : WebSocket(client_socket), _request(NULL), _response(NULL), _pending(false), _keepAlive(false),_openFd(-1), _finishedReading(false), _finishedWriting(true)
 {
 	std::cout<<GREEN<<"Client constructor called"<<RESET<<std::endl;
-	if (setNonBlocking(this->_clientSocket) == -1)
+	if (setNonBlocking(this->getSocketFd()) == -1)
 	{
 		std::cerr << "Failed to set non-blocking mode." << std::endl;
-		close(this->_clientSocket);
-		this->_clientSocket = -1;
+		close(this->getSocketFd());
+		this->setSocketFd(-1);
 	}
 	this->_response = new Response;
 	this->_request = new RequestParse;
@@ -24,18 +24,11 @@ Client::Client(int client_socket) : _clientSocket(client_socket), _request(NULL)
 
 Client::~Client()
 {
-	if (this->_clientSocket != -1)
-		close(this->_clientSocket);
 	delete this->_response->getBuffer();
 	delete this->_request;
 	delete this->_response;
 	delete this->_file;
 	std::cout<<RED<<"Client Destructor"<<RESET<<std::endl;
-}
-
-void	Client::setClientSocket(int client_socket)
-{
-	this->_clientSocket = client_socket;
 }
 
 void	Client::setClientPending(bool pending)
@@ -83,9 +76,14 @@ void	Client::setStartingTime()
 	this->_startTime = time(NULL);
 }
 
-int	Client::getClientSocket()
+void	Client::setPortTriggered(int port)
 {
-	return (this->_clientSocket);
+	this->_portTriggered = port;
+}
+
+void	Client::setDomainTriggered(std::string name)
+{
+	this->_domainTriggered = name;
 }
 
 bool	Client::getClientPending()
@@ -119,6 +117,16 @@ bool	Client::connectionExpired(int timeoutSec)
 int	Client::getClientOpenFd()
 {
 	return (_openFd);
+}
+
+int	Client::getPortTriggered()
+{
+	return (this->_portTriggered);
+}
+
+std::string	Client::getDomainTriggered()
+{
+	return (this->_domainTriggered);
 }
 
 RequestParse	*Client::getClientRequest()

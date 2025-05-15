@@ -1,18 +1,23 @@
 #ifndef CLIENT_HPP
 # define CLIENT_HPP
 
-#include "webserv.hpp"
+# include "../parse_request/RequestParse.hpp"
+# include "Response.hpp"
+# include "Server.hpp"
+# include "File.hpp"
+# include "WebSocket.hpp"
+
 
 class RequestParse;
 class Response;
 class Server;
 class File;
-class Server;
 
-class Client
+class Client : public WebSocket
 {
 private:
-	int				_clientSocket;
+	int				_portTriggered;
+	std::string		_domainTriggered;
 	RequestParse	*_request;
 	Response		*_response;
 	File			*_file;
@@ -26,7 +31,6 @@ public:
 	Client();
 	Client(int client_socket);
 	~Client();
-	void	setClientSocket(int client_socket);
 	void	setClientPending(bool pending);
 	void	setClientConnection(bool connection);
 	void	setClientRequest(RequestParse *request);
@@ -36,13 +40,16 @@ public:
 	void	setClientWritingFlag(bool flag);
 	void	setClientFile(File *file);
 	void	setStartingTime();
-	int		getClientSocket();
+	void	setPortTriggered(int port);
+	void	setDomainTriggered(std::string name);
 	bool	getClientPending();
 	bool	getClientConnection();
 	bool	getClientReadingFlag();
 	bool	getClientWritingFlag();
 	bool	connectionExpired(int timeoutSec);
 	int	getClientOpenFd();
+	int	getPortTriggered();
+	std::string	getDomainTriggered();
 	RequestParse	*getClientRequest();
 	Response		*getClientResponse();
 	File			*getClientFile();

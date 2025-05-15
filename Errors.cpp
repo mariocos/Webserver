@@ -27,8 +27,8 @@ runtime_error("Error 405 found")
 Error503Exception::Error503Exception(Client *errorClient, Server &server) :
 runtime_error("Error 503 found") 
 {
-	loadError503(errorClient->getClientSocket());
-	server.removeFromEpoll(errorClient->getClientSocket());
+	loadError503(errorClient->getSocketFd());
+	server.removeFromEpoll(errorClient->getSocketFd());
 	delete	errorClient;
 }
 

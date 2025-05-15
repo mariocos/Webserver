@@ -8,24 +8,28 @@
 
 # include "webserv.hpp"
 
+class ServerBlock;
+
 class Server
 {
 private:
-	std::vector<int>	_serverSockets;
+	std::vector<ServerBlock>	_serverBlocks;
 	int	_epoll_fd;
 	int	_epoll_count;
 	int	_maxEvents;
 	epoll_event	*_events;
 public:
 	Server();
-	Server(std::vector<int> ports, int backlog);
+	Server(std::vector<int> ports, std::vector<std::string> names, int backlog);
 	~Server();
 	void	setEpollCount(int count);
 	int	getEpollFd();
 	int	getEpollCount();
 	int	getMaxEvents();
 	int	getServerSocketTriggered(int fd);
-	std::vector<int>	getServerSockets();
+	std::vector<ServerBlock>::iterator getServerBlockTriggered(int fd);
+	std::vector<ServerBlock>	getServerBlocks();
+	ServerBlock	getServerBlock(int index);
 	epoll_event	*getEpollEventArray();
 	epoll_event	getEpollIndex(int index);
 	void	handle_connections(std::vector<Client*> &clientList, std::vector<int> &errorFds);

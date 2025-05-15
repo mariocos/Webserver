@@ -67,6 +67,7 @@ void	RequestParse::buildRequest(const char *request)
 	User = get_keyword(req, "User: ");
 	Accepts = get_keyword(req, "Accept: ");
 	connection = get_keyword(req, "Connection: ");
+	Host = get_keyword(req, "Host: ");
 	if (req.find("\r\n\r\n"))
 	{
 		req.erase(0, req.find("\r\n\r\n") + 4);

@@ -4,7 +4,7 @@ Server::Server()
 {
 }
 
-Server::Server(std::vector<int> ports, int backlog) : _maxEvents(backlog)
+Server::Server(std::vector<int> ports, std::vector<std::string> names, int backlog) : _maxEvents(backlog)
 {
 	int	option = 1;
 	struct sockaddr_in servaddr;
@@ -13,22 +13,24 @@ Server::Server(std::vector<int> ports, int backlog) : _maxEvents(backlog)
 	this->_epoll_fd = epoll_create(1);
 	if (this->_epoll_fd == -1)
 		throw EpollCreationException();
-	for (size_t i = 0; i < ports.size(); i++)
+	this->_serverBlocks.reserve(ports.size());
+	for (size_t i = 0; i < ports.size() && i < names.size(); i++)
 	{
-		this->_serverSockets.push_back(socket(AF_INET, SOCK_STREAM, 0));
-		if (this->_serverSockets[i] == -1)
+		this->_serverBlocks.push_back(ServerBlock(ports[i], backlog, names[i]));
+		this->_serverBlocks.back().setSocketFd(socket(AF_INET, SOCK_STREAM, 0));
+		if (this->_serverBlocks.back().getSocketFd() == -1)
 			throw SocketCreationException();
 		servaddr.sin_family = AF_INET;
 		servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
-		servaddr.sin_port = htons(ports[i]);
-		if (setsockopt(this->_serverSockets[i], SOL_SOCKET, SO_REUSEADDR, &option, sizeof(option)) == -1)
+		servaddr.sin_port = htons(this->_serverBlocks.back().getBlockPort());
+		if (setsockopt(this->_serverBlocks.back().getSocketFd(), SOL_SOCKET, SO_REUSEADDR, &option, sizeof(option)) == -1)
 			throw SocketBindException();
-		if (bind(this->_serverSockets[i], (const sockaddr *)&servaddr, sizeof(servaddr)) == -1)
+		if (bind(this->_serverBlocks.back().getSocketFd(), (const sockaddr *)&servaddr, sizeof(servaddr)) == -1)
 			throw SocketBindException();
-		if (listen(this->_serverSockets[i], backlog) == -1)
+		if (listen(this->_serverBlocks.back().getSocketFd(), this->_serverBlocks.back().getBlockMaxConnections()) == -1)
 			throw SocketBindException();
 		event.events = EPOLLIN;
-		event.data.fd = this->_serverSockets[i];
+		event.data.fd = this->_serverBlocks.back().getSocketFd();
 		if (epoll_ctl(this->_epoll_fd, EPOLL_CTL_ADD, event.data.fd, &event) == -1)
 			throw EpollCtlException();
 	}
@@ -64,17 +66,34 @@ int	Server::getMaxEvents()
 
 int	Server::getServerSocketTriggered(int fd)
 {
-	for (size_t i = 0; i < this->_serverSockets.size(); i++)
+	for (size_t i = 0; i < this->_serverBlocks.size(); i++)
 	{
-		if (fd == this->_serverSockets[i])
+		if (fd == this->_serverBlocks[i].getSocketFd())
 			return (fd);
 	}
 	return (-1);
 }
 
-std::vector<int>	Server::getServerSockets()
+std::vector<ServerBlock>::iterator	Server::getServerBlockTriggered(int fd)
 {
-	return (this->_serverSockets);
+	std::vector<ServerBlock>::iterator	it = this->_serverBlocks.begin();
+	while (it != this->_serverBlocks.end())
+	{
+		if (fd == it->getSocketFd())
+			return (it);
+		it++;
+	}
+	return (this->_serverBlocks.end());
+}
+
+std::vector<ServerBlock>	Server::getServerBlocks()
+{
+	return (this->_serverBlocks);
+}
+
+ServerBlock	Server::getServerBlock(int index)
+{
+	return (this->_serverBlocks[index]);
 }
 
 epoll_event	*Server::getEpollEventArray()
@@ -130,14 +149,14 @@ void	Server::handle_connections(std::vector<Client*> &clientList, std::vector<in
 			else if (event.events & EPOLLRDHUP)
 			{
 				std::cout<<YELLOW<<"Client Disconnected"<<RESET<<std::endl;
-				std::cout<<YELLOW<<"Socket that disconect was: "<<(*it)->getClientSocket()<<RESET<<std::endl;
-				this->removeFromEpoll((*it)->getClientSocket());
+				std::cout<<YELLOW<<"Socket that disconect was: "<<(*it)->getSocketFd()<<RESET<<std::endl;
+				this->removeFromEpoll((*it)->getSocketFd());
 				delete (*it);
 				clientList.erase(it);
 			}
 			else
 			{
-				(*it)->readRequest((*it)->getClientSocket());
+				(*it)->readRequest((*it)->getSocketFd());
 				(*it)->setClientWritingFlag(false);
 			}
 		}

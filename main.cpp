@@ -3,7 +3,7 @@
 bool	run;
 
 NoPendingConnectionsException::NoPendingConnectionsException() :
-runtime_error("Nothing Pending") {}
+runtime_error("") {}
 
 NewConnectionCreationException::NewConnectionCreationException(Server &server, std::vector<Client*> &clientList) :
 runtime_error("Error adding a new client")
@@ -39,48 +39,27 @@ void	ft_bzero(void *s, size_t n)
 	}
 }
 
-
-//trying to close connections after a timeout of inactivity
-void	searchDeadConnections(std::vector<Client*> &clientList, Server &server)
-{
-	std::vector<Client*>::iterator	it = clientList.begin();
-	std::vector<Client*>::iterator	end = clientList.end();
-	while (it != end)
-	{
-		if (*it != NULL && (*it)->connectionExpired(5) == true)
-		{
-			server.removeFromEpoll((*it)->getClientSocket());
-			close((*it)->getClientSocket());
-			delete (*it);
-			clientList.erase(it);
-			std::cout<<RED<<"Connection Expired"<<RESET<<std::endl;
-			it = clientList.begin();
-			end = clientList.end();
-		}
-		else
-			it++;
-	}
-}
-
 void	new_connection(std::vector<Client*> &clientList, std::vector<int> &errorFds, Server &server, int serverFd)
 {
 	struct sockaddr_in clientaddr;
 	socklen_t	addrlen = sizeof(clientaddr);
 	Client	*newClient = new Client(accept(serverFd, (struct sockaddr*)&clientaddr, &addrlen));
-	if (newClient->getClientSocket() == -1)
+	if (newClient->getSocketFd() == -1)
 		throw NewConnectionCreationException(server, clientList);
-	server.addNewSocket(newClient->getClientSocket());
+	newClient->setPortTriggered(server.getServerBlockTriggered(serverFd)->getBlockPort());
+	newClient->setDomainTriggered(server.getServerBlockTriggered(serverFd)->getBlockName());
+	server.addNewSocket(newClient->getSocketFd());
 	newClient->setStartingTime();
 	if (clientList.size() < 60)
 		clientList.push_back(newClient);
 	else
 	{
 		std::cout<<RED<<"SERVER OCUPIED"<<RESET<<std::endl;
-		errorFds.push_back(newClient->getClientSocket());
+		errorFds.push_back(newClient->getSocketFd());
 		delete	newClient;
 		return ;
 	}
-	std::cout<<"Socket Number: "<<newClient->getClientSocket()<<std::endl;
+	std::cout<<"Socket Number: "<<newClient->getSocketFd()<<std::endl;
 }
 
 void	error_connection_handler(std::vector<int> &errorFds, Server &server)
@@ -112,16 +91,36 @@ void	handlePendingConnections(std::vector<Client*> &clientList, Server &server)
 		throw NoPendingConnectionsException();
 	while (it != clientList.end())
 	{
+		std::cout<<RED<<"Host: "<<(*it)->getClientRequest()->get_host()<<RESET<<std::endl;
+		std::cout<<RED<<"Domain: "<<(*it)->getDomainTriggered()<<RESET<<std::endl;
+		std::cout<<RED<<"Port: "<<(*it)->getPortTriggered()<<RESET<<std::endl;
+		if ((*it)->getClientRequest()->get_host() == (*it)->getDomainTriggered())
+		{
+			size_t	i = 0;
+			while (i < server.getServerBlocks().size())
+			{
+				if ((*it)->getPortTriggered() == server.getServerBlock(i).getBlockPort() && (*it)->getDomainTriggered() == server.getServerBlock(i).getBlockName())
+					break;
+				i++;
+			}
+			if (i == server.getServerBlocks().size())
+			{
+				loadError400((*it)->getSocketFd(), (*it));
+				(*it)->setClientOpenFd(-1);
+				server.removeFromEpoll((*it)->getSocketFd());
+				delete (*it);
+				clientList.erase(it);
+			}
+		}
 		if ((*it)->getClientReadingFlag() == false)
-			(*it)->readRequest((*it)->getClientSocket());
+			(*it)->readRequest((*it)->getSocketFd());
 		else
 		{
-			(*it)->handle_connect((*it)->getClientSocket());
+			(*it)->handle_connect((*it)->getSocketFd());
 			if ((*it)->getClientWritingFlag() == true)
 			{
-				close((*it)->getClientSocket());
 				(*it)->setClientOpenFd(-1);
-				server.removeFromEpoll((*it)->getClientSocket());
+				server.removeFromEpoll((*it)->getSocketFd());
 				delete (*it);
 				clientList.erase(it);
 			}
@@ -147,7 +146,11 @@ int	main(int ac, char **av)
 		ports.push_back(4243);
 		ports.push_back(8080);
 		ports.push_back(3000);
-		Server	server(ports, 10);
+		std::vector<std::string>	names;
+		names.push_back("localhost");
+		names.push_back("webserver.com");
+		names.push_back("127.0.0.1");
+		Server	server(ports, names, 10);
 		std::vector<Client*>	clientList;
 		std::vector<int>		errorFds;
 		run = true;
@@ -161,15 +164,6 @@ int	main(int ac, char **av)
 				cleaner(server, clientList);
 				return (1);
 			}
-			/* try
-			{
-				//this still does nothing because the socket is closed after its use
-				searchDeadConnections(clientList, server);
-			}
-			catch(const std::exception& e)
-			{
-				std::cerr << e.what() << '\n';
-			} */
 			try
 			{
 				server.handle_connections(clientList, errorFds);
@@ -177,7 +171,7 @@ int	main(int ac, char **av)
 			}
 			catch(const std::exception& e)
 			{
-				std::cerr << RED << e.what() << RESET << '\n';
+				std::cerr << e.what() << '\n';
 			}
 		}
 		cleaner(server, clientList);
