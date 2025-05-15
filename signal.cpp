@@ -3,6 +3,8 @@
 void	cleaner(Server &server, std::vector<Client*> &clientList)
 {
 	std::vector<Client*>::iterator	clientIt = clientList.begin();
+	std::vector<ServerBlock*>	copy = server.getServerBlocks();
+	std::vector<ServerBlock*>::iterator	serverIt = copy.begin();
 	while (clientIt != clientList.end())
 	{
 		if ((*clientIt)->getSocketFd() != -1)
@@ -12,8 +14,11 @@ void	cleaner(Server &server, std::vector<Client*> &clientList)
 		delete (*clientIt);
 		clientIt++;
 	}
-	for (size_t i = 0; i < server.getServerBlocks().size(); i++)
+	while (serverIt != copy.end())
 	{
-		close(server.getServerBlock(i).getSocketFd());
+		if ((*serverIt)->getSocketFd() != -1)
+			close((*serverIt)->getSocketFd());
+		delete (*serverIt);
+		serverIt++;
 	}
 }

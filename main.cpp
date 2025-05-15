@@ -46,8 +46,9 @@ void	new_connection(std::vector<Client*> &clientList, std::vector<int> &errorFds
 	Client	*newClient = new Client(accept(serverFd, (struct sockaddr*)&clientaddr, &addrlen));
 	if (newClient->getSocketFd() == -1)
 		throw NewConnectionCreationException(server, clientList);
-	newClient->setPortTriggered(server.getServerBlockTriggered(serverFd)->getBlockPort());
-	newClient->setDomainTriggered(server.getServerBlockTriggered(serverFd)->getBlockName());
+	std::vector<ServerBlock*>::iterator	it = server.getServerBlockTriggered(serverFd);
+	newClient->setPortTriggered((*it)->getBlockPort());
+	newClient->setDomainTriggered((*it)->getBlockName());
 	server.addNewSocket(newClient->getSocketFd());
 	newClient->setStartingTime();
 	if (clientList.size() < 60)
@@ -83,6 +84,22 @@ void	error_connection_handler(std::vector<int> &errorFds, Server &server)
 	}
 }
 
+bool	isConnectionGood(Server &server, std::vector<Client*>::iterator it)
+{
+	std::vector<ServerBlock*>	copy = server.getServerBlocks();
+	std::vector<ServerBlock*>::iterator	serverIt = copy.begin();
+	while (serverIt != copy.end())
+	{
+		if ((*it)->getPortTriggered() == (*serverIt)->getBlockPort())
+		{
+			if ((*it)->getClientRequest()->get_host() == (*serverIt)->getBlockName())
+				return (true);
+		}
+		serverIt++;
+	}
+	return (false);
+}
+
 void	handlePendingConnections(std::vector<Client*> &clientList, Server &server)
 {
 	std::vector<Client*>::iterator	it;
@@ -91,28 +108,15 @@ void	handlePendingConnections(std::vector<Client*> &clientList, Server &server)
 		throw NoPendingConnectionsException();
 	while (it != clientList.end())
 	{
-		std::cout<<RED<<"Host: "<<(*it)->getClientRequest()->get_host()<<RESET<<std::endl;
-		std::cout<<RED<<"Domain: "<<(*it)->getDomainTriggered()<<RESET<<std::endl;
-		std::cout<<RED<<"Port: "<<(*it)->getPortTriggered()<<RESET<<std::endl;
-		if ((*it)->getClientRequest()->get_host() == (*it)->getDomainTriggered())
+		if (!isConnectionGood(server, it))
 		{
-			size_t	i = 0;
-			while (i < server.getServerBlocks().size())
-			{
-				if ((*it)->getPortTriggered() == server.getServerBlock(i).getBlockPort() && (*it)->getDomainTriggered() == server.getServerBlock(i).getBlockName())
-					break;
-				i++;
-			}
-			if (i == server.getServerBlocks().size())
-			{
-				loadError400((*it)->getSocketFd(), (*it));
-				(*it)->setClientOpenFd(-1);
-				server.removeFromEpoll((*it)->getSocketFd());
-				delete (*it);
-				clientList.erase(it);
-			}
+			loadError400((*it)->getSocketFd(), (*it));
+			(*it)->setClientOpenFd(-1);
+			server.removeFromEpoll((*it)->getSocketFd());
+			delete (*it);
+			clientList.erase(it);
 		}
-		if ((*it)->getClientReadingFlag() == false)
+		else if ((*it)->getClientReadingFlag() == false)
 			(*it)->readRequest((*it)->getSocketFd());
 		else
 		{

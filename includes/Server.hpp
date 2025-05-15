@@ -13,7 +13,7 @@ class ServerBlock;
 class Server
 {
 private:
-	std::vector<ServerBlock>	_serverBlocks;
+	std::vector<ServerBlock*>	_serverBlocks;
 	int	_epoll_fd;
 	int	_epoll_count;
 	int	_maxEvents;
@@ -27,8 +27,8 @@ public:
 	int	getEpollCount();
 	int	getMaxEvents();
 	int	getServerSocketTriggered(int fd);
-	std::vector<ServerBlock>::iterator getServerBlockTriggered(int fd);
-	std::vector<ServerBlock>	getServerBlocks();
+	std::vector<ServerBlock*>::iterator getServerBlockTriggered(int fd);
+	std::vector<ServerBlock*>	getServerBlocks();
 	ServerBlock	getServerBlock(int index);
 	epoll_event	*getEpollEventArray();
 	epoll_event	getEpollIndex(int index);

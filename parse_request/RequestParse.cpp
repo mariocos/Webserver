@@ -68,6 +68,8 @@ void	RequestParse::buildRequest(const char *request)
 	Accepts = get_keyword(req, "Accept: ");
 	connection = get_keyword(req, "Connection: ");
 	Host = get_keyword(req, "Host: ");
+	if (Host.find(":") != std::string::npos)
+		Host.erase(Host.find(":"), 5);
 	if (req.find("\r\n\r\n"))
 	{
 		req.erase(0, req.find("\r\n\r\n") + 4);
@@ -85,6 +87,7 @@ std::string	get_keyword(std::string req, std::string keyword)
 	i = req.find(keyword) + keyword.length();
 	while (req[i] && req[i] != '\r')
 		i++;
+	i -= req.find(keyword) + keyword.length();
 	return (req.substr(req.find(keyword) + keyword.length(), i));
 }
 

@@ -13,26 +13,25 @@ Server::Server(std::vector<int> ports, std::vector<std::string> names, int backl
 	this->_epoll_fd = epoll_create(1);
 	if (this->_epoll_fd == -1)
 		throw EpollCreationException();
-	this->_serverBlocks.reserve(ports.size());
 	for (size_t i = 0; i < ports.size() && i < names.size(); i++)
 	{
-		this->_serverBlocks.push_back(ServerBlock(ports[i], backlog, names[i]));
-		this->_serverBlocks.back().setSocketFd(socket(AF_INET, SOCK_STREAM, 0));
-		if (this->_serverBlocks.back().getSocketFd() == -1)
+		ServerBlock	*newServerBlock = new ServerBlock(ports[i], backlog, names[i], socket(AF_INET, SOCK_STREAM, 0));
+		if (newServerBlock->getSocketFd() == -1)
 			throw SocketCreationException();
 		servaddr.sin_family = AF_INET;
 		servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
-		servaddr.sin_port = htons(this->_serverBlocks.back().getBlockPort());
-		if (setsockopt(this->_serverBlocks.back().getSocketFd(), SOL_SOCKET, SO_REUSEADDR, &option, sizeof(option)) == -1)
+		servaddr.sin_port = htons(newServerBlock->getBlockPort());
+		if (setsockopt(newServerBlock->getSocketFd(), SOL_SOCKET, SO_REUSEADDR, &option, sizeof(option)) == -1)
 			throw SocketBindException();
-		if (bind(this->_serverBlocks.back().getSocketFd(), (const sockaddr *)&servaddr, sizeof(servaddr)) == -1)
+		if (bind(newServerBlock->getSocketFd(), (const sockaddr *)&servaddr, sizeof(servaddr)) == -1)
 			throw SocketBindException();
-		if (listen(this->_serverBlocks.back().getSocketFd(), this->_serverBlocks.back().getBlockMaxConnections()) == -1)
+		if (listen(newServerBlock->getSocketFd(), newServerBlock->getBlockMaxConnections()) == -1)
 			throw SocketBindException();
 		event.events = EPOLLIN;
-		event.data.fd = this->_serverBlocks.back().getSocketFd();
+		event.data.fd = newServerBlock->getSocketFd();
 		if (epoll_ctl(this->_epoll_fd, EPOLL_CTL_ADD, event.data.fd, &event) == -1)
 			throw EpollCtlException();
+		this->_serverBlocks.push_back(newServerBlock);
 	}
 	this->_events = new epoll_event[this->_maxEvents];
 }
@@ -66,34 +65,36 @@ int	Server::getMaxEvents()
 
 int	Server::getServerSocketTriggered(int fd)
 {
-	for (size_t i = 0; i < this->_serverBlocks.size(); i++)
+	std::vector<ServerBlock*>::iterator	it = this->_serverBlocks.begin();
+	while (it != this->_serverBlocks.end())
 	{
-		if (fd == this->_serverBlocks[i].getSocketFd())
+		if (fd == (*it)->getSocketFd())
 			return (fd);
+		it++;
 	}
 	return (-1);
 }
 
-std::vector<ServerBlock>::iterator	Server::getServerBlockTriggered(int fd)
+std::vector<ServerBlock*>::iterator	Server::getServerBlockTriggered(int fd)
 {
-	std::vector<ServerBlock>::iterator	it = this->_serverBlocks.begin();
+	std::vector<ServerBlock*>::iterator	it = this->_serverBlocks.begin();
 	while (it != this->_serverBlocks.end())
 	{
-		if (fd == it->getSocketFd())
+		if (fd == (*it)->getSocketFd())
 			return (it);
 		it++;
 	}
 	return (this->_serverBlocks.end());
 }
 
-std::vector<ServerBlock>	Server::getServerBlocks()
+std::vector<ServerBlock*>	Server::getServerBlocks()
 {
 	return (this->_serverBlocks);
 }
 
 ServerBlock	Server::getServerBlock(int index)
 {
-	return (this->_serverBlocks[index]);
+	return (*this->_serverBlocks[index]);
 }
 
 epoll_event	*Server::getEpollEventArray()
