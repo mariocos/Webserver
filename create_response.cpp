@@ -17,15 +17,16 @@ void	findType(RequestParse *request, Response *response)
 
 void	createHeader(RequestParse *request, Response *response, Client *client)
 {
+	response->clearResponse();
 	response->addToResponse(request->get_httpversion() + " 200 OK\r\n");
 	response->addToResponse("Content-Type: " + response->getType() + "\r\n");
 	response->addToResponseLenght(client->getClientFile()->getFileStats()->st_size);
 	if (client->getClientConnection() == true)
 		response->addToResponse("Connection: close\r\n");
-	response->addToResponse("Content-lenght: " + response->getResponseLenghtAsString() + "\r\n\r\n");
-	sendMsgToSocket(client->getSocketFd(), response->getResponse().length(), client, response);
-	std::cout<<"response head:\n"<<response->getResponse();
-	response->setResponse("");
+	response->addToResponse("Content-Length: " + response->getResponseLenghtAsString() + "\r\n\r\n");
+	sendMsgToSocket(client->getSocketFd(), response->getResponse().size(), client, response);
+	std::cout<<"response head:\n"<<std::string(response->getResponse().begin(), response->getResponse().end());
+	response->clearResponse();
 	client->getClientFile()->setReading(true);
 	client->getClientFile()->setWriting(false);
 }
@@ -58,13 +59,14 @@ void	loadPage(int client_socket, unsigned int buffer_size, Response *response, C
 	//std::cout<<"response body:\n"<<response->getResponse();
 	//std::cout<<"Bytes that was supposed to send: "<<response->getResponseLenght()<<std::endl;
 	//std::cout<<"Bytes sent: "<<response->getBytesSent()<<std::endl;
-	response->setResponse("");
+	response->clearResponse();
 	client->setClientWritingFlag(true);
 	client->setClientPending(false);
 }
 
 void	sendMsgToSocket(int client_socket, int lenght, Client *client, Response *response)
 {
-	if (send(client_socket, response->getResponse().c_str(), lenght, MSG_NOSIGNAL) == -1)
+	const std::vector<char> &data = response->getResponse();
+	if (send(client_socket, &data[0], lenght, MSG_NOSIGNAL) == -1)
 		throw SendException(client, response);
 }

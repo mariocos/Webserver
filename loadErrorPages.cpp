@@ -20,21 +20,25 @@ void	loadError403(int client_socket, Response *response, Client *client)
 	response->addToResponse("HTTP/1.1 403 Forbidden\r\n");
 	response->addToResponse("Content-Type: text/html\r\n");
 	response->addToResponse("Connection: close\r\n\r\n");
-	input.open("website/403.html");
+	input.open("website/403.html", std::ios::in | std::ios::binary);
 	if (input.is_open())
 	{
+		std::string	responseCopy;
 		while (getline(input, buffer))
-			response->setResponse(response->getResponse().append(buffer + "\n"));
+			responseCopy.append(buffer + "\n");
 		input.close();
-		send(client_socket, response->getResponse().c_str(), response->getResponse().length(), O_NONBLOCK);
-		response->setResponse("");
+		response->addToResponse(responseCopy);
+		send(client_socket, &response->getResponse()[0], response->getResponse().size(), O_NONBLOCK);
+		response->clearResponse();
 	}
 	else
 	{
-		if (response->getResponse().find("Content-Type: text/html") != std::string::npos)
-			response->setResponse(response->getResponse().replace(response->getResponse().find("Content-Type: text/html"), 24, "Content-Type: text/plain"));
+		std::string	responseCopy(response->getResponse().begin(), response->getResponse().end());
+		if (responseCopy.find("Content-Type: text/html") != std::string::npos)
+			responseCopy.replace(responseCopy.find("Content-Type: text/html"), 24, "Content-Type: text/plain");
+		response->getResponse().assign(responseCopy.begin(), responseCopy.end());
 		response->addToResponse("403 Forbidden - You do not have the right permissions to access this file\n");
-		send(client_socket, response->getResponse().c_str(), response->getResponse().length(), O_NONBLOCK);
+		send(client_socket, &response->getResponse()[0], response->getResponse().size(), O_NONBLOCK);
 	}
 	client->setClientWritingFlag(true);
 	client->setClientPending(false);
@@ -48,21 +52,25 @@ void	loadError404(int client_socket, Response *response, Client *client)
 	response->addToResponse("HTTP/1.1 404 Not Found\r\n");
 	response->addToResponse("Content-Type: text/html\r\n");
 	response->addToResponse("Connection: close\r\n\r\n");
-	input.open("website/404.html");
+	input.open("website/404.html", std::ios::in | std::ios::binary);
 	if (input.is_open())
 	{
+		std::string	responseCopy;
 		while (getline(input, buffer))
-			response->setResponse(response->getResponse().append(buffer + "\n"));
+			responseCopy.append(buffer + "\n");
 		input.close();
-		send(client_socket, response->getResponse().c_str(), response->getResponse().length(), O_NONBLOCK);
-		response->setResponse("");
+		response->addToResponse(responseCopy);
+		send(client_socket, &response->getResponse()[0], response->getResponse().size(), O_NONBLOCK);
+		response->clearResponse();
 	}
 	else
 	{
-		if (response->getResponse().find("Content-Type: text/html") != std::string::npos)
-			response->setResponse(response->getResponse().replace(response->getResponse().find("Content-Type: text/html"), 24, "Content-Type: text/plain"));
+		std::string	responseCopy(response->getResponse().begin(), response->getResponse().end());
+		if (responseCopy.find("Content-Type: text/html") != std::string::npos)
+			responseCopy.replace(responseCopy.find("Content-Type: text/html"), 24, "Content-Type: text/plain");
+		response->getResponse().assign(responseCopy.begin(), responseCopy.end());
 		response->addToResponse("404 Not Found - The server could not find the file requested\n");
-		send(client_socket, response->getResponse().c_str(), response->getResponse().length(), O_NONBLOCK);
+		send(client_socket, &response->getResponse()[0], response->getResponse().size(), O_NONBLOCK);
 	}
 	client->setClientWritingFlag(true);
 	client->setClientPending(false);

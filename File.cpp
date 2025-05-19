@@ -1,10 +1,10 @@
 #include "includes/File.hpp"
 
-File::File() : _bytesRead(0), _client(NULL), _buffer(""), _checkingSize(true), _isReading(false), _isWriting(false)
+File::File() : _bytesRead(0), _client(NULL), _checkingSize(true), _isReading(false), _isWriting(false)
 {
 }
 
-File::File(Client *client) : _bytesRead(0), _client(client), _buffer(""), _checkingSize(true), _isReading(false), _isWriting(false)
+File::File(Client *client) : _bytesRead(0), _client(client), _checkingSize(true), _isReading(false), _isWriting(false)
 {
 }
 
@@ -29,7 +29,12 @@ Client	*File::getClient()
 	return (this->_client);
 }
 
-std::string File::readFromBuffer()
+/* std::string File::readFromBuffer()
+{
+	return (this->_buffer);
+} */
+
+std::vector<char>	&File::readFromBuffer()
 {
 	return (this->_buffer);
 }
@@ -79,7 +84,7 @@ void	File::clearBuffer()
 	this->_buffer.clear();
 }
 
-void	File::writeToBuffer(char *info)
+/* void	File::writeToBuffer(char *info)
 {
 	adjustBuffer();
 	this->_buffer.append(info);
@@ -89,19 +94,34 @@ void	File::adjustBuffer()
 {
 	if (!this->_buffer.empty())
 		this->_buffer.insert(0, this->_buffer);
+} */
+
+void	File::writeToBuffer(char* info, size_t len)
+{
+    adjustBuffer();
+    this->_buffer.insert(this->_buffer.end(), info, info + len);
+}
+
+void	File::adjustBuffer()
+{
+    if (!this->_buffer.empty())
+	{
+		std::vector<char> copy = this->_buffer;
+		this->_buffer.insert(this->_buffer.begin(), copy.begin(), copy.end());
+    }
 }
 
 void	File::readFromFd(unsigned int buffer_size)
 {
 	if (this->_buffer.empty())
 	{
-		std::string	binaryBuffer(buffer_size, '\0');
+		std::vector<char>	binaryBuffer(buffer_size);
 
 		this->_file.read(&binaryBuffer[0], buffer_size);
 		this->_bytesRead = this->_file.gcount();
 		//std::cout<<"Read From fd Buffer: \n"<<buffer<<std::endl;
 		//std::cout<<"Bytes read: \n"<<_bytesRead<<std::endl;
-		this->_buffer = binaryBuffer;
+		this->_buffer.assign(binaryBuffer.begin(), binaryBuffer.begin() + this->_bytesRead);
 		this->_isReading = false;
 		this->_isWriting = true;
 	}
@@ -111,7 +131,7 @@ void	File::openFile(const char *path, int client_socket)
 {
 	if (!this->checkFileInfo(path, client_socket))
 		return ;
-	this->_file.open(this->_client->getClientResponse()->getPath().c_str(), std::ios::in);
+	this->_file.open(this->_client->getClientResponse()->getPath().c_str(), std::ios::in | std::ios::binary);
 	if (!this->_file.is_open())
 	{
 		if (errno == EACCES || errno == EPERM)

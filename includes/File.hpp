@@ -12,7 +12,8 @@ private:
 	struct stat		_fileStats;
 	unsigned int	_bytesRead;
 	Client 			*_client;
-	std::string		_buffer;
+	//std::string		_buffer;
+	std::vector<char>	_buffer;
 	bool			_checkingSize;
 	bool			_isReading;
 	bool			_isWriting;
@@ -23,7 +24,8 @@ public:
 	std::fstream	*getFile();
 	struct stat			*getFileStats();
 	Client			*getClient();
-	std::string		readFromBuffer();
+	//std::string		readFromBuffer();
+	std::vector<char>	&readFromBuffer();
 	bool			getCheckingSizeFlag();
 	bool			isReading();
 	bool			isWriting();
@@ -33,7 +35,7 @@ public:
 	void			setReading(bool flag);
 	void			setWriting(bool flag);
 	void			clearBuffer();
-	void			writeToBuffer(char *info);
+	void			writeToBuffer(char *info, size_t len);
 	void			adjustBuffer();
 	void			readFromFd(unsigned int buffer_size);
 	void			openFile(const char *path, int client_socket);

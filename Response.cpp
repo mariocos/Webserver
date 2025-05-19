@@ -1,9 +1,13 @@
 #include "includes/Response.hpp"
 
 
-Response::Response() : _response(""), _path(""), _type("text/plain"), _totalResponseLenght(0), _bytesSent(0)
+Response::Response() : _response(), _path(""), _type("text/plain"), _totalResponseLenght(0), _bytesSent(0)
 {
-	_buffer = NULL;
+	this->_buffer = NULL;
+	for (size_t i = 0; i < this->_response.size(); i++)
+	{
+		this->_response[i] = '\0';
+	}
 }
 
 //Response::Response(const Response &copy)
@@ -19,7 +23,7 @@ Response::~Response()
 //	return (*this);
 //}
 
-std::string	Response::getResponse()
+std::vector<char>	&Response::getResponse()
 {
 	return (this->_response);
 }
@@ -59,7 +63,7 @@ ssize_t	Response::getBytesSent()
 	return (this->_bytesSent);
 }
 
-void	Response::setResponse(std::string response)
+void	Response::setResponse(const std::vector<char>& response)
 {
 	this->_response = response;
 }
@@ -81,7 +85,7 @@ void	Response::setType(std::string type)
 
 void	Response::addToResponse(std::string info)
 {
-	this->_response.append(info);
+	this->_response.insert(this->_response.end(), info.begin(), info.end());
 }
 
 void	Response::addToResponseLenght(unsigned int bytes)
@@ -92,6 +96,11 @@ void	Response::addToResponseLenght(unsigned int bytes)
 void	Response::addToBytesSent(ssize_t bytes)
 {
 	this->_bytesSent += bytes;
+}
+
+void	Response::clearResponse()
+{
+	this->_response.clear();
 }
 
 std::string	Response::readFromBuffer()

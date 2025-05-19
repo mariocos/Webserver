@@ -18,7 +18,7 @@ runtime_error(RED"Error adding a new client"RESET)
 SendException::SendException(Client *client, Response *response) :
 runtime_error(RED"Error while sending"RESET)
 {
-	response->setResponse("");
+	response->clearResponse();
 	client->setClientWritingFlag(true);
 	client->setClientPending(false);
 	client->getClientFile()->setReading(false);
