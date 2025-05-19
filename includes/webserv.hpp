@@ -50,6 +50,7 @@
 # include "ServerBlock.hpp"
 
 extern bool	run;
+extern bool	print;
 
 class RequestParse;
 class Response;
@@ -59,6 +60,8 @@ void	stopRunning(int signal);
 void	ft_bzero(void *s, size_t n);
 void	error_connection_handler(std::vector<int> &errorFds, Server &server);
 bool	isConnectionGood(Server &server, std::vector<Client*>::iterator it);
+bool	doesPortsMatch(Server &server, std::vector<Client*>::iterator it);
+void	handlePortOrDomainMismatch(Server &server, std::vector<Client*> &clientList, std::vector<Client*>::iterator it);
 void	handlePendingConnections(std::vector<Client*> &clientList, Server &server);
 
 //signal.cpp
@@ -92,6 +95,12 @@ class	SendException : public std::runtime_error
 {
 	public:
 		SendException(Client *client, Response *response);
+};
+
+class	RedirectException : public std::runtime_error
+{
+	public:
+		RedirectException(Server &server, std::vector<Client*>::iterator it);
 };
 
 #endif

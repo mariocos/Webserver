@@ -24,7 +24,7 @@ private:
 	bool		_default;
 public:
 	ServerBlock();
-	ServerBlock(int port, int backlog, std::string name, int socket);
+	ServerBlock(int port, int backlog, std::string name, int socket, bool flag);
 	ServerBlock(const ServerBlock &copy);
 	ServerBlock	&operator=(const ServerBlock &copy);
 	~ServerBlock();

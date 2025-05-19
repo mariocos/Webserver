@@ -1,23 +1,36 @@
 #include "includes/webserv.hpp"
 
 bool	run;
+bool	print;
 
 NoPendingConnectionsException::NoPendingConnectionsException() :
-runtime_error("") {}
+runtime_error("")
+{
+	print = false;
+}
 
 NewConnectionCreationException::NewConnectionCreationException(Server &server, std::vector<Client*> &clientList) :
-runtime_error("Error adding a new client")
+runtime_error(RED"Error adding a new client"RESET)
 {
 	cleaner(server, clientList);
 }
 
 SendException::SendException(Client *client, Response *response) :
-runtime_error("Error while sending")
+runtime_error(RED"Error while sending"RESET)
 {
 	response->setResponse("");
 	client->setClientWritingFlag(true);
 	client->setClientPending(false);
 	client->getClientFile()->setReading(false);
+}
+
+RedirectException::RedirectException(Server &server, std::vector<Client*>::iterator it) :
+runtime_error(YELLOW"Redirecting Request To Default Server Block"RESET)
+{
+	std::vector<ServerBlock*>::iterator	serverIt = server.getDefaultServerBlock();
+	(*it)->setDomainTriggered((*serverIt)->getBlockName());
+	(*it)->getClientRequest()->setNewHost((*serverIt)->getBlockName());
+	(*it)->setPortTriggered((*serverIt)->getBlockPort());
 }
 
 void	stopRunning(int signal)
@@ -46,11 +59,11 @@ void	new_connection(std::vector<Client*> &clientList, std::vector<int> &errorFds
 	Client	*newClient = new Client(accept(serverFd, (struct sockaddr*)&clientaddr, &addrlen));
 	if (newClient->getSocketFd() == -1)
 		throw NewConnectionCreationException(server, clientList);
+	//still kinda hardcoded to store the information about the server block triggered
 	std::vector<ServerBlock*>::iterator	it = server.getServerBlockTriggered(serverFd);
 	newClient->setPortTriggered((*it)->getBlockPort());
 	newClient->setDomainTriggered((*it)->getBlockName());
-	server.addNewSocket(newClient->getSocketFd());
-	newClient->setStartingTime();
+	newClient->addSocketToEpoll(server.getEpollFd());
 	if (clientList.size() < 60)
 		clientList.push_back(newClient);
 	else
@@ -100,6 +113,29 @@ bool	isConnectionGood(Server &server, std::vector<Client*>::iterator it)
 	return (false);
 }
 
+bool	doesPortsMatch(Server &server, std::vector<Client*>::iterator it)
+{
+	std::vector<ServerBlock*>	copy = server.getServerBlocks();
+	std::vector<ServerBlock*>::iterator	serverIt = copy.begin();
+	while (serverIt != copy.end())
+	{
+		if ((*it)->getPortTriggered() == (*serverIt)->getBlockPort())
+			return (true);
+		serverIt++;
+	}
+	return (false);
+}
+
+void	handlePortOrDomainMismatch(Server &server, std::vector<Client*> &clientList, std::vector<Client*>::iterator it)
+{
+	if (doesPortsMatch(server, it))
+		throw RedirectException(server, it);
+	(*it)->setClientOpenFd(-1);
+	(*it)->removeSocketFromEpoll((*it)->getSocketFd());
+	delete (*it);
+	clientList.erase(it);
+}
+
 void	handlePendingConnections(std::vector<Client*> &clientList, Server &server)
 {
 	std::vector<Client*>::iterator	it;
@@ -108,14 +144,9 @@ void	handlePendingConnections(std::vector<Client*> &clientList, Server &server)
 		throw NoPendingConnectionsException();
 	while (it != clientList.end())
 	{
+		//checking if the Host and Port match with the ones described in the request
 		if (!isConnectionGood(server, it))
-		{
-			loadError400((*it)->getSocketFd(), (*it));
-			(*it)->setClientOpenFd(-1);
-			server.removeFromEpoll((*it)->getSocketFd());
-			delete (*it);
-			clientList.erase(it);
-		}
+			handlePortOrDomainMismatch(server, clientList, it);
 		else if ((*it)->getClientReadingFlag() == false)
 			(*it)->readRequest((*it)->getSocketFd());
 		else
@@ -124,7 +155,7 @@ void	handlePendingConnections(std::vector<Client*> &clientList, Server &server)
 			if ((*it)->getClientWritingFlag() == true)
 			{
 				(*it)->setClientOpenFd(-1);
-				server.removeFromEpoll((*it)->getSocketFd());
+				(*it)->removeSocketFromEpoll((*it)->getSocketFd());
 				delete (*it);
 				clientList.erase(it);
 			}
@@ -158,10 +189,15 @@ int	main(int ac, char **av)
 		std::vector<Client*>	clientList;
 		std::vector<int>		errorFds;
 		run = true;
+		print = true;
 		signal(SIGINT, stopRunning);
 		while (run)
 		{
-			std::cout<<"Waiting..."<<std::endl;
+			if (print)
+			{
+				std::cout<<"Waiting..."<<std::endl;
+				print = false;
+			}
 			server.setEpollCount(epoll_wait(server.getEpollFd(), server.getEpollEventArray(), server.getMaxEvents(), 100));
 			if (server.getEpollCount() == -1)
 			{
@@ -170,12 +206,14 @@ int	main(int ac, char **av)
 			}
 			try
 			{
+				print = true;
 				server.handle_connections(clientList, errorFds);
 				handlePendingConnections(clientList, server);
 			}
 			catch(const std::exception& e)
 			{
-				std::cerr << e.what() << '\n';
+				if (print)
+					std::cerr << e.what() << '\n';
 			}
 		}
 		cleaner(server, clientList);

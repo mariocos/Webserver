@@ -26,7 +26,7 @@ char	*ft_strstr(const char *big, const char *little)
 
 RequestParse::RequestParse() : _buffer(NULL)
 {
-	std::cout << "Default RequestParse constructor called\n";
+	//std::cout << "Default RequestParse constructor called\n";
 }
 
 RequestParse::RequestParse(const char *request)
@@ -98,7 +98,7 @@ std::string	RequestParse::get_buffer()
 
 RequestParse::~RequestParse()
 {
-	std::cout<<RED<<"Destructor"<<RESET<<std::endl;
+	//std::cout<<RED<<"Destructor"<<RESET<<std::endl;
 }
 
 void	RequestParse::set_path(std::string path)
@@ -109,6 +109,11 @@ void	RequestParse::set_path(std::string path)
 void	RequestParse::setBuffer(std::string *buffer)
 {
 	_buffer = buffer;
+}
+
+void	RequestParse::setNewHost(std::string str)
+{
+	this->Host = str;
 }
 
 void	RequestParse::writeToBuffer(char *info)
@@ -157,6 +162,7 @@ void	RequestParse::execute_response(int client_socket, Client *client)
 
 void	RequestParse::GET_response(int client_socket, Client *client)
 {
+	//creating the header for the response and oppening the file requested
 	if (!client->getClientWritingFlag() && !client->getClientPending() && !client->getClientFile()->getFile()->is_open())
 	{
 		findType(this, client->getClientResponse());

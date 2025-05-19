@@ -6,7 +6,6 @@ Client::Client() : WebSocket(-1), _request(NULL), _response(NULL), _pending(fals
 
 Client::Client(int client_socket) : WebSocket(client_socket), _request(NULL), _response(NULL), _pending(false), _keepAlive(false),_openFd(-1), _finishedReading(false), _finishedWriting(true)
 {
-	std::cout<<GREEN<<"Client constructor called"<<RESET<<std::endl;
 	if (setNonBlocking(this->getSocketFd()) == -1)
 	{
 		std::cerr << "Failed to set non-blocking mode." << std::endl;
@@ -28,7 +27,6 @@ Client::~Client()
 	delete this->_request;
 	delete this->_response;
 	delete this->_file;
-	std::cout<<RED<<"Client Destructor"<<RESET<<std::endl;
 }
 
 void	Client::setClientPending(bool pending)
@@ -71,11 +69,6 @@ void	Client::setClientWritingFlag(bool flag)
 	this->_finishedWriting = flag;
 }
 
-void	Client::setStartingTime()
-{
-	this->_startTime = time(NULL);
-}
-
 void	Client::setPortTriggered(int port)
 {
 	this->_portTriggered = port;
@@ -104,14 +97,6 @@ bool	Client::getClientReadingFlag()
 bool	Client::getClientWritingFlag()
 {
 	return (this->_finishedWriting);
-}
-
-bool	Client::connectionExpired(int timeoutSec)
-{
-	time_t	now = time(NULL);
-	if (now - this->_startTime >= timeoutSec)
-		return (true);
-	return (false);
 }
 
 int	Client::getClientOpenFd()
@@ -146,7 +131,6 @@ File	*Client::getClientFile()
 
 void	Client::readRequest(int client_socket)
 {
-	this->setStartingTime();
 	this->getClientRequest()->readToBuffer(client_socket, this);
 	if (this->getClientRequest()->get_buffer().find("Connection: keep-alive") != std::string::npos)
 		this->setClientConnection(true);
@@ -157,7 +141,6 @@ void	Client::handle_connect(int client_socket)
 {
 	try
 	{
-		this->setStartingTime();
 		this->getClientRequest()->execute_response(client_socket, this);
 	}
 	catch(const std::exception& e)
@@ -165,9 +148,5 @@ void	Client::handle_connect(int client_socket)
 		std::cerr << e.what() << '\n';
 	}
 	if (this->getClientWritingFlag() == true)
-	{
-		//still trying to handle the keep alive connections
-		//close(client_socket);
 		std::cout<<YELLOW<<"Closing connection..."<<RESET<<std::endl;
-	}
 }

@@ -3,7 +3,6 @@
 
 Response::Response() : _response(""), _path(""), _type("text/plain"), _totalResponseLenght(0), _bytesSent(0)
 {
-	std::cout<<GREEN<<"Response default constructor called"<<RESET<<std::endl;
 	_buffer = NULL;
 }
 

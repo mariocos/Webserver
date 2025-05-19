@@ -6,7 +6,7 @@ ServerBlock::ServerBlock() : WebSocket(), _maxConnections(-1), _port(-1), _defau
 		_methods[i] = false;
 }
 
-ServerBlock::ServerBlock(int port, int backlog, std::string name, int socket) : WebSocket(socket), _name(name), _maxConnections(backlog), _port(port), _default(false)
+ServerBlock::ServerBlock(int port, int backlog, std::string name, int socket, bool flag) : WebSocket(socket), _name(name), _maxConnections(backlog), _port(port), _default(flag)
 {
 	for (int i = 0; i < 3; i++)
 		_methods[i] = false;

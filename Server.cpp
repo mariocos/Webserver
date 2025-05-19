@@ -9,13 +9,18 @@ Server::Server(std::vector<int> ports, std::vector<std::string> names, int backl
 	int	option = 1;
 	struct sockaddr_in servaddr;
 	struct epoll_event	event;
+	ServerBlock	*newServerBlock;
 
 	this->_epoll_fd = epoll_create(1);
 	if (this->_epoll_fd == -1)
 		throw EpollCreationException();
 	for (size_t i = 0; i < ports.size() && i < names.size(); i++)
 	{
-		ServerBlock	*newServerBlock = new ServerBlock(ports[i], backlog, names[i], socket(AF_INET, SOCK_STREAM, 0));
+		//hardcoded, need to receive from parsing which is default
+		if (names[i] == "localhost")
+			newServerBlock = new ServerBlock(ports[i], backlog, names[i], socket(AF_INET, SOCK_STREAM, 0), true);
+		else
+			newServerBlock = new ServerBlock(ports[i], backlog, names[i], socket(AF_INET, SOCK_STREAM, 0), false);
 		if (newServerBlock->getSocketFd() == -1)
 			throw SocketCreationException();
 		servaddr.sin_family = AF_INET;
@@ -87,6 +92,18 @@ std::vector<ServerBlock*>::iterator	Server::getServerBlockTriggered(int fd)
 	return (this->_serverBlocks.end());
 }
 
+std::vector<ServerBlock*>::iterator	Server::getDefaultServerBlock()
+{
+	std::vector<ServerBlock*>::iterator	it = this->_serverBlocks.begin();
+	while (it != this->_serverBlocks.end())
+	{
+		if ((*it)->isDefault())
+			return (it);
+		it++;
+	}
+	return (this->_serverBlocks.end());
+}
+
 std::vector<ServerBlock*>	Server::getServerBlocks()
 {
 	return (this->_serverBlocks);
@@ -107,14 +124,6 @@ epoll_event	Server::getEpollIndex(int index)
 	return (this->_events[index]);
 }
 
-void	Server::addNewSocket(int fd)
-{
-	struct epoll_event	event;
-	event.events = EPOLLIN | EPOLLRDHUP | EPOLLET;
-	event.data.fd = fd;
-	epoll_ctl(this->_epoll_fd, EPOLL_CTL_ADD, event.data.fd, &event);
-}
-
 void	Server::removeFromEpoll(int fd)
 {
 	epoll_ctl(this->_epoll_fd, EPOLL_CTL_DEL, fd, NULL);
@@ -123,6 +132,7 @@ void	Server::removeFromEpoll(int fd)
 void	Server::handle_connections(std::vector<Client*> &clientList, std::vector<int> &errorFds)
 {
 	std::vector<Client*>::iterator	it;
+	//handling all the triggers made in epoll_wait
 	for (int i = 0; i < this->_epoll_count; i++)
 	{
 		struct epoll_event	&event = this->_events[i];
@@ -131,6 +141,7 @@ void	Server::handle_connections(std::vector<Client*> &clientList, std::vector<in
 		{
 			try
 			{
+				//accepting new connections using the corresponding socket triggered
 				new_connection(clientList, errorFds, *this, this->getServerSocketTriggered(event.data.fd));
 				std::cout<<GREEN<<"Connection successuful"<<RESET<<std::endl;
 			}
@@ -141,6 +152,7 @@ void	Server::handle_connections(std::vector<Client*> &clientList, std::vector<in
 		}
 		else
 		{
+			//getting from the clientList which client was triggered/disconnected
 			it = getRightHole(clientList, event.data.fd);
 			if (it == clientList.end())
 			{
@@ -151,30 +163,32 @@ void	Server::handle_connections(std::vector<Client*> &clientList, std::vector<in
 			{
 				std::cout<<YELLOW<<"Client Disconnected"<<RESET<<std::endl;
 				std::cout<<YELLOW<<"Socket that disconect was: "<<(*it)->getSocketFd()<<RESET<<std::endl;
-				this->removeFromEpoll((*it)->getSocketFd());
+				(*it)->removeSocketFromEpoll((*it)->getSocketFd());
 				delete (*it);
 				clientList.erase(it);
 			}
 			else
 			{
+				//reading the request received
 				(*it)->readRequest((*it)->getSocketFd());
 				(*it)->setClientWritingFlag(false);
+				(*it)->setSocketToReading(this->_epoll_fd);
 			}
 		}
 	}
 }
 
 Server::SocketCreationException::SocketCreationException() :
-runtime_error("Error creating the socket") {}
+runtime_error(RED"Error creating the socket"RESET) {}
 
 Server::SocketBindException::SocketBindException() :
-runtime_error("Error binding the socket") {}
+runtime_error(RED"Error binding the socket"RESET) {}
 
 Server::EpollCreationException::EpollCreationException() :
-runtime_error("Error creating the epoll_fd") {}
+runtime_error(RED"Error creating the epoll_fd"RESET) {}
 
 Server::EpollCtlException::EpollCtlException() :
-runtime_error("Error managing the epoll") {}
+runtime_error(RED"Error managing the epoll"RESET) {}
 
 Server::NoFileToReadException::NoFileToReadException() :
-runtime_error("No File Pending") {}
+runtime_error(RED"No File Pending"RESET) {}

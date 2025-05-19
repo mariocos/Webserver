@@ -28,12 +28,12 @@ public:
 	int	getMaxEvents();
 	int	getServerSocketTriggered(int fd);
 	std::vector<ServerBlock*>::iterator getServerBlockTriggered(int fd);
+	std::vector<ServerBlock*>::iterator	getDefaultServerBlock();
 	std::vector<ServerBlock*>	getServerBlocks();
 	ServerBlock	getServerBlock(int index);
 	epoll_event	*getEpollEventArray();
 	epoll_event	getEpollIndex(int index);
 	void	handle_connections(std::vector<Client*> &clientList, std::vector<int> &errorFds);
-	void	addNewSocket(int fd);
 	void	removeFromEpoll(int fd);
 	class	SocketCreationException : public std::runtime_error
 	{

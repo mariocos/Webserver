@@ -26,7 +26,6 @@ private:
 	int				_openFd;
 	bool			_finishedReading;
 	bool			_finishedWriting;
-	time_t			_startTime;
 public:
 	Client();
 	Client(int client_socket);
@@ -39,14 +38,12 @@ public:
 	void	setClientReadingFlag(bool flag);
 	void	setClientWritingFlag(bool flag);
 	void	setClientFile(File *file);
-	void	setStartingTime();
 	void	setPortTriggered(int port);
 	void	setDomainTriggered(std::string name);
 	bool	getClientPending();
 	bool	getClientConnection();
 	bool	getClientReadingFlag();
 	bool	getClientWritingFlag();
-	bool	connectionExpired(int timeoutSec);
 	int	getClientOpenFd();
 	int	getPortTriggered();
 	std::string	getDomainTriggered();
