@@ -3,17 +3,18 @@
 
 # include "webserv.hpp"
 
-void	loadError400(int client_socket, Client *client);
+void	loadError400(int client_socket, Response *response, Client *client);
 void	loadError403(int client_socket, Response *response, Client *client);
 void	loadError404(int client_socket, Response *response, Client *client);
-void	loadError405(int client_socket, Client *client);
+void	loadError405(int client_socket, Response *response, Client *client);
+void	loadError413(int client_socket, Response *response, Client *client);
 void	loadError503(int error_socket);
 void	loadError505();
 
 class	Error400Exception : public std::runtime_error
 {
 	public:
-		Error400Exception(int client_socket, Client *client);
+		Error400Exception(int client_socket, Response *response, Client *client);
 };
 
 class	Error403Exception : public std::runtime_error
@@ -31,7 +32,13 @@ class	Error404Exception : public std::runtime_error
 class	Error405Exception : public std::runtime_error
 {
 	public:
-		Error405Exception(int client_socket, Client *client);
+		Error405Exception(int client_socket, Response *response, Client *client);
+};
+
+class	Error413Exception : public std::runtime_error
+{
+	public:
+		Error413Exception(int client_socket, Response *response, Client *client);
 };
 
 class	Error503Exception : public std::runtime_error

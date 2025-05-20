@@ -1,9 +1,9 @@
 #include "includes/Errors.hpp"
 
-Error400Exception::Error400Exception(int client_socket, Client *client) :
+Error400Exception::Error400Exception(int client_socket, Response *response, Client *client) :
 runtime_error("Error 400 found") 
 {
-	loadError400(client_socket, client);
+	loadError400(client_socket, response, client);
 }
 
 Error403Exception::Error403Exception(int client_socket, Response *response, Client *client) :
@@ -18,10 +18,16 @@ runtime_error("Error 404 found")
 	loadError404(client_socket, response, client);
 }
 
-Error405Exception::Error405Exception(int client_socket, Client *client) :
+Error405Exception::Error405Exception(int client_socket, Response *response, Client *client) :
 runtime_error("Error 405 found") 
 {
-	loadError405(client_socket, client);
+	loadError405(client_socket, response, client);
+}
+
+Error413Exception::Error413Exception(int client_socket, Response *response, Client *client) :
+runtime_error("Error 413 found") 
+{
+	loadError413(client_socket, response, client);
 }
 
 Error503Exception::Error503Exception(Client *errorClient, Server &server) :

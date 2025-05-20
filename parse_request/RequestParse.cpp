@@ -157,7 +157,7 @@ void	RequestParse::execute_response(int client_socket, Client *client)
 	else if (method.compare("DELETE") == 0)
 		DELETE_response(client_socket, client);
 	else
-		throw Error405Exception(client_socket, client);
+		throw Error405Exception(client_socket, client->getClientResponse(), client);
 }
 
 void	RequestParse::GET_response(int client_socket, Client *client)
@@ -177,18 +177,18 @@ void	RequestParse::GET_response(int client_socket, Client *client)
 	if (client->getClientFile()->isReading())
 	{
 		std::cout<<YELLOW<<"Is Reading From the file"<<RESET<<std::endl;
-		if (client->getClientResponse()->getType() == "image/png")
-			client->getClientFile()->readFromFd(4096);
+		if (client->getClientFile()->getFileStats()->st_size > 1048576)
+			client->getClientFile()->readFromFd(1048576);
 		else
-			client->getClientFile()->readFromFd(1024);
+			client->getClientFile()->readFromFd(client->getClientFile()->getFileStats()->st_size);
 	}
 	else if (client->getClientFile()->isWriting())
 	{
 		std::cout<<YELLOW<<"Is Writing to the socket"<<RESET<<std::endl;
-		if (client->getClientResponse()->getType() == "image/png")
-			loadPage(client_socket, 4096, client->getClientResponse(), client);
+		if (client->getClientFile()->getFileStats()->st_size > 1048576)
+			loadPage(client_socket, 1048576, client->getClientResponse(), client);
 		else
-			loadPage(client_socket, 1024, client->getClientResponse(), client);
+			loadPage(client_socket, client->getClientFile()->getFileStats()->st_size, client->getClientResponse(), client);
 	}
 }
 

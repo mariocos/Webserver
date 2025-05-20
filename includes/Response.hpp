@@ -13,7 +13,7 @@ class Client;
 class Response
 {
 private:
-	std::vector<char>	_response;
+	std::vector<uint8_t>	_response;
 	std::string	*_buffer;
 	std::string	_path;
 	std::string	_type;
@@ -24,14 +24,14 @@ public:
 	//Response(const Response &copy);
 	//Response& operator=(const Response &copy);
 	~Response();
-	std::vector<char> &getResponse();
+	std::vector<uint8_t> &getResponse();
 	std::string	getPath();
 	std::string	getType();
 	std::string	*getBuffer();
 	std::string	getResponseLenghtAsString();
 	unsigned int getResponseLenght();
 	ssize_t		getBytesSent();
-	void	setResponse(const std::vector<char>& response);
+	void	setResponse(std::vector<uint8_t> &response);
 	void	setBuffer(std::string *buffer);
 	void	setPath(std::string path);
 	void	setType(std::string type);

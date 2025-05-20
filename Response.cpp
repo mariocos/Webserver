@@ -6,7 +6,7 @@ Response::Response() : _response(), _path(""), _type("text/plain"), _totalRespon
 	this->_buffer = NULL;
 	for (size_t i = 0; i < this->_response.size(); i++)
 	{
-		this->_response[i] = '\0';
+		this->_response[i] = 0;
 	}
 }
 
@@ -23,7 +23,7 @@ Response::~Response()
 //	return (*this);
 //}
 
-std::vector<char>	&Response::getResponse()
+std::vector<uint8_t>	&Response::getResponse()
 {
 	return (this->_response);
 }
@@ -63,7 +63,7 @@ ssize_t	Response::getBytesSent()
 	return (this->_bytesSent);
 }
 
-void	Response::setResponse(const std::vector<char>& response)
+void	Response::setResponse(std::vector<uint8_t> &response)
 {
 	this->_response = response;
 }

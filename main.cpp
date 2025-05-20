@@ -33,6 +33,13 @@ runtime_error(YELLOW"Redirecting Request To Default Server Block"RESET)
 	(*it)->setPortTriggered((*serverIt)->getBlockPort());
 }
 
+NonBlockingException::NonBlockingException(int fd) :
+runtime_error(RED"Failed To Set Server Fd To Non Blocking"RESET)
+{
+	print = false;
+	close(fd);
+}
+
 void	stopRunning(int signal)
 {
 	(void)signal;

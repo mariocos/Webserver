@@ -103,4 +103,10 @@ class	RedirectException : public std::runtime_error
 		RedirectException(Server &server, std::vector<Client*>::iterator it);
 };
 
+class	NonBlockingException : public std::runtime_error
+{
+	public:
+		NonBlockingException(int fd);
+};
+
 #endif

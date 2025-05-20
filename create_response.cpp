@@ -20,6 +20,11 @@ void	createHeader(RequestParse *request, Response *response, Client *client)
 	response->clearResponse();
 	response->addToResponse(request->get_httpversion() + " 200 OK\r\n");
 	response->addToResponse("Content-Type: " + response->getType() + "\r\n");
+
+	//To be added after getting the client_max_body_size
+	/* if (client->getClientFile()->getFileStats()->st_size > max_body_size)
+		throw Error413Exception(client->getSocketFd(), response, client); */
+
 	response->addToResponseLenght(client->getClientFile()->getFileStats()->st_size);
 	if (client->getClientConnection() == true)
 		response->addToResponse("Connection: close\r\n");
@@ -66,7 +71,7 @@ void	loadPage(int client_socket, unsigned int buffer_size, Response *response, C
 
 void	sendMsgToSocket(int client_socket, int lenght, Client *client, Response *response)
 {
-	const std::vector<char> &data = response->getResponse();
-	if (send(client_socket, &data[0], lenght, MSG_NOSIGNAL) == -1)
+	std::vector<uint8_t> data = response->getResponse();
+	if (send(client_socket, reinterpret_cast<const char*>(data.data()), lenght, MSG_NOSIGNAL) == -1)
 		throw SendException(client, response);
 }

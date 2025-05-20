@@ -34,7 +34,7 @@ Client	*File::getClient()
 	return (this->_buffer);
 } */
 
-std::vector<char>	&File::readFromBuffer()
+std::vector<uint8_t>	&File::readFromBuffer()
 {
 	return (this->_buffer);
 }
@@ -96,7 +96,7 @@ void	File::adjustBuffer()
 		this->_buffer.insert(0, this->_buffer);
 } */
 
-void	File::writeToBuffer(char* info, size_t len)
+void	File::writeToBuffer(uint8_t* info, size_t len)
 {
     adjustBuffer();
     this->_buffer.insert(this->_buffer.end(), info, info + len);
@@ -106,7 +106,7 @@ void	File::adjustBuffer()
 {
     if (!this->_buffer.empty())
 	{
-		std::vector<char> copy = this->_buffer;
+		std::vector<uint8_t> copy = this->_buffer;
 		this->_buffer.insert(this->_buffer.begin(), copy.begin(), copy.end());
     }
 }
@@ -115,9 +115,9 @@ void	File::readFromFd(unsigned int buffer_size)
 {
 	if (this->_buffer.empty())
 	{
-		std::vector<char>	binaryBuffer(buffer_size);
+		std::vector<uint8_t>	binaryBuffer(buffer_size);
 
-		this->_file.read(&binaryBuffer[0], buffer_size);
+		this->_file.read(reinterpret_cast<char*>(binaryBuffer.data()), buffer_size);
 		this->_bytesRead = this->_file.gcount();
 		//std::cout<<"Read From fd Buffer: \n"<<buffer<<std::endl;
 		//std::cout<<"Bytes read: \n"<<_bytesRead<<std::endl;

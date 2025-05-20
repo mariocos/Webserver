@@ -12,6 +12,25 @@
 				<h1>WebServ test</h1>
 			</header>
 			<img src="burro.png">
+			<div class="buttons">
+            	<button onclick="sayHello()">Say Hello</button>
+            	<button onclick="fetchData()">Fetch Data</button>
+				<button onclick="window.location.href='dummy.html'">Go to a Giant Page</button>
+				<button onclick="window.location.href='404.html'">Go to Unknown Place</button>
+				<!-- <button onclick="sayHello()">Post</button> -->
+        	</div>
 		</div>
+		<script>
+        	function sayHello() {
+        	    alert("Hello from WebServ!");
+        	}
+		
+        	function fetchData() {
+        	    fetch('/burro.png')
+        	        .then(response => response.text())
+        	        .then(data => alert("Server says: " + data))
+        	        .catch(error => console.error("Error fetching data:", error));
+        	}
+		</script>
 	</body>
 </html>
