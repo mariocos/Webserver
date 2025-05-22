@@ -165,6 +165,13 @@ bool	File::checkFileInfo(const char *path, int client_socket)
 			else
 				throw Error404Exception(client_socket, this->_client->getClientResponse(), this->_client);
 		}
+		if (stat("website/index.html", &this->_fileStats))
+		{
+			if (errno == EACCES || errno == EPERM)
+				throw Error403Exception(client_socket, this->_client->getClientResponse(), this->_client);
+			else
+				throw Error404Exception(client_socket, this->_client->getClientResponse(), this->_client);
+		}
 		return (false);
 	}
 	return (true);

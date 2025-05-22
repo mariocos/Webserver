@@ -22,6 +22,7 @@ private:
 	int			_port;
 	bool		_methods[3];
 	bool		_default;
+	bool		_isCgi;
 public:
 	ServerBlock();
 	ServerBlock(int port, int backlog, std::string name, int socket, bool flag);
@@ -33,6 +34,7 @@ public:
 	int			getBlockPort();
 	bool		canDoMethod(int method);
 	bool		isDefault();
+	bool		isCgi();
 	void		setBlockName(std::string name);
 	void		setBlockMaxConnections(int value);
 	void		setBlockPort(int port);

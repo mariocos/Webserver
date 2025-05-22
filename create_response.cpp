@@ -10,6 +10,8 @@ void	findType(RequestParse *request, Response *response)
 		response->setType("text/css");
 	else if (request->get_path().length() > 4 && request->get_path().find(".png") == request->get_path().length() - 4)
 		response->setType("image/png");
+	else if (request->get_path().length() > 4 && request->get_path().find(".ico") == request->get_path().length() - 4)
+		response->setType("image/x-icon");
 	else
 		response->setType("text/html");
 	response->setPath("website" + request->get_path());

@@ -152,6 +152,8 @@ void	Server::handle_connections(std::vector<Client*> &clientList, std::vector<in
 		}
 		else
 		{
+			//create a way to find if the fd triggered is from a pipe from a cgi
+
 			//getting from the clientList which client was triggered/disconnected
 			it = getRightHole(clientList, event.data.fd);
 			if (it == clientList.end())

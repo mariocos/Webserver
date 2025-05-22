@@ -70,6 +70,7 @@ void	new_connection(std::vector<Client*> &clientList, std::vector<int> &errorFds
 	std::vector<ServerBlock*>::iterator	it = server.getServerBlockTriggered(serverFd);
 	newClient->setPortTriggered((*it)->getBlockPort());
 	newClient->setDomainTriggered((*it)->getBlockName());
+	newClient->setServerBlockTriggered((*it));
 	newClient->addSocketToEpoll(server.getEpollFd());
 	if (clientList.size() < 60)
 		clientList.push_back(newClient);
@@ -154,8 +155,10 @@ void	handlePendingConnections(std::vector<Client*> &clientList, Server &server)
 		//checking if the Host and Port match with the ones described in the request
 		if (!isConnectionGood(server, it))
 			handlePortOrDomainMismatch(server, clientList, it);
-		else if ((*it)->getClientReadingFlag() == false)
+		else if ((*it)->getClientReadingFlag() == false && !(*it)->getServerBlockTriggered()->isCgi())
 			(*it)->readRequest((*it)->getSocketFd());
+		else if ((*it)->getServerBlockTriggered()->isCgi() && !(*it)->getClientCgi()->isActive())
+			cgiHandler(server, (*it));
 		else
 		{
 			(*it)->handle_connect((*it)->getSocketFd());

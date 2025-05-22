@@ -48,6 +48,7 @@
 # include "File.hpp"
 # include "WebSocket.hpp"
 # include "ServerBlock.hpp"
+# include "Cgi.hpp"
 
 extern bool	run;
 extern bool	print;

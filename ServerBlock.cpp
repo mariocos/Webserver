@@ -6,7 +6,7 @@ ServerBlock::ServerBlock() : WebSocket(), _maxConnections(-1), _port(-1), _defau
 		_methods[i] = false;
 }
 
-ServerBlock::ServerBlock(int port, int backlog, std::string name, int socket, bool flag) : WebSocket(socket), _name(name), _maxConnections(backlog), _port(port), _default(flag)
+ServerBlock::ServerBlock(int port, int backlog, std::string name, int socket, bool flag) : WebSocket(socket), _name(name), _maxConnections(backlog), _port(port), _default(flag), _isCgi(false)
 {
 	if (setNonBlocking(this->getSocketFd()) == -1)
 		throw NonBlockingException(this->getSocketFd());
@@ -70,6 +70,11 @@ bool	ServerBlock::canDoMethod(int method)
 bool	ServerBlock::isDefault()
 {
 	return (this->_default);
+}
+
+bool	ServerBlock::isCgi()
+{
+	return (this->_isCgi);
 }
 
 void	ServerBlock::setBlockName(std::string name)

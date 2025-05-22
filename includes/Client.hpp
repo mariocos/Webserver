@@ -11,7 +11,9 @@
 class RequestParse;
 class Response;
 class Server;
+class ServerBlock;
 class File;
+class Cgi;
 
 class Client : public WebSocket
 {
@@ -21,6 +23,8 @@ private:
 	RequestParse	*_request;
 	Response		*_response;
 	File			*_file;
+	Cgi				*_cgi;
+	ServerBlock		*_serverBlockTriggered;
 	bool			_pending;
 	bool			_keepAlive;
 	int				_openFd;
@@ -38,6 +42,8 @@ public:
 	void	setClientReadingFlag(bool flag);
 	void	setClientWritingFlag(bool flag);
 	void	setClientFile(File *file);
+	void	setClientCgi(Cgi *cgi);
+	void	setServerBlockTriggered(ServerBlock *serverBlock);
 	void	setPortTriggered(int port);
 	void	setDomainTriggered(std::string name);
 	bool	getClientPending();
@@ -50,6 +56,8 @@ public:
 	RequestParse	*getClientRequest();
 	Response		*getClientResponse();
 	File			*getClientFile();
+	Cgi				*getClientCgi();
+	ServerBlock		*getServerBlockTriggered();
 	void	readRequest(int client_socket);
 	void	handle_connect(int client_socket);
 };

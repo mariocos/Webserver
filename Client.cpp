@@ -19,6 +19,8 @@ Client::Client(int client_socket) : WebSocket(client_socket), _request(NULL), _r
 	std::string *buffer = new std::string;
 	this->_response->setBuffer(buffer);
 	this->_request->setBuffer(buffer);
+	this->_cgi = NULL;
+	this->_serverBlockTriggered = NULL;
 }
 
 Client::~Client()
@@ -52,6 +54,16 @@ void	Client::setClientResponse(Response *response)
 void	Client::setClientFile(File *file)
 {
 	this->_file = file;
+}
+
+void	Client::setClientCgi(Cgi *cgi)
+{
+	this->_cgi = cgi;
+}
+
+void	Client::setServerBlockTriggered(ServerBlock *serverBlock)
+{
+	this->_serverBlockTriggered = serverBlock;
 }
 
 void	Client::setClientOpenFd(int fd)
@@ -127,6 +139,16 @@ Response	*Client::getClientResponse()
 File	*Client::getClientFile()
 {
 	return (this->_file);
+}
+
+Cgi		*Client::getClientCgi()
+{
+	return (this->_cgi);
+}
+
+ServerBlock	*Client::getServerBlockTriggered()
+{
+	return (this->_serverBlockTriggered);
 }
 
 void	Client::readRequest(int client_socket)
