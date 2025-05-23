@@ -6,7 +6,7 @@
 class Cgi
 {
 private:
-	std::vector<char*>	_envp;
+	std::vector<std::string>	_envp;
 	pid_t	_pid;
 	int		_cgiStdIn[2];
 	int		_cgiStdOut[2];
@@ -15,19 +15,23 @@ private:
 public:
 	Cgi();
 	~Cgi();
-	std::vector<char*>	&getEnv();
-	std::vector<uint8_t>	&getCgiResponse();
+	std::vector<std::string>	&getEnv();
+	std::vector<uint8_t>		&getCgiResponse();
 	pid_t	getPid();
-	int	*getStdIn();
-	int	*getStdOut();
+	int		*getStdIn();
+	int		*getStdOut();
 	bool	isActive();
-	void	setEnv(std::vector<char*> env);
+	void	setEnv(std::vector<std::string> env);
 	void	setPid(pid_t pid);
 	void	setCgiResponse(unsigned int buffer_size);
 	void	changeCgiState();
+	void	executeCgi(Client *client);
+	void	readCgiResponse(Server &server, Client *client);
+	void	writeCgiResponse(Client *client);
 };
 
 void	prepareCgi(Client *client);
 void	cgiHandler(Server &server, Client *client);
+std::vector<Client*>::iterator	isThisPipe(int fd, std::vector<Client*> &clientList);
 
 #endif

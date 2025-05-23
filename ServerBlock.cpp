@@ -107,3 +107,8 @@ void	ServerBlock::setBlockMethod(int method, bool flag)
 			break ;
 	}
 }
+
+void	ServerBlock::setBlockAsCgi()
+{
+	this->_isCgi = true;
+}

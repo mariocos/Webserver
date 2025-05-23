@@ -63,5 +63,6 @@ public:
 };
 
 void	new_connection(std::vector<Client*> &clientList, std::vector<int> &errorFds, Server &server, int serverFd);
+void	clearClient(std::vector<Client*>::iterator	it, std::vector<Client*> &clientList);
 
 #endif

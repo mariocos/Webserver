@@ -23,6 +23,8 @@ Server::Server(std::vector<int> ports, std::vector<std::string> names, int backl
 			newServerBlock = new ServerBlock(ports[i], backlog, names[i], socket(AF_INET, SOCK_STREAM, 0), false);
 		if (newServerBlock->getSocketFd() == -1)
 			throw SocketCreationException();
+		if (ports[i] == 2424)
+			newServerBlock->setBlockAsCgi();
 		servaddr.sin_family = AF_INET;
 		servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
 		servaddr.sin_port = htons(newServerBlock->getBlockPort());
@@ -152,8 +154,13 @@ void	Server::handle_connections(std::vector<Client*> &clientList, std::vector<in
 		}
 		else
 		{
-			//create a way to find if the fd triggered is from a pipe from a cgi
-
+			//checking if the fd triggered was a fd from a pipe of a cgi
+			it = isThisPipe(event.data.fd, clientList);
+			if (it != clientList.end())
+			{
+				cgiHandler(*this, (*it));
+				continue;
+			}
 			//getting from the clientList which client was triggered/disconnected
 			it = getRightHole(clientList, event.data.fd);
 			if (it == clientList.end())

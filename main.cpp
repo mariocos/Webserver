@@ -71,6 +71,8 @@ void	new_connection(std::vector<Client*> &clientList, std::vector<int> &errorFds
 	newClient->setPortTriggered((*it)->getBlockPort());
 	newClient->setDomainTriggered((*it)->getBlockName());
 	newClient->setServerBlockTriggered((*it));
+	std::cout<<newClient->getPortTriggered()<<std::endl;
+	std::cout<<newClient->getDomainTriggered()<<std::endl;
 	newClient->addSocketToEpoll(server.getEpollFd());
 	if (clientList.size() < 60)
 		clientList.push_back(newClient);
@@ -157,18 +159,20 @@ void	handlePendingConnections(std::vector<Client*> &clientList, Server &server)
 			handlePortOrDomainMismatch(server, clientList, it);
 		else if ((*it)->getClientReadingFlag() == false && !(*it)->getServerBlockTriggered()->isCgi())
 			(*it)->readRequest((*it)->getSocketFd());
-		else if ((*it)->getServerBlockTriggered()->isCgi() && !(*it)->getClientCgi()->isActive())
-			cgiHandler(server, (*it));
+		else if ((*it)->getServerBlockTriggered()->isCgi())
+		{
+			if (((*it)->getClientCgi() && !(*it)->getClientCgi()->isActive()) || !(*it)->getClientCgi())
+				cgiHandler(server, (*it));
+			else
+				continue;
+			if ((*it)->getClientWritingFlag() && (*it)->getClientReadingFlag())
+				clearClient(it, clientList);
+		}
 		else
 		{
 			(*it)->handle_connect((*it)->getSocketFd());
-			if ((*it)->getClientWritingFlag() == true)
-			{
-				(*it)->setClientOpenFd(-1);
-				(*it)->removeSocketFromEpoll((*it)->getSocketFd());
-				delete (*it);
-				clientList.erase(it);
-			}
+			if ((*it)->getClientWritingFlag())
+				clearClient(it, clientList);
 		}
 		it = getNextPendingHole(clientList, it);
 	}
@@ -191,10 +195,12 @@ int	main(int ac, char **av)
 		ports.push_back(4243);
 		ports.push_back(8080);
 		ports.push_back(3000);
+		ports.push_back(2424);
 		std::vector<std::string>	names;
 		names.push_back("localhost");
 		names.push_back("webserver.com");
 		names.push_back("127.0.0.1");
+		names.push_back("script");
 		Server	server(ports, names, 10);
 		std::vector<Client*>	clientList;
 		std::vector<int>		errorFds;

@@ -29,6 +29,8 @@ Client::~Client()
 	delete this->_request;
 	delete this->_response;
 	delete this->_file;
+	if (this->_cgi)
+		delete this->_cgi;
 }
 
 void	Client::setClientPending(bool pending)
@@ -171,4 +173,12 @@ void	Client::handle_connect(int client_socket)
 	}
 	if (this->getClientWritingFlag() == true)
 		std::cout<<YELLOW<<"Closing connection..."<<RESET<<std::endl;
+}
+
+void	clearClient(std::vector<Client*>::iterator	it, std::vector<Client*> &clientList)
+{
+	(*it)->setClientOpenFd(-1);
+	(*it)->removeSocketFromEpoll((*it)->getSocketFd());
+	delete (*it);
+	clientList.erase(it);
 }

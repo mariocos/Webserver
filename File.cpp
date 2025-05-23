@@ -131,7 +131,7 @@ void	File::openFile(const char *path, int client_socket)
 {
 	if (!this->checkFileInfo(path, client_socket))
 		return ;
-	this->_file.open(this->_client->getClientResponse()->getPath().c_str(), std::ios::in | std::ios::binary);
+	this->_file.open(path, std::ios::in | std::ios::binary);
 	if (!this->_file.is_open())
 	{
 		if (errno == EACCES || errno == EPERM)

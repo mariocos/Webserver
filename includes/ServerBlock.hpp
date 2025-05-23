@@ -39,6 +39,7 @@ public:
 	void		setBlockMaxConnections(int value);
 	void		setBlockPort(int port);
 	void		setBlockMethod(int method, bool flag);
+	void		setBlockAsCgi();
 };
 
 #endif
