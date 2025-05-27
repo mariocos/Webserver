@@ -3,8 +3,6 @@
 void	prepareCgi(Client *client)
 {
 	std::vector<std::string>	env;
-	std::ostringstream	number;
-	std::string	lenght;
 	std::string	path;
 	std::string	name;
 
@@ -15,22 +13,16 @@ void	prepareCgi(Client *client)
 	//need to implement a member function to get whats behind the "?" after the file path
 	//env.push_back("QUERY_STRING=" + client->getClientRequest()->get_name());
 	client->getClientFile()->openFile(path.c_str(), client->getSocketFd());
-	number << client->getClientFile()->getFileStats()->st_size;
-	lenght = number.str();
+	env.push_back("CONTENT_LENGHT=" + transformToString(client->getClientFile()->getFileStats()->st_size));
 	client->getClientFile()->getFile()->close();
-	env.push_back("CONTENT_LENGHT=" + lenght);
 	env.push_back("CONTENT_TYPE=" + client->getClientRequest()->get_content_type());
 	env.push_back("GATEWAY_INTERFACE=CGI/1.1");
 	env.push_back("SERVER_PROTOCOL=HTTP/1.1");
 	env.push_back("SERVER_SOFTWARE=WebServ/1.0");
 	env.push_back("SERVER_NAME=" + client->getDomainTriggered());
-	number.clear();
-	number << client->getPortTriggered();
-	lenght = number.str();
-	env.push_back("SERVER_PORT=" + lenght);
-	//need to implement a member function to get the client address and port
-	//env.push_back("REMOTE_ADDR=" + client->getClientAddr());
-	//env.push_back("REMOTE_PORT=" + client->getClientPort());
+	env.push_back("SERVER_PORT=" + transformToString(client->getPortTriggered()));
+	env.push_back("REMOTE_ADDR=" + client->getClientIp());
+	env.push_back("REMOTE_PORT=" + transformToString(client->getClientPort()));
 	client->setClientCgi(new Cgi());
 	client->getClientCgi()->setEnv(env);
 	pipe(client->getClientCgi()->getStdIn());

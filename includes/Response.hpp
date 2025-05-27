@@ -19,6 +19,7 @@ private:
 	std::string	_type;
 	unsigned int	_totalResponseLenght;
 	ssize_t		_bytesSent;
+	int			_statusCode;
 public:
 	Response();
 	//Response(const Response &copy);
@@ -31,10 +32,12 @@ public:
 	std::string	getResponseLenghtAsString();
 	unsigned int getResponseLenght();
 	ssize_t		getBytesSent();
+	int			getStatusCode();
 	void	setResponse(std::vector<uint8_t> &response);
 	void	setBuffer(std::string *buffer);
 	void	setPath(std::string path);
 	void	setType(std::string type);
+	void	setStatusCode(int status);
 	void	addToResponse(std::string info);
 	void	addToResponseLenght(unsigned int bytes);
 	void	addToBytesSent(ssize_t bytes);

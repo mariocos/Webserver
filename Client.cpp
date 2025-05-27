@@ -93,6 +93,16 @@ void	Client::setDomainTriggered(std::string name)
 	this->_domainTriggered = name;
 }
 
+void	Client::setClientPort(int port)
+{
+	this->_clientPort = port;
+}
+
+void	Client::setClientIp(std::string ip)
+{
+	this->_clientIp = ip;
+}
+
 bool	Client::getClientPending()
 {
 	return (this->_pending);
@@ -121,6 +131,16 @@ int	Client::getClientOpenFd()
 int	Client::getPortTriggered()
 {
 	return (this->_portTriggered);
+}
+
+int	Client::getClientPort()
+{
+	return (this->_clientPort);
+}
+
+std::string	Client::getClientIp()
+{
+	return (this->_clientIp);
 }
 
 std::string	Client::getDomainTriggered()
@@ -171,12 +191,11 @@ void	Client::handle_connect(int client_socket)
 	{
 		std::cerr << e.what() << '\n';
 	}
-	if (this->getClientWritingFlag() == true)
-		std::cout<<YELLOW<<"Closing connection..."<<RESET<<std::endl;
 }
 
 void	clearClient(std::vector<Client*>::iterator	it, std::vector<Client*> &clientList)
 {
+	printLog("INFO", (*it)->getServerBlockTriggered(), (*it), (*it)->getClientResponse(), 2);
 	(*it)->setClientOpenFd(-1);
 	(*it)->removeSocketFromEpoll((*it)->getSocketFd());
 	delete (*it);

@@ -18,6 +18,8 @@ class Cgi;
 class Client : public WebSocket
 {
 private:
+	int				_clientPort;
+	std::string		_clientIp;
 	int				_portTriggered;
 	std::string		_domainTriggered;
 	RequestParse	*_request;
@@ -46,12 +48,16 @@ public:
 	void	setServerBlockTriggered(ServerBlock *serverBlock);
 	void	setPortTriggered(int port);
 	void	setDomainTriggered(std::string name);
+	void	setClientPort(int port);
+	void	setClientIp(std::string ip);
 	bool	getClientPending();
 	bool	getClientConnection();
 	bool	getClientReadingFlag();
 	bool	getClientWritingFlag();
-	int	getClientOpenFd();
-	int	getPortTriggered();
+	int		getClientOpenFd();
+	int		getPortTriggered();
+	int		getClientPort();
+	std::string	getClientIp();
 	std::string	getDomainTriggered();
 	RequestParse	*getClientRequest();
 	Response		*getClientResponse();

@@ -45,12 +45,7 @@ std::string	Response::getType()
 
 std::string	Response::getResponseLenghtAsString()
 {
-	std::ostringstream	number;
-	std::string	lenght;
-
-	number << this->_totalResponseLenght;
-	lenght = number.str();
-	return (lenght);
+	return (transformToString(this->_totalResponseLenght));
 }
 
 unsigned int Response::getResponseLenght()
@@ -61,6 +56,11 @@ unsigned int Response::getResponseLenght()
 ssize_t	Response::getBytesSent()
 {
 	return (this->_bytesSent);
+}
+
+int	Response::getStatusCode()
+{
+	return (this->_statusCode);
 }
 
 void	Response::setResponse(std::vector<uint8_t> &response)
@@ -81,6 +81,11 @@ void	Response::setPath(std::string path)
 void	Response::setType(std::string type)
 {
 	this->_type = type;
+}
+
+void	Response::setStatusCode(int status)
+{
+	this->_statusCode = status;
 }
 
 void	Response::addToResponse(std::string info)

@@ -34,6 +34,7 @@
 # include <stdlib.h>
 # include <vector>
 # include <ctime>
+# include <map>
 
 # define RESET "\033[0m"
 # define GREEN "\033[1m\033[32m"
@@ -56,7 +57,21 @@ extern bool	print;
 class RequestParse;
 class Response;
 
+template <typename T>
+std::string	transformToString(const T &value)
+{
+	std::ostringstream	ostream;
+	std::string			lenght;
+
+	ostream << value;
+	lenght = ostream.str();
+	return (lenght);
+}
+
 //main.cpp
+std::string	getTimeStamp();
+std::string	convertIpToString(struct in_addr s_addr);
+void	printLog(std::string action, ServerBlock *serverBlock, Client *client, Response *response, int mode);
 void	stopRunning(int signal);
 void	ft_bzero(void *s, size_t n);
 void	error_connection_handler(std::vector<int> &errorFds, Server &server);
@@ -69,6 +84,7 @@ void	handlePendingConnections(std::vector<Client*> &clientList, Server &server);
 void	cleaner(Server &server, std::vector<Client*> &clientList);
 
 //create_response.cpp
+std::string	findFileExtension(std::string path);
 void	findType(RequestParse *request, Response *response);
 void	createHeader(RequestParse *request, Response *response, Client *client);
 int 	setNonBlocking(int fd);

@@ -39,6 +39,7 @@ Server::Server(std::vector<int> ports, std::vector<std::string> names, int backl
 		if (epoll_ctl(this->_epoll_fd, EPOLL_CTL_ADD, event.data.fd, &event) == -1)
 			throw EpollCtlException();
 		this->_serverBlocks.push_back(newServerBlock);
+		printLog("INFO", newServerBlock, NULL, NULL, 0);
 	}
 	this->_events = new epoll_event[this->_maxEvents];
 }
@@ -145,7 +146,6 @@ void	Server::handle_connections(std::vector<Client*> &clientList, std::vector<in
 			{
 				//accepting new connections using the corresponding socket triggered
 				new_connection(clientList, errorFds, *this, this->getServerSocketTriggered(event.data.fd));
-				std::cout<<GREEN<<"Connection successuful"<<RESET<<std::endl;
 			}
 			catch(const std::exception& e)
 			{
@@ -164,18 +164,9 @@ void	Server::handle_connections(std::vector<Client*> &clientList, std::vector<in
 			//getting from the clientList which client was triggered/disconnected
 			it = getRightHole(clientList, event.data.fd);
 			if (it == clientList.end())
-			{
-				std::cout<<RED<<"All spaces ocupied"<<RESET<<std::endl;
 				continue;
-			}
 			else if (event.events & EPOLLRDHUP)
-			{
-				std::cout<<YELLOW<<"Client Disconnected"<<RESET<<std::endl;
-				std::cout<<YELLOW<<"Socket that disconect was: "<<(*it)->getSocketFd()<<RESET<<std::endl;
-				(*it)->removeSocketFromEpoll((*it)->getSocketFd());
-				delete (*it);
-				clientList.erase(it);
-			}
+				clearClient(it, clientList);
 			else
 			{
 				//reading the request received

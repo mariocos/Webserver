@@ -1,25 +1,45 @@
 #include "includes/webserv.hpp"
 
+std::string	findFileExtension(std::string path)
+{
+	size_t	pos = path.rfind(".");
+	if (pos != std::string::npos)
+		return (path.substr(pos));
+	return ("");
+}
+
 void	findType(RequestParse *request, Response *response)
 {
+	std::map<std::string, std::string> fileTypes;
+	fileTypes[".html"] = "text/html";
+	fileTypes[".css"] = "text/css";
+	fileTypes[".js"] = "application/javascript";
+	fileTypes[".png"] = "image/png";
+	fileTypes[".jpg"] = "image/jpeg";
+	fileTypes[".jpeg"] = "image/jpeg";
+	fileTypes[".ico"] = "image/x-icon";
+	fileTypes[".json"] = "application/json";
+	fileTypes[".mp3"] = "audio/mpeg";
+	fileTypes[".mp4"] = "video/mp4";
+	fileTypes[".txt"] = "text/plain";
+
 	if (request->get_path() == "/")
 		request->set_path("/dummy.html");
-	if (request->get_path().length() > 5 && request->get_path().find(".html") == request->get_path().length() - 5)
-		response->setType("text/html");
-	else if (request->get_path().length() > 4 && request->get_path().find(".css") == request->get_path().length() - 4)
-		response->setType("text/css");
-	else if (request->get_path().length() > 4 && request->get_path().find(".png") == request->get_path().length() - 4)
-		response->setType("image/png");
-	else if (request->get_path().length() > 4 && request->get_path().find(".ico") == request->get_path().length() - 4)
-		response->setType("image/x-icon");
-	else
-		response->setType("text/html");
+
+	std::string	extension = findFileExtension(request->get_path());
+	std::string	type = "application/octet-stream";
+
+	if (fileTypes.count(extension))
+		type = fileTypes.at(extension);
+
+	response->setType(type);
 	response->setPath("website" + request->get_path());
 }
 
 void	createHeader(RequestParse *request, Response *response, Client *client)
 {
 	response->clearResponse();
+	response->setStatusCode(200);
 	response->addToResponse(request->get_httpversion() + " 200 OK\r\n");
 	response->addToResponse("Content-Type: " + response->getType() + "\r\n");
 
@@ -36,6 +56,7 @@ void	createHeader(RequestParse *request, Response *response, Client *client)
 	response->clearResponse();
 	client->getClientFile()->setReading(true);
 	client->getClientFile()->setWriting(false);
+	printLog("ACCESS", client->getServerBlockTriggered(), client, client->getClientResponse(), 3);
 }
 
 int setNonBlocking(int fd)
@@ -49,9 +70,8 @@ void	loadPage(int client_socket, unsigned int buffer_size, Response *response, C
 	client->getClientFile()->clearBuffer();
 	client->getClientFile()->setReading(true);
 	client->getClientFile()->setWriting(false);
-	if (client->getClientFile()->getBytesRead() >= buffer_size - 1)
+	if (client->getClientFile()->getBytesRead() >= buffer_size)
 	{
-		std::cout<<RED<<"Sent chunk"<<RESET<<std::endl;
 		//std::cout<<"response body:\n"<<response->getResponse();
 		//response->addToBytesSent(send(client_socket, response->getResponse().c_str(), client->getClientFile()->getBytesRead(), MSG_NOSIGNAL));
 		//std::cout<<"Bytes sent until now: "<<response->getBytesSent()<<std::endl;
@@ -61,8 +81,8 @@ void	loadPage(int client_socket, unsigned int buffer_size, Response *response, C
 		return ;
 	}
 	sendMsgToSocket(client_socket, client->getClientFile()->getBytesRead(), client, response);
+	printLog("INFO", client->getServerBlockTriggered(), client, response, 4);
 	//response->addToBytesSent(send(client_socket, response->getResponse().c_str(), client->getClientFile()->getBytesRead(), MSG_NOSIGNAL));
-	std::cout<<RED<<"Sent all the info"<<RESET<<std::endl;
 	//std::cout<<"response body:\n"<<response->getResponse();
 	//std::cout<<"Bytes that was supposed to send: "<<response->getResponseLenght()<<std::endl;
 	//std::cout<<"Bytes sent: "<<response->getBytesSent()<<std::endl;

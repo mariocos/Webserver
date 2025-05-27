@@ -40,6 +40,83 @@ runtime_error(RED"Failed To Set Server Fd To Non Blocking"RESET)
 	close(fd);
 }
 
+std::string	getTimeStamp()
+{
+	time_t	now = time(NULL);
+	struct tm *timeStruct = localtime(&now);
+	char	buffer[20];
+	strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S", timeStruct);
+	return (std::string(buffer));
+}
+
+std::string	convertIpToString(struct in_addr s_addr)
+{
+	uint32_t	addr = ntohl(s_addr.s_addr);
+	std::ostringstream	ostream;
+	std::string	output;
+
+	for (int i = 3; i >= 0; i--)
+	{
+		ostream << ((addr >> (i * 8)) & 0xFF);
+		if (i > 0)
+			ostream << '.';
+	}
+	output = ostream.str();
+	return (output);
+}
+
+void	printLog(std::string action, ServerBlock *serverBlock, Client *client, Response *response, int mode)
+{
+	switch (mode)
+	{
+		case 0:
+			std::cout<<"["<<getTimeStamp()<<"]"<<GREEN<<" ["<<action<<"] "<<RESET;
+			std::cout<<GREEN<<serverBlock->getBlockName()<<" started on port "<<serverBlock->getBlockPort()<<RESET<<std::endl;
+			break;
+		case 1:
+			std::cout<<"["<<getTimeStamp()<<"]"<<GREEN<<" ["<<action<<"] "<<RESET;
+			std::cout<<GREEN<<" New connection from "<<client->getClientIp()<<RESET<<std::endl;
+			break;
+		case 2:
+			std::cout<<"["<<getTimeStamp()<<"]"<<RED<<" ["<<action<<"] "<<RESET;
+			std::cout<<RED<<" Closed connection from "<<client->getClientIp()<<RESET<<std::endl;
+			break;
+		case 3:
+			std::cout<<"["<<getTimeStamp()<<"]"<<YELLOW<<" ["<<action<<"] "<<RESET;
+			std::cout<<YELLOW<<client->getClientIp()<<" - "<<client->getClientRequest()->get_method();
+			std::cout<<" "<<response->getPath()<<" "<<response->getStatusCode()<<RESET<<std::endl;
+			break;
+		case 4:
+			std::cout<<"["<<getTimeStamp()<<"]"<<YELLOW<<" ["<<action<<"] "<<RESET;
+			std::cout<<YELLOW<<"Served static file: "<<response->getPath()<<" (size: "<<client->getClientFile()->getFileStats()->st_size<<"KB)"<<RESET<<std::endl;
+			break;
+		case 400:
+			std::cout<<"["<<getTimeStamp()<<"]"<<RED<<" ["<<action<<"] "<<RESET;
+			std::cout<<RED<<"Bad Request "<<response->getStatusCode()<<RESET<<std::endl;
+			break;
+		case 403:
+			std::cout<<"["<<getTimeStamp()<<"]"<<RED<<" ["<<action<<"] "<<RESET;
+			std::cout<<RED<<"Forbidden "<<response->getStatusCode()<<RESET<<std::endl;
+			break;
+		case 404:
+			std::cout<<"["<<getTimeStamp()<<"]"<<RED<<" ["<<action<<"] "<<RESET;
+			std::cout<<RED<<"File Not Found "<<response->getStatusCode()<<" "<<response->getPath()<<RESET<<std::endl;
+			break;
+		case 405:
+			std::cout<<"["<<getTimeStamp()<<"]"<<RED<<" ["<<action<<"] "<<RESET;
+			std::cout<<RED<<"Method Not Allowed "<<response->getStatusCode()<<" - "<<client->getClientRequest()->get_method()<<RESET<<std::endl;
+			break;
+		case 413:
+			std::cout<<"["<<getTimeStamp()<<"]"<<RED<<" ["<<action<<"] "<<RESET;
+			std::cout<<RED<<"Payload Too Large "<<response->getStatusCode()<<" "<<response->getPath()<<RESET<<std::endl;
+			break;
+		case 503:
+			break;
+		default:
+			break;
+	}
+}
+
 void	stopRunning(int signal)
 {
 	(void)signal;
@@ -66,24 +143,24 @@ void	new_connection(std::vector<Client*> &clientList, std::vector<int> &errorFds
 	Client	*newClient = new Client(accept(serverFd, (struct sockaddr*)&clientaddr, &addrlen));
 	if (newClient->getSocketFd() == -1)
 		throw NewConnectionCreationException(server, clientList);
+	newClient->setClientIp(convertIpToString(clientaddr.sin_addr));
+	std::cout<<"NewClient Ip: "<<newClient->getClientIp()<<std::endl;
+	newClient->setClientPort(ntohs(clientaddr.sin_port));
 	//still kinda hardcoded to store the information about the server block triggered
 	std::vector<ServerBlock*>::iterator	it = server.getServerBlockTriggered(serverFd);
 	newClient->setPortTriggered((*it)->getBlockPort());
 	newClient->setDomainTriggered((*it)->getBlockName());
 	newClient->setServerBlockTriggered((*it));
-	std::cout<<newClient->getPortTriggered()<<std::endl;
-	std::cout<<newClient->getDomainTriggered()<<std::endl;
 	newClient->addSocketToEpoll(server.getEpollFd());
 	if (clientList.size() < 60)
 		clientList.push_back(newClient);
 	else
 	{
-		std::cout<<RED<<"SERVER OCUPIED"<<RESET<<std::endl;
 		errorFds.push_back(newClient->getSocketFd());
 		delete	newClient;
 		return ;
 	}
-	std::cout<<"Socket Number: "<<newClient->getSocketFd()<<std::endl;
+	printLog("INFO", newClient->getServerBlockTriggered(), newClient, NULL, 1);
 }
 
 void	error_connection_handler(std::vector<int> &errorFds, Server &server)
