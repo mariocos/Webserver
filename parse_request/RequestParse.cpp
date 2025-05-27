@@ -163,15 +163,12 @@ void	RequestParse::execute_response(int client_socket, Client *client)
 void	RequestParse::GET_response(int client_socket, Client *client)
 {
 	//creating the header for the response and oppening the file requested
-	if (!client->getClientWritingFlag() && !client->getClientPending() && !client->getClientFile()->getFile()->is_open())
+	if (!client->getClientFile()->isReading() && !client->getClientFile()->isWriting())
 	{
 		findType(this, client->getClientResponse());
 		client->getClientFile()->openFile(client->getClientResponse()->getPath().c_str(), client_socket);
-		client->getClientFile()->setCheckingSizeFlag(false);
-		return ;
-	}
-	else if (!client->getClientFile()->isReading() && !client->getClientFile()->isWriting())
 		createHeader(this, client->getClientResponse(), client);
+	}
 
 	//reading/write operations
 	if (client->getClientFile()->isReading())
@@ -185,10 +182,7 @@ void	RequestParse::GET_response(int client_socket, Client *client)
 	else if (client->getClientFile()->isWriting())
 	{
 		std::cout<<YELLOW<<"Is Writing to the socket"<<RESET<<std::endl;
-		if (client->getClientFile()->getFileStats()->st_size > 1048576)
-			loadPage(client_socket, 1048576, client->getClientResponse(), client);
-		else
-			loadPage(client_socket, client->getClientFile()->getFileStats()->st_size, client->getClientResponse(), client);
+		loadPage(client_socket, client->getClientResponse(), client);
 	}
 }
 

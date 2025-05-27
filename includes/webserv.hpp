@@ -88,7 +88,7 @@ std::string	findFileExtension(std::string path);
 void	findType(RequestParse *request, Response *response);
 void	createHeader(RequestParse *request, Response *response, Client *client);
 int 	setNonBlocking(int fd);
-void	loadPage(int client_socket, unsigned int buffer_size, Response *response, Client *client);
+void	loadPage(int client_socket, Response *response, Client *client);
 void	sendMsgToSocket(int client_socket, int lenght, Client *client, Response *response);
 
 //HoleExplorer.cpp

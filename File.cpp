@@ -1,10 +1,10 @@
 #include "includes/File.hpp"
 
-File::File() : _bytesRead(0), _client(NULL), _checkingSize(true), _isReading(false), _isWriting(false)
+File::File() : _bytesRead(0), _client(NULL), _isReading(false), _isWriting(false)
 {
 }
 
-File::File(Client *client) : _bytesRead(0), _client(client), _checkingSize(true), _isReading(false), _isWriting(false)
+File::File(Client *client) : _bytesRead(0), _client(client), _isReading(false), _isWriting(false)
 {
 }
 
@@ -29,19 +29,9 @@ Client	*File::getClient()
 	return (this->_client);
 }
 
-/* std::string File::readFromBuffer()
-{
-	return (this->_buffer);
-} */
-
 std::vector<uint8_t>	&File::readFromBuffer()
 {
 	return (this->_buffer);
-}
-
-bool	File::getCheckingSizeFlag()
-{
-	return (this->_checkingSize);
 }
 
 bool	File::isReading()
@@ -64,11 +54,6 @@ void	File::setClient(Client *client)
 	this->_client = client;
 }
 
-void	File::setCheckingSizeFlag(bool flag)
-{
-	this->_checkingSize = flag;
-}
-
 void	File::setReading(bool flag)
 {
 	this->_isReading = flag;
@@ -83,18 +68,6 @@ void	File::clearBuffer()
 {
 	this->_buffer.clear();
 }
-
-/* void	File::writeToBuffer(char *info)
-{
-	adjustBuffer();
-	this->_buffer.append(info);
-}
-
-void	File::adjustBuffer()
-{
-	if (!this->_buffer.empty())
-		this->_buffer.insert(0, this->_buffer);
-} */
 
 void	File::writeToBuffer(uint8_t* info, size_t len)
 {
@@ -119,8 +92,6 @@ void	File::readFromFd(unsigned int buffer_size)
 
 		this->_file.read(reinterpret_cast<char*>(binaryBuffer.data()), buffer_size);
 		this->_bytesRead = this->_file.gcount();
-		//std::cout<<"Read From fd Buffer: \n"<<buffer<<std::endl;
-		//std::cout<<"Bytes read: \n"<<_bytesRead<<std::endl;
 		this->_buffer.assign(binaryBuffer.begin(), binaryBuffer.begin() + this->_bytesRead);
 		this->_isReading = false;
 		this->_isWriting = true;
@@ -172,6 +143,8 @@ bool	File::checkFileInfo(const char *path, int client_socket)
 			else
 				throw Error404Exception(client_socket, this->_client->getClientResponse(), this->_client);
 		}
+		this->_client->getClientResponse()->setPath("website/index.html");
+		this->_client->getClientRequest()->set_path("website/index.html");
 		return (false);
 	}
 	return (true);

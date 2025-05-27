@@ -40,6 +40,7 @@ Server::Server(std::vector<int> ports, std::vector<std::string> names, int backl
 			throw EpollCtlException();
 		this->_serverBlocks.push_back(newServerBlock);
 		printLog("INFO", newServerBlock, NULL, NULL, 0);
+		printLog("INFO", newServerBlock, NULL, NULL, 1);
 	}
 	this->_events = new epoll_event[this->_maxEvents];
 }

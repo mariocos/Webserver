@@ -31,30 +31,42 @@ void	prepareCgi(Client *client)
 
 void	cgiHandler(Server &server, Client *client)
 {
-	if (client->getClientReadingFlag() && !client->getClientWritingFlag() && !client->getClientCgi())
+	try
 	{
-		prepareCgi(client);
-		client->getClientCgi()->setPid(fork());
-		if (client->getClientCgi()->getPid() == 0)
-			client->getClientCgi()->executeCgi(client);
-		else
+		if (client->getClientReadingFlag() && !client->getClientWritingFlag() && !client->getClientCgi())
 		{
-			struct epoll_event	event;
-			event.events = EPOLLIN | EPOLLRDHUP;
-			event.data.fd = client->getClientCgi()->getStdOut()[0];
-			epoll_ctl(server.getEpollFd(), EPOLL_CTL_ADD, event.data.fd, &event);
-			close(client->getClientCgi()->getStdIn()[0]);
-			close(client->getClientCgi()->getStdOut()[1]);
-			client->setClientReadingFlag(true);
-			client->setClientWritingFlag(false);
-			close(client->getClientCgi()->getStdIn()[1]);
-			client->getClientCgi()->changeCgiState();
+			prepareCgi(client);
+			printLog("CGI", client->getServerBlockTriggered(), client, client->getClientResponse(), 6);
+			client->getClientCgi()->setPid(fork());
+			if (client->getClientCgi()->getPid() == 0)
+				client->getClientCgi()->executeCgi(client);
+			else
+			{
+				struct epoll_event	event;
+				event.events = EPOLLIN | EPOLLRDHUP;
+				event.data.fd = client->getClientCgi()->getStdOut()[0];
+				epoll_ctl(server.getEpollFd(), EPOLL_CTL_ADD, event.data.fd, &event);
+				close(client->getClientCgi()->getStdIn()[0]);
+				close(client->getClientCgi()->getStdOut()[1]);
+				client->setClientReadingFlag(true);
+				client->setClientWritingFlag(false);
+				//if CGI is set to Post need to write to STDIN[1] so cgi can read it
+				//if (client->getClientRequest()->get_method() == "POST")
+				//	send(client->getClientCgi()->getStdIn()[1], client->getClientRequest()->get_buffer().c_str(), lenght, MSG_NOSIGNAL);
+				close(client->getClientCgi()->getStdIn()[1]);
+				client->getClientCgi()->changeCgiState();
+				client->getClientResponse()->setStatusCode(200);
+			}
 		}
+		else if (client->getClientReadingFlag())
+			client->getClientCgi()->readCgiResponse(server, client);
+		else if (client->getClientWritingFlag())
+			client->getClientCgi()->writeCgiResponse(client);
 	}
-	else if (client->getClientReadingFlag())
-		client->getClientCgi()->readCgiResponse(server, client);
-	else if (client->getClientWritingFlag())
-		client->getClientCgi()->writeCgiResponse(client);
+	catch(const std::exception& e)
+	{
+		std::cerr << e.what() << '\n';
+	}
 }
 
 std::vector<Client*>::iterator	isThisPipe(int fd, std::vector<Client*> &clientList)

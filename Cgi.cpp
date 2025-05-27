@@ -101,6 +101,7 @@ void	Cgi::executeCgi(Client *client)
 
 void	Cgi::readCgiResponse(Server &server, Client *client)
 {
+	printLog("CGI", client->getServerBlockTriggered(), client, client->getClientResponse(), 7);
 	this->setCgiResponse(1048576);
 	epoll_ctl(server.getEpollFd(), EPOLL_CTL_DEL, this->_cgiStdOut[0], NULL);
 	close(this->_cgiStdOut[0]);

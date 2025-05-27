@@ -56,7 +56,7 @@ void	createHeader(RequestParse *request, Response *response, Client *client)
 	response->clearResponse();
 	client->getClientFile()->setReading(true);
 	client->getClientFile()->setWriting(false);
-	printLog("ACCESS", client->getServerBlockTriggered(), client, client->getClientResponse(), 3);
+	printLog("ACCESS", client->getServerBlockTriggered(), client, client->getClientResponse(), 4);
 }
 
 int setNonBlocking(int fd)
@@ -64,28 +64,21 @@ int setNonBlocking(int fd)
     return (fcntl(fd, F_SETFL, O_NONBLOCK));
 }
 
-void	loadPage(int client_socket, unsigned int buffer_size, Response *response, Client *client)
+void	loadPage(int client_socket, Response *response, Client *client)
 {
 	response->setResponse(client->getClientFile()->readFromBuffer());
 	client->getClientFile()->clearBuffer();
 	client->getClientFile()->setReading(true);
 	client->getClientFile()->setWriting(false);
-	if (client->getClientFile()->getBytesRead() >= buffer_size)
+	response->addToBytesSent(client->getClientFile()->getBytesRead());
+	sendMsgToSocket(client_socket, client->getClientFile()->getBytesRead(), client, response);
+	if (response->getBytesSent() < client->getClientFile()->getFileStats()->st_size)
 	{
-		//std::cout<<"response body:\n"<<response->getResponse();
-		//response->addToBytesSent(send(client_socket, response->getResponse().c_str(), client->getClientFile()->getBytesRead(), MSG_NOSIGNAL));
-		//std::cout<<"Bytes sent until now: "<<response->getBytesSent()<<std::endl;
-		sendMsgToSocket(client_socket, buffer_size, client, response);
 		client->setClientWritingFlag(false);
 		client->setClientPending(true);
 		return ;
 	}
-	sendMsgToSocket(client_socket, client->getClientFile()->getBytesRead(), client, response);
-	printLog("INFO", client->getServerBlockTriggered(), client, response, 4);
-	//response->addToBytesSent(send(client_socket, response->getResponse().c_str(), client->getClientFile()->getBytesRead(), MSG_NOSIGNAL));
-	//std::cout<<"response body:\n"<<response->getResponse();
-	//std::cout<<"Bytes that was supposed to send: "<<response->getResponseLenght()<<std::endl;
-	//std::cout<<"Bytes sent: "<<response->getBytesSent()<<std::endl;
+	printLog("INFO", client->getServerBlockTriggered(), client, response, 5);
 	response->clearResponse();
 	client->setClientWritingFlag(true);
 	client->setClientPending(false);

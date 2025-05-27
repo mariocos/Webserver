@@ -75,20 +75,33 @@ void	printLog(std::string action, ServerBlock *serverBlock, Client *client, Resp
 			break;
 		case 1:
 			std::cout<<"["<<getTimeStamp()<<"]"<<GREEN<<" ["<<action<<"] "<<RESET;
-			std::cout<<GREEN<<" New connection from "<<client->getClientIp()<<RESET<<std::endl;
+			//set which file was used to load the ServerBlock
+			std::cout<<GREEN<<"Loaded configuration from default.config"<<RESET<<std::endl;
 			break;
 		case 2:
-			std::cout<<"["<<getTimeStamp()<<"]"<<RED<<" ["<<action<<"] "<<RESET;
-			std::cout<<RED<<" Closed connection from "<<client->getClientIp()<<RESET<<std::endl;
+			std::cout<<"["<<getTimeStamp()<<"]"<<GREEN<<" ["<<action<<"] "<<RESET;
+			std::cout<<GREEN<<"New connection from "<<client->getClientIp()<<RESET<<std::endl;
 			break;
 		case 3:
+			std::cout<<"["<<getTimeStamp()<<"]"<<RED<<" ["<<action<<"] "<<RESET;
+			std::cout<<RED<<"Closed connection from "<<client->getClientIp()<<RESET<<std::endl;
+			break;
+		case 4:
 			std::cout<<"["<<getTimeStamp()<<"]"<<YELLOW<<" ["<<action<<"] "<<RESET;
 			std::cout<<YELLOW<<client->getClientIp()<<" - "<<client->getClientRequest()->get_method();
 			std::cout<<" "<<response->getPath()<<" "<<response->getStatusCode()<<RESET<<std::endl;
 			break;
-		case 4:
+		case 5:
 			std::cout<<"["<<getTimeStamp()<<"]"<<YELLOW<<" ["<<action<<"] "<<RESET;
 			std::cout<<YELLOW<<"Served static file: "<<response->getPath()<<" (size: "<<client->getClientFile()->getFileStats()->st_size<<"KB)"<<RESET<<std::endl;
+			break;
+		case 6:
+			std::cout<<"["<<getTimeStamp()<<"]"<<YELLOW<<" ["<<action<<"] "<<RESET;
+			std::cout<<YELLOW<<"Executing script: "<<client->getClientRequest()->get_path()<<RESET<<std::endl;
+			break;
+		case 7:
+			std::cout<<"["<<getTimeStamp()<<"]"<<YELLOW<<" ["<<action<<"] "<<RESET;
+			std::cout<<YELLOW<<"Completed "<<client->getClientRequest()->get_path()<<" with status "<<response->getStatusCode()<<RESET<<std::endl;
 			break;
 		case 400:
 			std::cout<<"["<<getTimeStamp()<<"]"<<RED<<" ["<<action<<"] "<<RESET;
@@ -134,33 +147,6 @@ void	ft_bzero(void *s, size_t n)
 		p++;
 		n--;
 	}
-}
-
-void	new_connection(std::vector<Client*> &clientList, std::vector<int> &errorFds, Server &server, int serverFd)
-{
-	struct sockaddr_in clientaddr;
-	socklen_t	addrlen = sizeof(clientaddr);
-	Client	*newClient = new Client(accept(serverFd, (struct sockaddr*)&clientaddr, &addrlen));
-	if (newClient->getSocketFd() == -1)
-		throw NewConnectionCreationException(server, clientList);
-	newClient->setClientIp(convertIpToString(clientaddr.sin_addr));
-	std::cout<<"NewClient Ip: "<<newClient->getClientIp()<<std::endl;
-	newClient->setClientPort(ntohs(clientaddr.sin_port));
-	//still kinda hardcoded to store the information about the server block triggered
-	std::vector<ServerBlock*>::iterator	it = server.getServerBlockTriggered(serverFd);
-	newClient->setPortTriggered((*it)->getBlockPort());
-	newClient->setDomainTriggered((*it)->getBlockName());
-	newClient->setServerBlockTriggered((*it));
-	newClient->addSocketToEpoll(server.getEpollFd());
-	if (clientList.size() < 60)
-		clientList.push_back(newClient);
-	else
-	{
-		errorFds.push_back(newClient->getSocketFd());
-		delete	newClient;
-		return ;
-	}
-	printLog("INFO", newClient->getServerBlockTriggered(), newClient, NULL, 1);
 }
 
 void	error_connection_handler(std::vector<int> &errorFds, Server &server)
