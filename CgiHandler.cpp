@@ -36,7 +36,7 @@ void	cgiHandler(Server &server, Client *client)
 		if (client->getClientReadingFlag() && !client->getClientWritingFlag() && !client->getClientCgi())
 		{
 			prepareCgi(client);
-			printLog("CGI", client->getServerBlockTriggered(), client, client->getClientResponse(), 6);
+			printLog("CGI", client->getServerBlockTriggered(), client, client->getClientResponse(), 7);
 			client->getClientCgi()->setPid(fork());
 			if (client->getClientCgi()->getPid() == 0)
 				client->getClientCgi()->executeCgi(client);
@@ -65,6 +65,8 @@ void	cgiHandler(Server &server, Client *client)
 	}
 	catch(const std::exception& e)
 	{
+		if (std::string(e.what()) == "Bad child")
+			throw BadChildException();
 		std::cerr << e.what() << '\n';
 	}
 }

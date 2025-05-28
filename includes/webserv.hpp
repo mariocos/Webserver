@@ -126,4 +126,10 @@ class	NonBlockingException : public std::runtime_error
 		NonBlockingException(int fd);
 };
 
+class	BadChildException : public std::runtime_error
+{
+	public:
+		BadChildException();
+};
+
 #endif

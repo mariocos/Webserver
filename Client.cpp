@@ -216,12 +216,12 @@ void	new_connection(std::vector<Client*> &clientList, std::vector<int> &errorFds
 		delete	newClient;
 		return ;
 	}
-	printLog("INFO", newClient->getServerBlockTriggered(), newClient, NULL, 2);
+	printLog("INFO", newClient->getServerBlockTriggered(), newClient, NULL, 3);
 }
 
 void	clearClient(std::vector<Client*>::iterator	it, std::vector<Client*> &clientList)
 {
-	printLog("INFO", (*it)->getServerBlockTriggered(), (*it), (*it)->getClientResponse(), 3);
+	printLog("INFO", (*it)->getServerBlockTriggered(), (*it), (*it)->getClientResponse(), 4);
 	(*it)->setClientOpenFd(-1);
 	(*it)->removeSocketFromEpoll((*it)->getSocketFd());
 	delete (*it);

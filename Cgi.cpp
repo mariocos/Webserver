@@ -84,6 +84,8 @@ void	Cgi::executeCgi(Client *client)
 {
 	std::string	path = "website" + client->getClientRequest()->get_path();
 	std::vector<char*>	env;
+	std::string	scriptDir;
+	std::string	scriptName;
 	for (size_t i = 0; i < this->_envp.size(); i++)
 	{
 		env.push_back(const_cast<char*>(this->_envp[i].c_str()));
@@ -93,16 +95,21 @@ void	Cgi::executeCgi(Client *client)
 	dup2(this->_cgiStdOut[1], STDOUT_FILENO);
 	close(this->_cgiStdIn[1]);
 	close(this->_cgiStdOut[0]);
-	char	*av[] = {(char*)"/usr/bin/python3", const_cast<char*>(path.c_str()), NULL};
-	execve("/usr/bin/python3", av, env.data());
+	scriptDir = path.substr(0, path.find_last_of("/"));
+	chdir(scriptDir.c_str());
+	scriptName = path.substr(path.find_last_of("/") + 1);
+	char	*av[] = {const_cast<char*>(scriptName.c_str()), NULL};
+	execve(scriptName.c_str(), av, env.data());
 	perror("execve failed");
-	exit(1);
+	throw BadChildException();
 }
 
 void	Cgi::readCgiResponse(Server &server, Client *client)
 {
-	printLog("CGI", client->getServerBlockTriggered(), client, client->getClientResponse(), 7);
 	this->setCgiResponse(1048576);
+	if (this->_cgiResponse.size() == 0)
+		client->getClientResponse()->setStatusCode(403);
+	printLog("CGI", client->getServerBlockTriggered(), client, client->getClientResponse(), 8);
 	epoll_ctl(server.getEpollFd(), EPOLL_CTL_DEL, this->_cgiStdOut[0], NULL);
 	close(this->_cgiStdOut[0]);
 	this->changeCgiState();

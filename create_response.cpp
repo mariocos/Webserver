@@ -56,7 +56,7 @@ void	createHeader(RequestParse *request, Response *response, Client *client)
 	response->clearResponse();
 	client->getClientFile()->setReading(true);
 	client->getClientFile()->setWriting(false);
-	printLog("ACCESS", client->getServerBlockTriggered(), client, client->getClientResponse(), 4);
+	printLog("ACCESS", client->getServerBlockTriggered(), client, client->getClientResponse(), 5);
 }
 
 int setNonBlocking(int fd)
@@ -78,7 +78,7 @@ void	loadPage(int client_socket, Response *response, Client *client)
 		client->setClientPending(true);
 		return ;
 	}
-	printLog("INFO", client->getServerBlockTriggered(), client, response, 5);
+	printLog("INFO", client->getServerBlockTriggered(), client, response, 6);
 	response->clearResponse();
 	client->setClientWritingFlag(true);
 	client->setClientPending(false);
