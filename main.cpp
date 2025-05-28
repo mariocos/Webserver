@@ -230,10 +230,12 @@ void	handlePendingConnections(std::vector<Client*> &clientList, Server &server)
 		//checking if the Host and Port match with the ones described in the request
 		if (!isConnectionGood(server, it))
 			handlePortOrDomainMismatch(server, clientList, it);
-		else if ((*it)->getClientReadingFlag() == false && !(*it)->getServerBlockTriggered()->isCgi())
+		//in case the request was too big to be read in one instance
+		else if (!(*it)->getClientReadingFlag() && !(*it)->getServerBlockTriggered()->isCgi())
 			(*it)->readRequest((*it)->getSocketFd());
 		else if ((*it)->getServerBlockTriggered()->isCgi())
 		{
+			//handling the CGI before and after the child process is created
 			if (((*it)->getClientCgi() && !(*it)->getClientCgi()->isActive()) || !(*it)->getClientCgi())
 				cgiHandler(server, (*it));
 			else
@@ -243,6 +245,7 @@ void	handlePendingConnections(std::vector<Client*> &clientList, Server &server)
 		}
 		else
 		{
+			//handling all the other pending connections
 			(*it)->handle_connect((*it)->getSocketFd());
 			if ((*it)->getClientWritingFlag())
 				clearClient(it, clientList);
@@ -301,6 +304,7 @@ int	main(int ac, char **av)
 			}
 			catch(const std::exception& e)
 			{
+				//in case of a lost child proccess after a error in execve
 				if (std::string(e.what()) == "Bad child")
 				{
 					cleaner(server, clientList);
