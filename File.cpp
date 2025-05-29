@@ -143,6 +143,7 @@ bool	File::checkFileInfo(const char *path, int client_socket)
 			else
 				throw Error404Exception(client_socket, this->_client->getClientResponse(), this->_client);
 		}
+		this->_client->getClientResponse()->setType("text/html");
 		this->_client->getClientResponse()->setPath("website/index.html");
 		this->_client->getClientRequest()->set_path("website/index.html");
 		return (false);

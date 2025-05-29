@@ -27,6 +27,8 @@ void	findType(RequestParse *request, Response *response)
 		request->set_path("/dummy.html");
 
 	std::string	extension = findFileExtension(request->get_path());
+	//for some reason with this type when requesting a directory in the browser
+	//it presents a menu like for downloading a file when requesting for a unknown type of file
 	std::string	type = "application/octet-stream";
 
 	if (fileTypes.count(extension))
