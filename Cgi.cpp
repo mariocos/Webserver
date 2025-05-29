@@ -45,15 +45,27 @@ void	Cgi::setPid(pid_t pid)
 	this->_pid = pid;
 }
 
-void	Cgi::setCgiResponse(unsigned int buffer_size)
+void	Cgi::setCgiResponse(unsigned int buffer_size, Response *response)
 {
 	std::vector<uint8_t>	binaryBuffer(buffer_size);
 	ssize_t	bytesRead = 1;
+	std::string	buffer;
 
 	while (bytesRead > 0)
 	{
 		bytesRead = read(this->_cgiStdOut[0], reinterpret_cast<char*>(binaryBuffer.data()), buffer_size);
-		this->_cgiResponse.insert(this->_cgiResponse.end(), binaryBuffer.begin(), binaryBuffer.begin() + bytesRead);
+		if (bytesRead <= 0)
+			break;
+		buffer = transformToString(binaryBuffer.data());
+		if (buffer.find("Content-Type:") != std::string::npos)
+		{
+			response->setType(buffer.substr(buffer.find(":") + 2, buffer.find_first_of("\n") - 14));
+			ssize_t headerEnd = buffer.find(response->getType());
+			headerEnd += response->getType().size() + 2;
+			this->_cgiResponse.insert(this->_cgiResponse.end(), binaryBuffer.begin() + headerEnd, binaryBuffer.begin() + bytesRead);
+		}
+		else
+			this->_cgiResponse.insert(this->_cgiResponse.end(), binaryBuffer.begin(), binaryBuffer.begin() + bytesRead);
 	}
 }
 
@@ -106,7 +118,7 @@ void	Cgi::executeCgi(Client *client)
 
 void	Cgi::readCgiResponse(Server &server, Client *client)
 {
-	this->setCgiResponse(1048576);
+	this->setCgiResponse(1048576, client->getClientResponse());
 	if (this->_cgiResponse.size() == 0)
 		client->getClientResponse()->setStatusCode(403);
 	printLog("CGI", client->getServerBlockTriggered(), client, client->getClientResponse(), 8);

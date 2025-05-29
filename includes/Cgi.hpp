@@ -23,7 +23,7 @@ public:
 	bool	isActive();
 	void	setEnv(std::vector<std::string> env);
 	void	setPid(pid_t pid);
-	void	setCgiResponse(unsigned int buffer_size);
+	void	setCgiResponse(unsigned int buffer_size, Response *response);
 	void	changeCgiState();
 	void	executeCgi(Client *client);
 	void	readCgiResponse(Server &server, Client *client);

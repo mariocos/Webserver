@@ -10,8 +10,7 @@ void	prepareCgi(Client *client)
 	name = client->getClientRequest()->get_path().substr(client->getClientRequest()->get_path().rfind("/") + 1);
 	env.push_back("SCRIPT_NAME="+ name);
 	path = "website" + client->getClientRequest()->get_path();
-	//need to implement a member function to get whats behind the "?" after the file path
-	//env.push_back("QUERY_STRING=" + client->getClientRequest()->get_name());
+	env.push_back("QUERY_STRING=" + client->getClientRequest()->get_query_str());
 	client->getClientFile()->openFile(path.c_str(), client->getSocketFd());
 	env.push_back("CONTENT_LENGHT=" + transformToString(client->getClientFile()->getFileStats()->st_size));
 	client->getClientFile()->getFile()->close();

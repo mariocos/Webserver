@@ -51,6 +51,11 @@ void	RequestParse::buildRequest(const char *request)
 	line1.erase(0, len + 1);
 	len = line1.find(' ');
 	this->path_to_request = line1.substr(0, len);
+	if (path_to_request.find("?") != std::string::npos)
+	{
+		queryString = get_keyword(path_to_request, "?");
+		path_to_request = path_to_request.substr(0, path_to_request.find("?"));
+	}
 	std::cout << "path to request is: [" << path_to_request << "]\n";
 	if (ft_strstr(path_to_request.c_str(), ".."))
 	{
@@ -96,9 +101,13 @@ std::string	RequestParse::get_buffer()
 	return (*_buffer);
 }
 
+std::string	RequestParse::get_query_str()
+{
+	return (queryString);
+}
+
 RequestParse::~RequestParse()
 {
-	//std::cout<<RED<<"Destructor"<<RESET<<std::endl;
 }
 
 void	RequestParse::set_path(std::string path)

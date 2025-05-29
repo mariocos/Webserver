@@ -3,8 +3,8 @@
 import os
 import cgi
 
-#print("Content-Type: text/html")
-#print()
+print("Content-Type: text/html")
+print()
 
 print("<!DOCTYPE html>")
 print("<html lang='en'>")
