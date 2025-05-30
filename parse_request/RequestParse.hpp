@@ -37,6 +37,7 @@ public:
 	std::string	get_content_length();
 	std::string	get_buffer();
 	std::string	get_query_str();
+	std::string get_content();
 	void		buildRequest(const char *req);
 	/*  setters  */
 	void	set_path(std::string path);

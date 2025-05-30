@@ -206,3 +206,8 @@ void	RequestParse::DELETE_response(int client_socket, Client *client)
 	(void)client_socket;
 	(void)client;
 }
+
+std::string RequestParse::get_content()
+{
+	return (content);
+}

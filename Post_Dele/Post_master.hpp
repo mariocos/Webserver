@@ -120,18 +120,21 @@ void Post_master::createDirectoryIfNeeded(const std::string& path)
 
 //temos de ver se aceitamos postarem com path ou so files na diretoria post
 //TODO: check if file already exists
-void Post_master::post(Client** client) // add socket
+void Post_master::post(Client* client) // add socket
 {
-    if (!client || !*client) {
+    if (!client) {
         throw BadClientPointer();//TODO: needs integration
     }
     
     // get request
-    Request* request = (*client)->getClientRequest();
+    RequestParse* request = client->getClientRequest();
     if (!request) {
         throw EvilRequest();
     }
-    
+    std::string content = request->get_content();// maybe change to vetors?
+	if (content.empty()) {
+		throw EvilRequest();
+	}
 
     // Get path from request
     std::string targetPath = request->get_path();
@@ -149,14 +152,19 @@ void Post_master::post(Client** client) // add socket
 	if (request_path[0] != '/') {
 		result += "/";
 	}
-	result += request_path;
+	result += request_path;//change name for readability
 
 
     // TODO: when should this be done?
     createDirectoryIfNeeded(uploadDir);
     
-	//TODO: write from buffer to file
-	//TODO: get body from request and write to file;
+
+	std::ifstream	outfile(result);
+	if (!outfile.is_open()) {
+		throw EvilRequest();//change exception
+	}
+
+	outfile << content;
 }
 
 #endif
