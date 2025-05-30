@@ -1,32 +1,41 @@
 #ifndef CLIENT_HPP
 # define CLIENT_HPP
 
-#include "webserv.hpp"
+# include "../parse_request/RequestParse.hpp"
+# include "Response.hpp"
+# include "Server.hpp"
+# include "File.hpp"
+# include "WebSocket.hpp"
+
 
 class RequestParse;
 class Response;
 class Server;
+class ServerBlock;
 class File;
-class Server;
+class Cgi;
 
-class Client
+class Client : public WebSocket
 {
 private:
-	int				_clientSocket;
+	int				_clientPort;
+	std::string		_clientIp;
+	int				_portTriggered;
+	std::string		_domainTriggered;
 	RequestParse	*_request;
 	Response		*_response;
 	File			*_file;
+	Cgi				*_cgi;
+	ServerBlock		*_serverBlockTriggered;
 	bool			_pending;
 	bool			_keepAlive;
 	int				_openFd;
 	bool			_finishedReading;
 	bool			_finishedWriting;
-	time_t			_startTime;
 public:
 	Client();
 	Client(int client_socket);
 	~Client();
-	void	setClientSocket(int client_socket);
 	void	setClientPending(bool pending);
 	void	setClientConnection(bool connection);
 	void	setClientRequest(RequestParse *request);
@@ -35,21 +44,31 @@ public:
 	void	setClientReadingFlag(bool flag);
 	void	setClientWritingFlag(bool flag);
 	void	setClientFile(File *file);
-	void	setStartingTime();
-	int		getClientSocket();
+	void	setClientCgi(Cgi *cgi);
+	void	setServerBlockTriggered(ServerBlock *serverBlock);
+	void	setPortTriggered(int port);
+	void	setDomainTriggered(std::string name);
+	void	setClientPort(int port);
+	void	setClientIp(std::string ip);
 	bool	getClientPending();
 	bool	getClientConnection();
 	bool	getClientReadingFlag();
 	bool	getClientWritingFlag();
-	bool	connectionExpired(int timeoutSec);
-	int	getClientOpenFd();
+	int		getClientOpenFd();
+	int		getPortTriggered();
+	int		getClientPort();
+	std::string	getClientIp();
+	std::string	getDomainTriggered();
 	RequestParse	*getClientRequest();
 	Response		*getClientResponse();
 	File			*getClientFile();
+	Cgi				*getClientCgi();
+	ServerBlock		*getServerBlockTriggered();
 	void	readRequest(int client_socket);
 	void	handle_connect(int client_socket);
 };
 
-void	new_connection(std::vector<Client*> &clientList, std::vector<int> &errorFds, Server &server);
+void	new_connection(std::vector<Client*> &clientList, std::vector<int> &errorFds, Server &server, int serverFd);
+void	clearClient(std::vector<Client*>::iterator	it, std::vector<Client*> &clientList);
 
 #endif

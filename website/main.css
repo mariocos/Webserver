@@ -19,3 +19,16 @@ body.error-page {
 	text-align: center;
 	margin: auto;
 }
+
+.buttons {
+    margin-top: 20px;
+	display: flex;
+    justify-content: center;
+    gap: 20px;
+}
+
+button {
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+}

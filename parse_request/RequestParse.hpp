@@ -18,6 +18,7 @@ private:
 	std::string	content_type;
 	std::string	content_length;
 	std::string	connection;
+	std::string	queryString;
 	std::string	*_buffer;
 	int			error_code;
 	std::string	content;
@@ -35,10 +36,12 @@ public:
 	std::string	get_content_type();
 	std::string	get_content_length();
 	std::string	get_buffer();
+	std::string	get_query_str();
 	void		buildRequest(const char *req);
 	/*  setters  */
 	void	set_path(std::string path);
 	void	setBuffer(std::string *buffer);
+	void	setNewHost(std::string str);
 	void	writeToBuffer(char *info);
 	void	adjustBuffer();
 	void	readToBuffer(int client_socket, Client *client);

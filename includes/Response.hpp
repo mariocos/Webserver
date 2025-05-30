@@ -13,31 +13,35 @@ class Client;
 class Response
 {
 private:
-	std::string	_response;
+	std::vector<uint8_t>	_response;
 	std::string	*_buffer;
 	std::string	_path;
 	std::string	_type;
 	unsigned int	_totalResponseLenght;
 	ssize_t		_bytesSent;
+	int			_statusCode;
 public:
 	Response();
 	//Response(const Response &copy);
 	//Response& operator=(const Response &copy);
 	~Response();
-	std::string	getResponse();
+	std::vector<uint8_t> &getResponse();
 	std::string	getPath();
 	std::string	getType();
 	std::string	*getBuffer();
 	std::string	getResponseLenghtAsString();
 	unsigned int getResponseLenght();
 	ssize_t		getBytesSent();
-	void	setResponse(std::string response);
+	int			getStatusCode();
+	void	setResponse(std::vector<uint8_t> &response);
 	void	setBuffer(std::string *buffer);
 	void	setPath(std::string path);
 	void	setType(std::string type);
+	void	setStatusCode(int status);
 	void	addToResponse(std::string info);
 	void	addToResponseLenght(unsigned int bytes);
 	void	addToBytesSent(ssize_t bytes);
+	void	clearResponse();
 	std::string	readFromBuffer();
 };
 

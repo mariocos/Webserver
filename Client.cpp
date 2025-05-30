@@ -1,17 +1,16 @@
 #include "includes/Client.hpp"
 
-Client::Client() : _clientSocket(0), _request(NULL), _response(NULL), _pending(false), _keepAlive(false), _openFd(-1), _finishedReading(false), _finishedWriting(true)
+Client::Client() : WebSocket(-1), _request(NULL), _response(NULL), _pending(false), _keepAlive(false), _openFd(-1), _finishedReading(false), _finishedWriting(true)
 {
 }
 
-Client::Client(int client_socket) : _clientSocket(client_socket), _request(NULL), _response(NULL), _pending(false), _keepAlive(false),_openFd(-1), _finishedReading(false), _finishedWriting(true)
+Client::Client(int client_socket) : WebSocket(client_socket), _request(NULL), _response(NULL), _pending(false), _keepAlive(false),_openFd(-1), _finishedReading(false), _finishedWriting(true)
 {
-	std::cout<<GREEN<<"Client constructor called"<<RESET<<std::endl;
-	if (setNonBlocking(this->_clientSocket) == -1)
+	if (setNonBlocking(this->getSocketFd()) == -1)
 	{
 		std::cerr << "Failed to set non-blocking mode." << std::endl;
-		close(this->_clientSocket);
-		this->_clientSocket = -1;
+		close(this->getSocketFd());
+		this->setSocketFd(-1);
 	}
 	this->_response = new Response;
 	this->_request = new RequestParse;
@@ -20,22 +19,18 @@ Client::Client(int client_socket) : _clientSocket(client_socket), _request(NULL)
 	std::string *buffer = new std::string;
 	this->_response->setBuffer(buffer);
 	this->_request->setBuffer(buffer);
+	this->_cgi = NULL;
+	this->_serverBlockTriggered = NULL;
 }
 
 Client::~Client()
 {
-	if (this->_clientSocket != -1)
-		close(this->_clientSocket);
 	delete this->_response->getBuffer();
 	delete this->_request;
 	delete this->_response;
 	delete this->_file;
-	std::cout<<RED<<"Client Destructor"<<RESET<<std::endl;
-}
-
-void	Client::setClientSocket(int client_socket)
-{
-	this->_clientSocket = client_socket;
+	if (this->_cgi)
+		delete this->_cgi;
 }
 
 void	Client::setClientPending(bool pending)
@@ -63,6 +58,16 @@ void	Client::setClientFile(File *file)
 	this->_file = file;
 }
 
+void	Client::setClientCgi(Cgi *cgi)
+{
+	this->_cgi = cgi;
+}
+
+void	Client::setServerBlockTriggered(ServerBlock *serverBlock)
+{
+	this->_serverBlockTriggered = serverBlock;
+}
+
 void	Client::setClientOpenFd(int fd)
 {
 	this->_openFd = fd;
@@ -78,14 +83,24 @@ void	Client::setClientWritingFlag(bool flag)
 	this->_finishedWriting = flag;
 }
 
-void	Client::setStartingTime()
+void	Client::setPortTriggered(int port)
 {
-	this->_startTime = time(NULL);
+	this->_portTriggered = port;
 }
 
-int	Client::getClientSocket()
+void	Client::setDomainTriggered(std::string name)
 {
-	return (this->_clientSocket);
+	this->_domainTriggered = name;
+}
+
+void	Client::setClientPort(int port)
+{
+	this->_clientPort = port;
+}
+
+void	Client::setClientIp(std::string ip)
+{
+	this->_clientIp = ip;
 }
 
 bool	Client::getClientPending()
@@ -108,17 +123,29 @@ bool	Client::getClientWritingFlag()
 	return (this->_finishedWriting);
 }
 
-bool	Client::connectionExpired(int timeoutSec)
-{
-	time_t	now = time(NULL);
-	if (now - this->_startTime >= timeoutSec)
-		return (true);
-	return (false);
-}
-
 int	Client::getClientOpenFd()
 {
 	return (_openFd);
+}
+
+int	Client::getPortTriggered()
+{
+	return (this->_portTriggered);
+}
+
+int	Client::getClientPort()
+{
+	return (this->_clientPort);
+}
+
+std::string	Client::getClientIp()
+{
+	return (this->_clientIp);
+}
+
+std::string	Client::getDomainTriggered()
+{
+	return (this->_domainTriggered);
 }
 
 RequestParse	*Client::getClientRequest()
@@ -136,9 +163,18 @@ File	*Client::getClientFile()
 	return (this->_file);
 }
 
+Cgi		*Client::getClientCgi()
+{
+	return (this->_cgi);
+}
+
+ServerBlock	*Client::getServerBlockTriggered()
+{
+	return (this->_serverBlockTriggered);
+}
+
 void	Client::readRequest(int client_socket)
 {
-	this->setStartingTime();
 	this->getClientRequest()->readToBuffer(client_socket, this);
 	if (this->getClientRequest()->get_buffer().find("Connection: keep-alive") != std::string::npos)
 		this->setClientConnection(true);
@@ -149,17 +185,45 @@ void	Client::handle_connect(int client_socket)
 {
 	try
 	{
-		this->setStartingTime();
 		this->getClientRequest()->execute_response(client_socket, this);
 	}
 	catch(const std::exception& e)
 	{
 		std::cerr << e.what() << '\n';
 	}
-	if (this->getClientWritingFlag() == true)
+}
+
+void	new_connection(std::vector<Client*> &clientList, std::vector<int> &errorFds, Server &server, int serverFd)
+{
+	struct sockaddr_in clientaddr;
+	socklen_t	addrlen = sizeof(clientaddr);
+	Client	*newClient = new Client(accept(serverFd, (struct sockaddr*)&clientaddr, &addrlen));
+	if (newClient->getSocketFd() == -1)
+		throw NewConnectionCreationException(server, clientList);
+	newClient->setClientIp(convertIpToString(clientaddr.sin_addr));
+	newClient->setClientPort(ntohs(clientaddr.sin_port));
+	//still kinda hardcoded to store the information about the server block triggered
+	std::vector<ServerBlock*>::iterator	it = server.getServerBlockTriggered(serverFd);
+	newClient->setPortTriggered((*it)->getBlockPort());
+	newClient->setDomainTriggered((*it)->getBlockName());
+	newClient->setServerBlockTriggered((*it));
+	newClient->addSocketToEpoll(server.getEpollFd());
+	if (clientList.size() < 60)
+		clientList.push_back(newClient);
+	else
 	{
-		//still trying to handle the keep alive connections
-		//close(client_socket);
-		std::cout<<YELLOW<<"Closing connection..."<<RESET<<std::endl;
+		errorFds.push_back(newClient->getSocketFd());
+		delete	newClient;
+		return ;
 	}
+	printLog("INFO", newClient->getServerBlockTriggered(), newClient, NULL, 3);
+}
+
+void	clearClient(std::vector<Client*>::iterator	it, std::vector<Client*> &clientList)
+{
+	printLog("INFO", (*it)->getServerBlockTriggered(), (*it), (*it)->getClientResponse(), 4);
+	(*it)->setClientOpenFd(-1);
+	(*it)->removeSocketFromEpoll((*it)->getSocketFd());
+	delete (*it);
+	clientList.erase(it);
 }

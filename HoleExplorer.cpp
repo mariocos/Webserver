@@ -7,7 +7,7 @@ std::vector<Client*>::iterator	getRightHole(std::vector<Client*> &clientList, in
 	std::vector<Client*>::iterator	end = clientList.end();
 	while (it != end)
 	{
-		if (*it != NULL && (*it)->getClientSocket() == event_fd)
+		if (*it != NULL && (*it)->getSocketFd() == event_fd)
 			return (it);
 		it++;
 	}
@@ -20,7 +20,7 @@ std::vector<Client*>::iterator	getPendingHole(std::vector<Client*> &clientList)
 	std::vector<Client*>::iterator	end = clientList.end();
 	while (it != end)
 	{
-		if (*it != NULL && ((*it)->getClientWritingFlag() == false))
+		if (*it != NULL && ((*it)->getClientWritingFlag() == false || (*it)->getClientCgi()))
 			return (it);
 		it++;
 	}
@@ -34,7 +34,7 @@ std::vector<Client*>::iterator	getNextPendingHole(std::vector<Client*> &clientLi
 		it++;
 	while (it != end)
 	{
-		if (*it != NULL && (*it)->getClientWritingFlag() == false)
+		if (*it != NULL && ((*it)->getClientWritingFlag() == false || (*it)->getClientCgi()))
 			return (it);
 		it++;
 	}

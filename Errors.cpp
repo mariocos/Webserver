@@ -1,34 +1,77 @@
 #include "includes/Errors.hpp"
 
-Error400Exception::Error400Exception(int client_socket, Client *client) :
+Error400Exception::Error400Exception(int client_socket, Response *response, Client *client) :
 runtime_error("Error 400 found") 
 {
-	loadError400(client_socket, client);
+	response->setStatusCode(400);
+	printLog("ERROR", client->getServerBlockTriggered(), client, response, 400);
+	loadError400(client_socket, response, client);
+	if (client->getServerBlockTriggered()->isCgi())
+	{
+		client->setClientWritingFlag(true);
+		client->setClientReadingFlag(true);
+	}
 }
 
-Error403Exception::Error403Exception() :
+Error403Exception::Error403Exception(int client_socket, Response *response, Client *client) :
 runtime_error("Error 403 found") 
 {
-	loadError403();
+	response->setStatusCode(403);
+	printLog("ERROR", client->getServerBlockTriggered(), client, response, 403);
+	loadError403(client_socket, response, client);
+	if (client->getServerBlockTriggered()->isCgi())
+	{
+		client->setClientWritingFlag(true);
+		client->setClientReadingFlag(true);
+	}
 }
 
 Error404Exception::Error404Exception(int client_socket, Response *response, Client *client) :
 runtime_error("Error 404 found") 
 {
+	response->setStatusCode(404);
+	printLog("ERROR", client->getServerBlockTriggered(), client, response, 404);
 	loadError404(client_socket, response, client);
+	if (client->getServerBlockTriggered()->isCgi())
+	{
+		client->setClientWritingFlag(true);
+		client->setClientReadingFlag(true);
+	}
 }
 
-Error405Exception::Error405Exception() :
+Error405Exception::Error405Exception(int client_socket, Response *response, Client *client) :
 runtime_error("Error 405 found") 
 {
-	loadError405();
+	response->setStatusCode(405);
+	printLog("ERROR", client->getServerBlockTriggered(), client, response, 405);
+	loadError405(client_socket, response, client);
+	if (client->getServerBlockTriggered()->isCgi())
+	{
+		client->setClientWritingFlag(true);
+		client->setClientReadingFlag(true);
+	}
+}
+
+Error413Exception::Error413Exception(int client_socket, Response *response, Client *client) :
+runtime_error("Error 413 found") 
+{
+	response->setStatusCode(413);
+	printLog("ERROR", client->getServerBlockTriggered(), client, response, 413);
+	loadError413(client_socket, response, client);
+	if (client->getServerBlockTriggered()->isCgi())
+	{
+		client->setClientWritingFlag(true);
+		client->setClientReadingFlag(true);
+	}
 }
 
 Error503Exception::Error503Exception(Client *errorClient, Server &server) :
 runtime_error("Error 503 found") 
 {
-	loadError503(errorClient->getClientSocket());
-	server.removeFromEpoll(errorClient->getClientSocket());
+	//printLog("ERROR", client->getServerBlockTriggered(), client, response, 503);
+	errorClient->getClientResponse()->setStatusCode(503);
+	loadError503(errorClient->getSocketFd());
+	server.removeFromEpoll(errorClient->getSocketFd());
 	delete	errorClient;
 }
 

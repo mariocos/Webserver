@@ -34,6 +34,7 @@
 # include <stdlib.h>
 # include <vector>
 # include <ctime>
+# include <map>
 
 # define RESET "\033[0m"
 # define GREEN "\033[1m\033[32m"
@@ -46,28 +47,49 @@
 # include "Server.hpp"
 # include "Errors.hpp"
 # include "File.hpp"
+# include "WebSocket.hpp"
+# include "ServerBlock.hpp"
+# include "Cgi.hpp"
 
 extern bool	run;
+extern bool	print;
 
 class RequestParse;
 class Response;
 
+template <typename T>
+std::string	transformToString(const T &value)
+{
+	std::ostringstream	ostream;
+	std::string			lenght;
+
+	ostream << value;
+	lenght = ostream.str();
+	return (lenght);
+}
+
 //main.cpp
+std::string	getTimeStamp();
+std::string	convertIpToString(struct in_addr s_addr);
+void	printLog(std::string action, ServerBlock *serverBlock, Client *client, Response *response, int mode);
 void	stopRunning(int signal);
 void	ft_bzero(void *s, size_t n);
-void	searchDeadConnections(std::vector<Client*> &clientList, Server &server);
 void	error_connection_handler(std::vector<int> &errorFds, Server &server);
+bool	isConnectionGood(Server &server, std::vector<Client*>::iterator it);
+bool	doesPortsMatch(Server &server, std::vector<Client*>::iterator it);
+void	handlePortOrDomainMismatch(Server &server, std::vector<Client*> &clientList, std::vector<Client*>::iterator it);
 void	handlePendingConnections(std::vector<Client*> &clientList, Server &server);
 
 //signal.cpp
 void	cleaner(Server &server, std::vector<Client*> &clientList);
 
 //create_response.cpp
+std::string	findFileExtension(std::string path);
 void	findType(RequestParse *request, Response *response);
 void	createHeader(RequestParse *request, Response *response, Client *client);
 int 	setNonBlocking(int fd);
-void	loadPage(int client_socket, unsigned int buffer_size, Response *response, Client *client);
-void	sendMsgToSocket(int client_socket, Client *client, Response *response);
+void	loadPage(int client_socket, Response *response, Client *client);
+void	sendMsgToSocket(int client_socket, int lenght, Client *client, Response *response);
 
 //HoleExplorer.cpp
 std::vector<Client*>::iterator	getRightHole(std::vector<Client*> &clientList, int event_fd);
@@ -90,6 +112,24 @@ class	SendException : public std::runtime_error
 {
 	public:
 		SendException(Client *client, Response *response);
+};
+
+class	RedirectException : public std::runtime_error
+{
+	public:
+		RedirectException(Server &server, std::vector<Client*>::iterator it);
+};
+
+class	NonBlockingException : public std::runtime_error
+{
+	public:
+		NonBlockingException(int fd);
+};
+
+class	BadChildException : public std::runtime_error
+{
+	public:
+		BadChildException();
 };
 
 #endif
