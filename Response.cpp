@@ -68,6 +68,21 @@ void	Response::setResponse(std::vector<uint8_t> &response)
 	this->_response = response;
 }
 
+void	Response::setBinaryBuffer(std::vector<uint8_t> &buffer)
+{
+	if (this->_binaryBuffer.empty())
+		this->_binaryBuffer = buffer;
+	else
+	{
+		std::vector<uint8_t>::iterator	it = buffer.begin();
+		while (it != buffer.end())
+		{
+			this->_binaryBuffer.push_back(*it);
+			it++;
+		}
+	}
+}
+
 void	Response::setBuffer(std::string *buffer)
 {
 	this->_buffer = buffer;
@@ -111,4 +126,9 @@ void	Response::clearResponse()
 std::string	Response::readFromBuffer()
 {
 	return (this->_buffer ? *_buffer : "");
+}
+
+std::vector<uint8_t> &Response::readFromBinaryBuffer()
+{
+	return (this->_binaryBuffer);
 }

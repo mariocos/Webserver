@@ -45,6 +45,7 @@ void	createHeader(RequestParse *request, Response *response, Client *client)
 	response->addToResponse(request->get_httpversion() + " 200 OK\r\n");
 	response->addToResponse("Content-Type: " + response->getType() + "\r\n");
 
+	//TODO
 	//To be added after getting the client_max_body_size
 	/* if (client->getClientFile()->getFileStats()->st_size > max_body_size)
 		throw Error413Exception(client->getSocketFd(), response, client); */

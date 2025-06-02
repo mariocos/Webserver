@@ -22,6 +22,7 @@ private:
 	std::string	*_buffer;
 	int			error_code;
 	std::string	content;
+	std::vector<uint8_t>	_binaryBuffer;
 public:
 	RequestParse();
 	RequestParse(const char *request);
@@ -46,6 +47,9 @@ public:
 	void	writeToBuffer(char *info);
 	void	adjustBuffer();
 	void	readToBuffer(int client_socket, Client *client);
+	void	readBinary(int client_socket, Client *client);
+	void	clearBuffer();
+	std::vector<uint8_t>	&getBufferInfo();
 	void	execute_response(int client_socket, Client *client);
 	void	GET_response(int client_socket, Client *client);
 	void	POST_response(int client_socket, Client *client);

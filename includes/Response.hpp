@@ -14,6 +14,7 @@ class Response
 {
 private:
 	std::vector<uint8_t>	_response;
+	std::vector<uint8_t>	_binaryBuffer;
 	std::string	*_buffer;
 	std::string	_path;
 	std::string	_type;
@@ -34,6 +35,7 @@ public:
 	ssize_t		getBytesSent();
 	int			getStatusCode();
 	void	setResponse(std::vector<uint8_t> &response);
+	void	setBinaryBuffer(std::vector<uint8_t> &buffer);
 	void	setBuffer(std::string *buffer);
 	void	setPath(std::string path);
 	void	setType(std::string type);
@@ -43,6 +45,7 @@ public:
 	void	addToBytesSent(ssize_t bytes);
 	void	clearResponse();
 	std::string	readFromBuffer();
+	std::vector<uint8_t> &readFromBinaryBuffer();
 };
 
 #endif

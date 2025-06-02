@@ -49,7 +49,7 @@ void	cgiHandler(Server &server, Client *client)
 				close(client->getClientCgi()->getStdOut()[1]);
 				client->setClientReadingFlag(true);
 				client->setClientWritingFlag(false);
-				//if CGI is set to Post need to write to STDIN[1] so cgi can read it
+				//TODO: if CGI is set to Post need to write to STDIN[1] so cgi can read it
 				//if (client->getClientRequest()->get_method() == "POST")
 				//	send(client->getClientCgi()->getStdIn()[1], client->getClientRequest()->get_buffer().c_str(), lenght, MSG_NOSIGNAL);
 				close(client->getClientCgi()->getStdIn()[1]);

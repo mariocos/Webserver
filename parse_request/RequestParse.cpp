@@ -157,6 +157,44 @@ void	RequestParse::readToBuffer(int client_socket, Client *client)
 		client->setClientReadingFlag(true);
 }
 
+void	RequestParse::readBinary(int client_socket, Client *client)
+{
+	ssize_t	bytes_read;
+	std::vector<uint8_t>	binaryBuffer(1048576);
+
+	bytes_read = read(client_socket, reinterpret_cast<char*>(binaryBuffer.data()), 1048576);
+	if (bytes_read == -1)
+	{
+		perror("read: ");
+		close(client_socket);
+	}
+	if (this->_binaryBuffer.empty())
+		this->_binaryBuffer.assign(binaryBuffer.begin(), binaryBuffer.begin() + bytes_read);
+	else
+	{
+		std::vector<uint8_t>::iterator	it = binaryBuffer.begin();
+		while (it != binaryBuffer.end())
+		{
+			this->_binaryBuffer.push_back(*it);
+			it++;
+		}
+	}
+	if (bytes_read >= 1048574)
+		client->setClientReadingFlag(false);
+	else
+		client->setClientReadingFlag(true);
+}
+
+void	RequestParse::clearBuffer()
+{
+	this->_binaryBuffer.clear();
+}
+
+std::vector<uint8_t>	&RequestParse::getBufferInfo()
+{
+	return (this->_binaryBuffer);
+}
+
 void	RequestParse::execute_response(int client_socket, Client *client)
 {
 	if (method.compare("GET") == 0)
