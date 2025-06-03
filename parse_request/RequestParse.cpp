@@ -200,9 +200,17 @@ void	RequestParse::execute_response(int client_socket, Client *client)
 	if (method.compare("GET") == 0)
 		GET_response(client_socket, client);
 	else if (method.compare("POST") == 0)
+	{
 		POST_response(client_socket, client);
+		client->setClientWritingFlag(true);
+		client->setClientPending(false);
+	}
 	else if (method.compare("DELETE") == 0)
+	{
 		DELETE_response(client_socket, client);
+		client->setClientWritingFlag(true);
+		client->setClientPending(false);
+	}
 	else
 		throw Error405Exception(client_socket, client->getClientResponse(), client);
 }
