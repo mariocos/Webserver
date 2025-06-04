@@ -22,7 +22,10 @@ if method == "GET":
 elif method == "POST":
     form = cgi.FieldStorage()
     print("<p><strong>POST Data:</strong></p>")
-    for key in form.keys():
-        print(f"<p>{key} = {form.getvalue(key)}</p>")
+    if form is not None and form.list:
+        for field in form.list:
+            print(f"<p>{field.name} = {field.value}</p>")
+    else:
+        print("<p>No POST data received.</p>")
 
 print("</body></html>")

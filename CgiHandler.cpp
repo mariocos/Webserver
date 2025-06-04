@@ -11,9 +11,15 @@ void	prepareCgi(Client *client)
 	env.push_back("SCRIPT_NAME="+ name);
 	path = "website" + client->getClientRequest()->get_path();
 	env.push_back("QUERY_STRING=" + client->getClientRequest()->get_query_str());
-	client->getClientFile()->openFile(path.c_str(), client->getSocketFd());
-	env.push_back("CONTENT_LENGHT=" + transformToString(client->getClientFile()->getFileStats()->st_size));
-	client->getClientFile()->getFile()->close();
+	std::cout<<"Content: "<<client->getClientRequest()->get_content()<<std::endl;
+	if (client->getClientRequest()->get_method() == "POST")
+		env.push_back("CONTENT_LENGHT=" + transformToString(client->getClientRequest()->get_content().size()));
+	else
+	{
+		client->getClientFile()->openFile(path.c_str(), client->getSocketFd());
+		env.push_back("CONTENT_LENGHT=" + transformToString(client->getClientFile()->getFileStats()->st_size));
+		client->getClientFile()->getFile()->close();
+	}
 	env.push_back("CONTENT_TYPE=" + client->getClientRequest()->get_content_type());
 	env.push_back("GATEWAY_INTERFACE=CGI/1.1");
 	env.push_back("SERVER_PROTOCOL=HTTP/1.1");
@@ -51,9 +57,8 @@ void	cgiHandler(Server &server, Client *client)
 				close(client->getClientCgi()->getStdOut()[1]);
 				client->setClientReadingFlag(true);
 				client->setClientWritingFlag(false);
-				//TODO: if CGI is set to Post need to write to STDIN[1] so cgi can read it
-				//if (client->getClientRequest()->get_method() == "POST")
-				//	send(client->getClientCgi()->getStdIn()[1], client->getClientRequest()->get_buffer().c_str(), lenght, MSG_NOSIGNAL);
+				if (client->getClientRequest()->get_method() == "POST")
+					send(client->getClientCgi()->getStdIn()[1], client->getClientRequest()->get_content().c_str(), client->getClientRequest()->get_content().size(), MSG_NOSIGNAL);
 				close(client->getClientCgi()->getStdIn()[1]);
 				client->getClientCgi()->changeCgiState();
 				client->getClientResponse()->setStatusCode(200);

@@ -67,8 +67,8 @@ void	RequestParse::buildRequest(const char *request)
 	this->HTTP_version = line1.substr(0, line1.find('\r'));
 	req.erase(0, req.find('\n') + 1);
 	/* key word get */
-	content_length = get_keyword(req, "content-length: ");
-	content_type = get_keyword(req, "content-type: ");
+	content_length = get_keyword(req, "Content-Length: ");
+	content_type = get_keyword(req, "Content-Type: ");
 	User = get_keyword(req, "User: ");
 	Accepts = get_keyword(req, "Accept: ");
 	connection = get_keyword(req, "Connection: ");
@@ -78,7 +78,22 @@ void	RequestParse::buildRequest(const char *request)
 	if (req.find("\r\n\r\n"))
 	{
 		req.erase(0, req.find("\r\n\r\n") + 4);
+		//!this is only getting one character of the request content
+		//example request:
+		//POST /cgi-bin/hello.py?name=Jonh&age=30 HTTP/1.1
+		//Host: script
+		//User-Agent: curl/7.81.0
+		//Accept: */*
+		//Content-Length: 21
+		//Content-Type: application/x-www-form-urlencoded
+		//	
+		//name=paul&lang=python
+		//
+		//content only gets the 'n' of "name=paul&lang=python"
 		content = req.substr(0, req.find("\0") + 1);
+
+		//* Fix i got for the remaining of the request but idk if we can receive something after
+		//content = req.substr(0);
 	}
 }
 
