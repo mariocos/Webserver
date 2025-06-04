@@ -11,7 +11,6 @@ void	prepareCgi(Client *client)
 	env.push_back("SCRIPT_NAME="+ name);
 	path = "website" + client->getClientRequest()->get_path();
 	env.push_back("QUERY_STRING=" + client->getClientRequest()->get_query_str());
-	std::cout<<"Content: "<<client->getClientRequest()->get_content()<<std::endl;
 	if (client->getClientRequest()->get_method() == "POST")
 		env.push_back("CONTENT_LENGHT=" + transformToString(client->getClientRequest()->get_content().size()));
 	else
@@ -48,21 +47,7 @@ void	cgiHandler(Server &server, Client *client)
 			if (client->getClientCgi()->getPid() == 0)
 				client->getClientCgi()->executeCgi(client);
 			else
-			{
-				struct epoll_event	event;
-				event.events = EPOLLIN | EPOLLRDHUP;
-				event.data.fd = client->getClientCgi()->getStdOut()[0];
-				epoll_ctl(server.getEpollFd(), EPOLL_CTL_ADD, event.data.fd, &event);
-				close(client->getClientCgi()->getStdIn()[0]);
-				close(client->getClientCgi()->getStdOut()[1]);
-				client->setClientReadingFlag(true);
-				client->setClientWritingFlag(false);
-				if (client->getClientRequest()->get_method() == "POST")
-					send(client->getClientCgi()->getStdIn()[1], client->getClientRequest()->get_content().c_str(), client->getClientRequest()->get_content().size(), MSG_NOSIGNAL);
-				close(client->getClientCgi()->getStdIn()[1]);
-				client->getClientCgi()->changeCgiState();
-				client->getClientResponse()->setStatusCode(200);
-			}
+				client->getClientCgi()->parentWork(server, client);
 		}
 		else if (client->getClientReadingFlag())
 			client->getClientCgi()->readCgiResponse(server, client);

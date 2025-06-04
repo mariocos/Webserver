@@ -26,6 +26,7 @@ public:
 	void	setCgiResponse(unsigned int buffer_size, Response *response);
 	void	changeCgiState();
 	void	executeCgi(Client *client);
+	void	parentWork(Server &server, Client *client);
 	void	readCgiResponse(Server &server, Client *client);
 	void	writeCgiResponse(Client *client);
 };

@@ -118,6 +118,34 @@ void	Cgi::executeCgi(Client *client)
 	throw BadChildException();
 }
 
+void	Cgi::parentWork(Server &server, Client *client)
+{
+	struct epoll_event	event;
+	event.events = EPOLLIN | EPOLLRDHUP;
+	event.data.fd = this->_cgiStdOut[0];
+	epoll_ctl(server.getEpollFd(), EPOLL_CTL_ADD, event.data.fd, &event);
+	close(this->_cgiStdIn[0]);
+	close(this->_cgiStdOut[1]);
+	client->setClientReadingFlag(true);
+	client->setClientWritingFlag(false);
+	if (client->getClientRequest()->get_method() == "POST")
+	{
+		std::string	body = client->getClientRequest()->get_content();
+		ssize_t	bytesSent = 0;
+		ssize_t	bodyLenght = body.size();
+		while (bytesSent < bodyLenght)
+		{
+			ssize_t	n = write(this->_cgiStdIn[1], body.c_str() + bytesSent, bodyLenght - bytesSent);
+			if (n <= 0)
+				break;
+			bytesSent += n;
+		}
+	}
+	close(this->_cgiStdIn[1]);
+	this->changeCgiState();
+	client->getClientResponse()->setStatusCode(200);
+}
+
 void	Cgi::readCgiResponse(Server &server, Client *client)
 {
 	this->setCgiResponse(1048576, client->getClientResponse());
