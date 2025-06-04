@@ -81,7 +81,7 @@ void	handlePortOrDomainMismatch(Server &server, std::vector<Client*> &clientList
 void	handlePendingConnections(std::vector<Client*> &clientList, Server &server);
 
 //signal.cpp
-void	cleaner(Server &server, std::vector<Client*> &clientList);
+void	cleaner(Server &server, std::vector<Client*> &clientList, bool print);
 
 //create_response.cpp
 std::string	findFileExtension(std::string path);
@@ -130,6 +130,12 @@ class	BadChildException : public std::runtime_error
 {
 	public:
 		BadChildException();
+};
+
+class	BadPipeCreationException : public std::runtime_error
+{
+	public:
+		BadPipeCreationException();
 };
 
 #endif

@@ -12,7 +12,7 @@ runtime_error("")
 NewConnectionCreationException::NewConnectionCreationException(Server &server, std::vector<Client*> &clientList) :
 runtime_error(RED"Error adding a new client"RESET)
 {
-	cleaner(server, clientList);
+	cleaner(server, clientList, true);
 }
 
 SendException::SendException(Client *client, Response *response) :
@@ -31,12 +31,16 @@ runtime_error(YELLOW"Redirecting Request To Default Server Block"RESET)
 	(*it)->setDomainTriggered((*serverIt)->getBlockName());
 	(*it)->getClientRequest()->setNewHost((*serverIt)->getBlockName());
 	(*it)->setPortTriggered((*serverIt)->getBlockPort());
+	(*it)->setServerBlockTriggered(*serverIt);
 }
 
 BadChildException::BadChildException() :
 runtime_error("Bad child")
 {
 }
+
+BadPipeCreationException::BadPipeCreationException() :
+runtime_error(RED"Error opening the pipe"RESET) {}
 
 NonBlockingException::NonBlockingException(int fd) :
 runtime_error(RED"Failed To Set Server Fd To Non Blocking"RESET)
@@ -293,7 +297,7 @@ int	main(int ac, char **av)
 			server.setEpollCount(epoll_wait(server.getEpollFd(), server.getEpollEventArray(), server.getMaxEvents(), 100));
 			if (server.getEpollCount() == -1)
 			{
-				cleaner(server, clientList);
+				cleaner(server, clientList, true);
 				return (1);
 			}
 			try
@@ -307,14 +311,14 @@ int	main(int ac, char **av)
 				//in case of a lost child proccess after a error in execve
 				if (std::string(e.what()) == "Bad child")
 				{
-					cleaner(server, clientList);
+					cleaner(server, clientList, false);
 					throw BadChildException();
 				}
 				if (print)
 					std::cerr << e.what() << '\n';
 			}
 		}
-		cleaner(server, clientList);
+		cleaner(server, clientList, true);
 	}
 	catch(const std::exception& e)
 	{

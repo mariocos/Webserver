@@ -35,7 +35,6 @@ ServerBlock	&ServerBlock::operator=(const ServerBlock &copy)
 
 ServerBlock::~ServerBlock()
 {
-	printLog("INFO", this, NULL, NULL, 2);
 }
 
 std::string	ServerBlock::getBlockName()

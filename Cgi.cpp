@@ -103,16 +103,18 @@ void	Cgi::executeCgi(Client *client)
 		env.push_back(const_cast<char*>(this->_envp[i].c_str()));
 	}
 	env.push_back(NULL);
-	dup2(this->_cgiStdIn[0], STDIN_FILENO);
-	dup2(this->_cgiStdOut[1], STDOUT_FILENO);
+	if (dup2(this->_cgiStdIn[0], STDIN_FILENO) == -1)
+		throw BadChildException();
+	if (dup2(this->_cgiStdOut[1], STDOUT_FILENO) == -1)
+		throw BadChildException();
 	close(this->_cgiStdIn[1]);
 	close(this->_cgiStdOut[0]);
 	scriptDir = path.substr(0, path.find_last_of("/"));
-	chdir(scriptDir.c_str());
+	if (chdir(scriptDir.c_str()) == -1)
+		throw BadChildException();
 	scriptName = path.substr(path.find_last_of("/") + 1);
 	char	*av[] = {const_cast<char*>(scriptName.c_str()), NULL};
 	execve(scriptName.c_str(), av, env.data());
-	perror("execve failed");
 	throw BadChildException();
 }
 
@@ -122,7 +124,7 @@ void	Cgi::readCgiResponse(Server &server, Client *client)
 	if (this->_cgiResponse.size() == 0)
 		client->getClientResponse()->setStatusCode(403);
 	printLog("CGI", client->getServerBlockTriggered(), client, client->getClientResponse(), 8);
-	epoll_ctl(server.getEpollFd(), EPOLL_CTL_DEL, this->_cgiStdOut[0], NULL);
+	server.removeFromEpoll(this->_cgiStdOut[0]);
 	close(this->_cgiStdOut[0]);
 	this->changeCgiState();
 	client->setClientReadingFlag(false);

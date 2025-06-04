@@ -24,8 +24,10 @@ void	prepareCgi(Client *client)
 	env.push_back("REMOTE_PORT=" + transformToString(client->getClientPort()));
 	client->setClientCgi(new Cgi());
 	client->getClientCgi()->setEnv(env);
-	pipe(client->getClientCgi()->getStdIn());
-	pipe(client->getClientCgi()->getStdOut());
+	if (pipe(client->getClientCgi()->getStdIn()) == -1)
+		throw BadPipeCreationException();
+	if (pipe(client->getClientCgi()->getStdOut()) == -1)
+		throw BadPipeCreationException();
 }
 
 void	cgiHandler(Server &server, Client *client)
