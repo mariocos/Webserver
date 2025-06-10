@@ -330,6 +330,6 @@ int	main(int ac, char **av)
 }
 
 //command to test GET to another serverBlock besides the localhost : "curl -H "Host: webserver.com" http://localhost:8080"
-//command to test POST : "curl -X POST -d"whatever we want to send as content" -H "Host: webserver.com" http://localhost:8080"
+//command to test POST : "curl -X POST -d "whatever we want to send as content" -H "Host: webserver.com" http://localhost:8080"
 //command to test GET to CGI : "curl -H "Host: script" http://localhost:2424/cgi-bin/hello.py\?name\=Jonh\&age\=30"
 //command to test POST to CGI : "curl -X POST -H "Host: script" -d "name=paul&lang=python" http://localhost:2424/cgi-bin/hello.py\?name\=Jonh\&age\=30"

@@ -43,6 +43,7 @@
 
 # include "Client.hpp"
 # include "../parse_request/RequestParse.hpp"
+# include "../Post_Dele/Post_master.hpp"
 # include "Response.hpp"
 # include "Server.hpp"
 # include "Errors.hpp"

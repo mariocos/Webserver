@@ -77,23 +77,8 @@ void	RequestParse::buildRequest(const char *request)
 		Host.erase(Host.find(":"), 5);
 	if (req.find("\r\n\r\n"))
 	{
-		req.erase(0, req.find("\r\n\r\n") + 4);
-		//!this is only getting one character of the request content
-		//example request:
-		//POST /cgi-bin/hello.py?name=Jonh&age=30 HTTP/1.1
-		//Host: script
-		//User-Agent: curl/7.81.0
-		//Accept: */*
-		//Content-Length: 21
-		//Content-Type: application/x-www-form-urlencoded
-		//	
-		//name=paul&lang=python
-		//
-		//content only gets the 'n' of "name=paul&lang=python"
-		content = req.substr(0, req.find("\0") + 1);
-
-		//* Fix i got for the remaining of the request but idk if we can receive something after
-		//content = req.substr(0);
+		req = req.erase(0, req.find("\r\n\r\n") + 4);
+		content = req;
 	}
 }
 
@@ -216,6 +201,7 @@ void	RequestParse::execute_response(int client_socket, Client *client)
 		GET_response(client_socket, client);
 	else if (method.compare("POST") == 0)
 	{
+		Post_master::post(client);
 		POST_response(client_socket, client);
 		client->setClientWritingFlag(true);
 		client->setClientPending(false);
