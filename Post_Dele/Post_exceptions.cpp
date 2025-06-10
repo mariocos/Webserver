@@ -130,11 +130,7 @@ void Post_master::post(Client* client) // add socket
     // // TODO: when should this be done?
 	createDirectoryIfNeeded("POSTED/");
 
-	std::ofstream	outfile(result.c_str());
-	if (!outfile.is_open()) {
-		std::cout<<"MAMADU"<<std::endl;
-		throw EvilRequest();//change exception
-	}
-
-	outfile << content;
+	int out_fd = open(result.c_str(), O_WRONLY | O_CREAT);
+		write(out_fd, request->get_full_content(), atoi(request->get_content_length().c_str()));
+		close(out_fd);
 }

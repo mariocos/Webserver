@@ -36,6 +36,12 @@ RequestParse::RequestParse(const char *request)
 
 void	RequestParse::buildRequest(const char *request)
 {
+	// std::vector<uint8_t>	algo(request);
+	full_content = ft_strstr(request, "\r\n\r\n") + 4;
+	if (!full_content)
+	{
+		std::cout << "\nfuck me in the but\n\n";//change to exceptions
+	}
 	error_code = 0;
 	std::cout << "calling request parse cstring constructor\n";
 	if (!request)
@@ -159,26 +165,22 @@ void	RequestParse::readToBuffer(int client_socket, Client *client)
 
 void	RequestParse::readBinary(int client_socket, Client *client)
 {
-	ssize_t	bytes_read;
-	std::vector<uint8_t>	binaryBuffer(1048576);
+	ssize_t	bytes_read = 1;
+	ssize_t	totalBytesRead = 0;
+	std::vector<uint8_t>	binaryBuffer;
 
-	bytes_read = read(client_socket, reinterpret_cast<char*>(binaryBuffer.data()), 1048576);
-	if (bytes_read == -1)
+	while (bytes_read != 0)
 	{
-		perror("read: ");
-		close(client_socket);
+		uint8_t tempBuffer[1048576];
+		bytes_read = read(client_socket, tempBuffer, sizeof(tempBuffer));
+		if (bytes_read <= 0)
+			break;
+		binaryBuffer.insert(binaryBuffer.end(), tempBuffer, tempBuffer + bytes_read);
+		totalBytesRead += bytes_read;
 	}
-	if (this->_binaryBuffer.empty())
-		this->_binaryBuffer.assign(binaryBuffer.begin(), binaryBuffer.begin() + bytes_read);
-	else
-	{
-		std::vector<uint8_t>::iterator	it = binaryBuffer.begin();
-		while (it != binaryBuffer.end())
-		{
-			this->_binaryBuffer.push_back(*it);
-			it++;
-		}
-	}
+	//! This print will give a invalid read because of the missing '\0' ate the end
+	//std::cout<<"Buffer:\n"<<binaryBuffer.data()<<std::endl;
+	this->_binaryBuffer = binaryBuffer;
 	if (bytes_read >= 1048574)
 		client->setClientReadingFlag(false);
 	else

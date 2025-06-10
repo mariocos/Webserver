@@ -23,6 +23,7 @@ private:
 	int			error_code;
 	std::string	content;
 	std::vector<uint8_t>	_binaryBuffer;
+	char *full_content;
 public:
 	RequestParse();
 	RequestParse(const char *request);
@@ -39,6 +40,7 @@ public:
 	std::string	get_buffer();
 	std::string	get_query_str();
 	std::string get_content();
+	char* get_full_content();
 	void		buildRequest(const char *req);
 	/*  setters  */
 	void	set_path(std::string path);

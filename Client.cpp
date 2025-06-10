@@ -175,12 +175,7 @@ ServerBlock	*Client::getServerBlockTriggered()
 
 void	Client::readRequest(int client_socket)
 {
-	//to read binary
 	this->getClientRequest()->readBinary(client_socket, this);
-	// this->getClientRequest()->readToBuffer(client_socket, this);
-	// if (this->getClientRequest()->get_buffer().find("Connection: keep-alive") != std::string::npos)
-	// 	this->setClientConnection(true);
-	// this->getClientRequest()->buildRequest(this->getClientRequest()->get_buffer().c_str());
 	this->getClientRequest()->buildRequest(reinterpret_cast<char*>(this->getClientRequest()->getBufferInfo().data()));
 }
 
