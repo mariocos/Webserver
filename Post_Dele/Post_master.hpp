@@ -14,8 +14,8 @@ class Post_master
 {
 private:
     std::string generateUniqueFilename(const std::string& directory, const std::string& extension);
-    void createDirectoryIfNeeded(const std::string& path);
-    bool isFileExists(const std::string& filename);
+    static void createDirectoryIfNeeded(const std::string& path);
+    static bool isFileExists(const std::string& filename);
     std::string getContentTypeExtension(const std::string& contentType);
 
 public:

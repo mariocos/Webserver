@@ -140,18 +140,18 @@ void	RequestParse::adjustBuffer()
 void	RequestParse::readToBuffer(int client_socket, Client *client)
 {
 	ssize_t	bytes_read;
-	char	buffer[1024];
+	char	buffer[1048576];
 
-	ft_bzero(buffer, 1024);
+	ft_bzero(buffer, 1048576);
 	bytes_read = read(client_socket, buffer, sizeof(buffer));
 	if (bytes_read == -1)
 	{
 		perror("read: ");
 		close(client_socket);
 	}
-	std::cout<<"Buffer:\n"<<buffer<<std::endl;
+	//std::cout<<"Buffer:\n"<<buffer<<std::endl;
 	writeToBuffer(buffer);
-	if (bytes_read >= 1022)
+	if (bytes_read >= 1048574)
 		client->setClientReadingFlag(false);
 	else
 		client->setClientReadingFlag(true);
@@ -202,7 +202,6 @@ void	RequestParse::execute_response(int client_socket, Client *client)
 	else if (method.compare("POST") == 0)
 	{	
 		Post_master::post(client);
-		POST_response(client_socket, client);
 		client->setClientWritingFlag(true);
 		client->setClientPending(false);
 	}
