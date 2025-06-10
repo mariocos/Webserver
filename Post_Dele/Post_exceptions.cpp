@@ -119,7 +119,8 @@ void Post_master::post(Client* client) // add socket
     }
     
 	//adding prefix
-	std::string result = "POSTED";
+
+	std::string result = "./POSTED";
 	if (targetPath[0] != '/') {
 		result += "/";
 	}
@@ -128,10 +129,10 @@ void Post_master::post(Client* client) // add socket
 
     // // TODO: when should this be done?
     // createDirectoryIfNeeded(uploadDir);
-    
 
 	std::ofstream	outfile(result.c_str());
 	if (!outfile.is_open()) {
+		std::cout<<"MAMADU4"<<std::endl;
 		throw EvilRequest();//change exception
 	}
 

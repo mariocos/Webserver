@@ -200,7 +200,7 @@ void	RequestParse::execute_response(int client_socket, Client *client)
 	if (method.compare("GET") == 0)
 		GET_response(client_socket, client);
 	else if (method.compare("POST") == 0)
-	{
+	{	
 		Post_master::post(client);
 		POST_response(client_socket, client);
 		client->setClientWritingFlag(true);
