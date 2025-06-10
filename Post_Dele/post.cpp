@@ -9,7 +9,7 @@ int	create_and_submit(RequestParse req)//creates and submits the request
 	sub_file << "Content-Type: " << req.get_content_type() << "\r\n";
 	sub_file << "Content-Length: " << req.get_content_length() << "\r\n\r\n";
 	sub_file << req.get_content();
-	
+	return(1);
 
 }
 
@@ -36,6 +36,6 @@ int	post(RequestParse req)
 
 
 
-
+	return(1);
 
 }

@@ -1,3 +1,5 @@
+#include "../includes/webserv.hpp"
+
 const char* Post_master::EvilRequest::what() const throw()
 {
     return "Evil request: The HTTP request contains malicious or invalid content\n";
@@ -12,6 +14,12 @@ const char* Post_master::InvalidContentType::what() const throw()
 {
     return "Invalid content type: Content-Type header is missing or invalid\n";
 }
+
+const char* Post_master::FileOperationError::what() const throw()
+{
+    return "Invalid content type: Content-Type header is missing or invalid\n";
+}
+
 
 Post_master::Post_master()
 {
@@ -75,7 +83,7 @@ void Post_master::createDirectoryIfNeeded(const std::string& path)
         dir = path.substr(0, pos);
         if (!dir.empty() && !isFileExists(dir)) {
             if (mkdir(dir.c_str(), 0755) != 0 && errno != EEXIST) {
-                throw FileOperationError("Failed to create directory: " + dir);
+                throw FileOperationError();//revise
             }
         }
     }
@@ -112,20 +120,20 @@ void Post_master::post(Client* client) // add socket
     
 	//adding prefix
 	std::string result = "POSTED";
-	if (request_path[0] != '/') {
+	if (targetPath[0] != '/') {
 		result += "/";
 	}
-	result += request_path;//change name for readability
+	result += targetPath;//change name for readability
 
 
-    // TODO: when should this be done?
-    createDirectoryIfNeeded(uploadDir);
+    // // TODO: when should this be done?
+    // createDirectoryIfNeeded(uploadDir);
     
 
-	std::ifstream	outfile(result);
+	std::ofstream	outfile(result.c_str());
 	if (!outfile.is_open()) {
 		throw EvilRequest();//change exception
 	}
 
-	//outfile << content;
+	outfile << content;
 }
