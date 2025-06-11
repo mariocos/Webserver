@@ -135,7 +135,7 @@ void	loadError405(int client_socket, Response *response, Client *client)
 void	loadError409(int client_socket, Response *response, Client *client)
 {
 	response->clearResponse();
-	response->addToResponse(client->getClientRequest()->get_httpversion() + " 409 Conflit\r\n");
+	response->addToResponse(client->getClientRequest()->get_httpversion() + " 409 Conflict\r\n");
 	response->addToResponse("Connection: close\r\n");
 	response->addToResponse("Content-Length: 0\r\n\r\n");
 	sendMsgToSocket(client_socket, response->getResponse().size(), client, response);

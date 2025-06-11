@@ -204,13 +204,12 @@ void	RequestParse::execute_response(int client_socket, Client *client)
 	else if (method.compare("POST") == 0)
 	{	
 		Post_master::post(client);
-		create201Response(client, client->getClientResponse());
+		createPostResponse(client, client->getClientResponse());
 	}
 	else if (method.compare("DELETE") == 0)
 	{
-		DELETE_response(client_socket, client);
-		client->setClientWritingFlag(true);
-		client->setClientPending(false);
+		delete_resource(client, client->getClientRequest());
+		createDeleteResponse(client, client->getClientResponse());
 	}
 	else
 		throw Error405Exception(client_socket, client->getClientResponse(), client);
@@ -240,18 +239,6 @@ void	RequestParse::GET_response(int client_socket, Client *client)
 		std::cout<<YELLOW<<"Is Writing to the socket"<<RESET<<std::endl;
 		loadPage(client_socket, client->getClientResponse(), client);
 	}
-}
-
-void	RequestParse::POST_response(int client_socket, Client *client)
-{
-	(void)client_socket;
-	(void)client;
-}
-
-void	RequestParse::DELETE_response(int client_socket, Client *client)
-{
-	(void)client_socket;
-	(void)client;
 }
 
 std::string RequestParse::get_content()

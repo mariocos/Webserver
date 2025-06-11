@@ -1,9 +1,9 @@
 #include "../includes/webserv.hpp"
 
-int delete_resource(RequestParse req)
+int delete_resource(Client *client, RequestParse *req)
 {
     // Sanitize path to prevent directory traversal
-    std::string targetPath = req.get_path();
+    std::string targetPath = req->get_path();
     if (targetPath.empty() || targetPath.find("..") != std::string::npos) {
         return (-1); // Evil request
     }
@@ -22,8 +22,7 @@ int delete_resource(RequestParse req)
     
     // Check if file/resource exists
     if (access(fullPath.c_str(), F_OK) != 0) {
-        std::cout << "Resource does not exist: " << fullPath << std::endl;
-        return (-2); // Not found
+		throw Error404Exception(client->getSocketFd(), client->getClientResponse(), client);
     }
     
     // Check if it's a directory
@@ -36,18 +35,14 @@ int delete_resource(RequestParse req)
     if (S_ISDIR(pathStat.st_mode)) {
         // It's a directory - remove it (only if empty)
         if (rmdir(fullPath.c_str()) != 0) {
-            std::cout << "Cannot remove directory (not empty or permission denied): " << fullPath << std::endl;
-            return (-4);
+			throw Error409Exception(client->getSocketFd(), client->getClientResponse(), client);
         }
-        std::cout << "Directory deleted successfully: " << fullPath << std::endl;
     } else {
         // It's a regular file - delete it
         if (unlink(fullPath.c_str()) != 0) {
-            std::cout << "Cannot delete file (permission denied): " << fullPath << std::endl;
-            return (-5);
+			throw Error403Exception(client->getSocketFd(), client->getClientResponse(), client);
         }
-        std::cout << "File deleted successfully: " << fullPath << std::endl;
     }
     
-    return (1); // Success
+    return (1);
 }

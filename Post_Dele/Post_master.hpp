@@ -9,6 +9,7 @@
 #include <filesystem>
 
 class Client;
+class RequestParse;
 
 class Post_master
 {
@@ -58,5 +59,6 @@ public:
     };
 };
 
+int delete_resource(Client *client, RequestParse *req);
 
 #endif

@@ -121,6 +121,11 @@ void	printLog(std::string action, ServerBlock *serverBlock, Client *client, Resp
 			std::cout<<YELLOW<<client->getClientRequest()->get_method() + " " + client->getClientRequest()->get_path() + " "<<response->getStatusCode();
 			std::cout<<" from "<<client->getClientIp() + " - " + client->getClientRequest()->get_content_length() + " bytes received"<<RESET<<std::endl;
 			break;
+		case 10:
+			std::cout<<"["<<getTimeStamp()<<"]"<<YELLOW<<" ["<<action<<"] "<<RESET;
+			std::cout<<YELLOW<<client->getClientRequest()->get_method() + " " + client->getClientRequest()->get_path() + " "<<response->getStatusCode();
+			std::cout<<" from "<<client->getClientIp()<<RESET<<std::endl;
+			break;
 		case 400:
 			std::cout<<"["<<getTimeStamp()<<"]"<<RED<<" ["<<action<<"] "<<RESET;
 			std::cout<<RED<<"Bad Request "<<response->getStatusCode()<<RESET<<std::endl;
@@ -139,7 +144,7 @@ void	printLog(std::string action, ServerBlock *serverBlock, Client *client, Resp
 			break;
 		case 409:
 			std::cout<<"["<<getTimeStamp()<<"]"<<RED<<" ["<<action<<"] "<<RESET;
-			std::cout<<RED<<"File Already Exists "<<response->getStatusCode()<<" - "<<client->getClientRequest()->get_path()<<RESET<<std::endl;
+			std::cout<<RED<<"Conflict "<<response->getStatusCode()<<" - "<<client->getClientRequest()->get_path()<<RESET<<std::endl;
 			break;
 		case 413:
 			std::cout<<"["<<getTimeStamp()<<"]"<<RED<<" ["<<action<<"] "<<RESET;

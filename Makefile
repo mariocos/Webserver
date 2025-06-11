@@ -8,7 +8,7 @@ SOURCES =	main.cpp \
 			signal.cpp Client.cpp Response.cpp create_response.cpp \
 			HoleExplorer.cpp Server.cpp loadErrorPages.cpp \
 			Errors.cpp File.cpp WebSocket.cpp ServerBlock.cpp CgiHandler.cpp \
-			Cgi.cpp Post_Dele/Post_exceptions.cpp Post_Dele/post.cpp
+			Cgi.cpp Post_Dele/Post_exceptions.cpp Post_Dele/post.cpp Post_Dele/del.cpp
 OBJS_DIR = obj
 OBJECTS = $(addprefix $(OBJS_DIR)/, $(SOURCES:%.cpp=%.o))
 

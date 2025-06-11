@@ -54,8 +54,6 @@ public:
 	std::vector<uint8_t>	&getBufferInfo();
 	void	execute_response(int client_socket, Client *client);
 	void	GET_response(int client_socket, Client *client);
-	void	POST_response(int client_socket, Client *client);
-	void	DELETE_response(int client_socket, Client *client);
 };
 
 std::string	get_keyword(std::string req, std::string keyword);

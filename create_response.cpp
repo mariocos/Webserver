@@ -87,7 +87,7 @@ void	loadPage(int client_socket, Response *response, Client *client)
 	client->setClientPending(false);
 }
 
-void	create201Response(Client *client, Response *response)
+void	createPostResponse(Client *client, Response *response)
 {
 	response->clearResponse();
 	response->setStatusCode(201);
@@ -99,6 +99,22 @@ void	create201Response(Client *client, Response *response)
 	client->setClientWritingFlag(true);
 	client->setClientPending(false);
 	printLog("INFO", client->getServerBlockTriggered(), client, response, 9);
+}
+
+void	createDeleteResponse(Client *client, Response *response)
+{
+	response->clearResponse();
+	response->setStatusCode(200);
+	response->addToResponse(client->getClientRequest()->get_httpversion() + " 200 OK\r\n");
+	response->addToResponse("Content-Type: text/plain");
+	response->addToResponse("Connection: close\r\n");
+	response->addToResponse("Content-Length: 20\r\n\r\n");
+	response->addToResponse("Deleted successfully");
+	sendMsgToSocket(client->getSocketFd(), response->getResponse().size(), client, response);
+	response->clearResponse();
+	client->setClientWritingFlag(true);
+	client->setClientPending(false);
+	printLog("INFO", client->getServerBlockTriggered(), client, response, 10);
 }
 
 void	sendMsgToSocket(int client_socket, int lenght, Client *client, Response *response)
