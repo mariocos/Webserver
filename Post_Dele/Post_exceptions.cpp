@@ -2,12 +2,22 @@
 
 const char* Post_master::EvilRequest::what() const throw()
 {
-    return "Evil request: The HTTP request contains malicious or invalid content\n";
+    return "Evil request: The HTTP request is evil\n";
 }
 
 const char* Post_master::BadClientPointer::what() const throw()
 {
     return "Bad client pointer: Null client pointer received\n";
+}
+
+const char* Post_master::BadRequestPointer::what() const throw()
+{
+    return "Bad Request pointer: Null Request pointer received\n";
+}
+
+const char* Post_master::FileAlreadyExists::what() const throw()
+{
+    return "File already exists\n";
 }
 
 const char* Post_master::InvalidContentType::what() const throw()
@@ -94,19 +104,14 @@ void Post_master::createDirectoryIfNeeded(const std::string& path)
 void Post_master::post(Client* client) // add socket
 {
     if (!client) {
-        throw BadClientPointer();//TODO: needs integration
+        throw BadClientPointer();
     }
     
     // get request
     RequestParse* request = client->getClientRequest();
     if (!request) {
-        throw EvilRequest();
+        throw BadRequestPointer();
     }
-    std::string content = request->get_content();// maybe change to vetors?
-	if (content.empty()) {
-		throw EvilRequest();
-	}
-
     // Get path from request
     std::string targetPath = request->get_path();
     if (targetPath.empty() || targetPath.find("..") != std::string::npos) {
@@ -129,6 +134,9 @@ void Post_master::post(Client* client) // add socket
 
     // // TODO: when should this be done?
 	createDirectoryIfNeeded("POSTED/");
+
+	if (!access(result.c_str(), F_OK))
+		throw FileAlreadyExists();
 
 	int out_fd = open(result.c_str(), O_WRONLY | O_CREAT);
 		write(out_fd, request->get_full_content(), atoi(request->get_content_length().c_str()));
