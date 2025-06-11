@@ -22,18 +22,24 @@ Server::Server(std::vector<int> ports, std::vector<std::string> names, int backl
 		else
 			newServerBlock = new ServerBlock(ports[i], backlog, names[i], socket(AF_INET, SOCK_STREAM, 0), false);
 		if (newServerBlock->getSocketFd() == -1)
+		{
+			delete newServerBlock;
+			close(this->_epoll_fd);
 			throw SocketCreationException();
+		}
 		if (ports[i] == 2424)
 			newServerBlock->setBlockAsCgi();
 		servaddr.sin_family = AF_INET;
 		servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
 		servaddr.sin_port = htons(newServerBlock->getBlockPort());
-		if (setsockopt(newServerBlock->getSocketFd(), SOL_SOCKET, SO_REUSEADDR, &option, sizeof(option)) == -1)
+		if (setsockopt(newServerBlock->getSocketFd(), SOL_SOCKET, SO_REUSEADDR, &option, sizeof(option)) == -1 \
+			|| bind(newServerBlock->getSocketFd(), (const sockaddr *)&servaddr, sizeof(servaddr)) == -1 \
+			|| listen(newServerBlock->getSocketFd(), newServerBlock->getBlockMaxConnections()) == -1)
+		{
+			delete newServerBlock;
+			close(this->_epoll_fd);
 			throw SocketBindException();
-		if (bind(newServerBlock->getSocketFd(), (const sockaddr *)&servaddr, sizeof(servaddr)) == -1)
-			throw SocketBindException();
-		if (listen(newServerBlock->getSocketFd(), newServerBlock->getBlockMaxConnections()) == -1)
-			throw SocketBindException();
+		}
 		event.events = EPOLLIN;
 		event.data.fd = newServerBlock->getSocketFd();
 		if (epoll_ctl(this->_epoll_fd, EPOLL_CTL_ADD, event.data.fd, &event) == -1)
