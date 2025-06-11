@@ -104,7 +104,7 @@ void Post_master::createDirectoryIfNeeded(const std::string& path)
 void Post_master::post(Client* client) // add socket
 {
     if (!client) {
-        throw BadClientPointer();//TODO: needs integration
+        throw BadClientPointer();
     }
     
     // get request
@@ -134,6 +134,9 @@ void Post_master::post(Client* client) // add socket
 
     // // TODO: when should this be done?
 	createDirectoryIfNeeded("POSTED/");
+
+	if (!access(result.c_str(), F_OK))
+		throw FileAlreadyExists();
 
 	int out_fd = open(result.c_str(), O_WRONLY | O_CREAT);
 		write(out_fd, request->get_full_content(), atoi(request->get_content_length().c_str()));
