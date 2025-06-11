@@ -1,5 +1,5 @@
 CXX = c++
-CXXFLAGS = -std=c++98 -Wall -Wextra -Werror -g
+CXXFLAGS = -std=c++98 -Wall -Wextra -Werror -g -Wno-c++11-compats
 NAME = webserv
 
 SOURCES =	main.cpp \

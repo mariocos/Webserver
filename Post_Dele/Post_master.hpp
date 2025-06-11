@@ -35,16 +35,20 @@ public:
     public:
         const char* what() const throw();
     };
-    
+    class BadRequestPointer : public std::exception
+    {
+    public:
+        const char* what() const throw();
+    };    
+    class FileAlreadyExists : public std::exception
+    {
+    public:
+        const char* what() const throw();
+    };
     class FileOperationError : public std::exception
     {
    		public:
         	const char* what() const throw();
-    	// private:
-    	//     std::string message;
-    	// public:
-    	//     FileOperationError(const std::string& msg) : message("File operation error: " + msg) {}
-    	//     const char* what() const throw() { return message.c_str(); }
     };
     
     class InvalidContentType : public std::exception
