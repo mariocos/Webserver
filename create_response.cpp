@@ -87,6 +87,20 @@ void	loadPage(int client_socket, Response *response, Client *client)
 	client->setClientPending(false);
 }
 
+void	create201Response(Client *client, Response *response)
+{
+	response->clearResponse();
+	response->setStatusCode(201);
+	response->addToResponse(client->getClientRequest()->get_httpversion() + " 201 Created\r\n");
+	response->addToResponse("Connection: close\r\n");
+	response->addToResponse("Content-Length: 0\r\n\r\n");
+	sendMsgToSocket(client->getSocketFd(), response->getResponse().size(), client, response);
+	response->clearResponse();
+	client->setClientWritingFlag(true);
+	client->setClientPending(false);
+	//printLog("INFO", client->getServerBlockTriggered(), client, response, 6);
+}
+
 void	sendMsgToSocket(int client_socket, int lenght, Client *client, Response *response)
 {
 	std::vector<uint8_t> data = response->getResponse();

@@ -204,8 +204,7 @@ void	RequestParse::execute_response(int client_socket, Client *client)
 	else if (method.compare("POST") == 0)
 	{	
 		Post_master::post(client);
-		client->setClientWritingFlag(true);
-		client->setClientPending(false);
+		create201Response(client, client->getClientResponse());
 	}
 	else if (method.compare("DELETE") == 0)
 	{

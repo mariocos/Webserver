@@ -90,6 +90,7 @@ void	findType(RequestParse *request, Response *response);
 void	createHeader(RequestParse *request, Response *response, Client *client);
 int 	setNonBlocking(int fd);
 void	loadPage(int client_socket, Response *response, Client *client);
+void	create201Response(Client *client, Response *response);
 void	sendMsgToSocket(int client_socket, int lenght, Client *client, Response *response);
 
 //HoleExplorer.cpp
