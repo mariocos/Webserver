@@ -137,6 +137,10 @@ void	printLog(std::string action, ServerBlock *serverBlock, Client *client, Resp
 			std::cout<<"["<<getTimeStamp()<<"]"<<RED<<" ["<<action<<"] "<<RESET;
 			std::cout<<RED<<"Method Not Allowed "<<response->getStatusCode()<<" - "<<client->getClientRequest()->get_method()<<RESET<<std::endl;
 			break;
+		case 409:
+			std::cout<<"["<<getTimeStamp()<<"]"<<RED<<" ["<<action<<"] "<<RESET;
+			std::cout<<RED<<"File Already Exists "<<response->getStatusCode()<<" - "<<client->getClientRequest()->get_path()<<RESET<<std::endl;
+			break;
 		case 413:
 			std::cout<<"["<<getTimeStamp()<<"]"<<RED<<" ["<<action<<"] "<<RESET;
 			std::cout<<RED<<"Payload Too Large "<<response->getStatusCode()<<" "<<response->getPath()<<RESET<<std::endl;

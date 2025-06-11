@@ -56,6 +56,7 @@ Error409Exception::Error409Exception(int client_socket, Response *response, Clie
 runtime_error("Error 409 found")
 {
 	response->setStatusCode(409);
+	printLog("ERROR", client->getServerBlockTriggered(), client, response, 409);
 	loadError409(client_socket, response, client);
 }
 
