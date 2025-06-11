@@ -132,6 +132,18 @@ void	loadError405(int client_socket, Response *response, Client *client)
 	client->setClientPending(false);
 }
 
+void	loadError409(int client_socket, Response *response, Client *client)
+{
+	response->clearResponse();
+	response->addToResponse(client->getClientRequest()->get_httpversion() + " 409 Conflit\r\n");
+	response->addToResponse("Connection: close\r\n");
+	response->addToResponse("Content-Length: 0\r\n\r\n");
+	sendMsgToSocket(client_socket, response->getResponse().size(), client, response);
+	response->clearResponse();
+	client->setClientWritingFlag(true);
+	client->setClientPending(false);
+}
+
 void	loadError413(int client_socket, Response *response, Client *client)
 {
 	std::ifstream	input;

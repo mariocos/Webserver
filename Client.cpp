@@ -188,6 +188,8 @@ void	Client::handle_connect(int client_socket)
 	catch(const std::exception& e)
 	{
 		std::cerr << e.what() << '\n';
+		this->setClientWritingFlag(true);
+		this->setClientPending(false);
 	}
 }
 

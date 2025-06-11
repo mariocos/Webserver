@@ -52,6 +52,13 @@ runtime_error("Error 405 found")
 	}
 }
 
+Error409Exception::Error409Exception(int client_socket, Response *response, Client *client) :
+runtime_error("Error 409 found")
+{
+	response->setStatusCode(409);
+	loadError409(client_socket, response, client);
+}
+
 Error413Exception::Error413Exception(int client_socket, Response *response, Client *client) :
 runtime_error("Error 413 found") 
 {

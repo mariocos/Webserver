@@ -136,7 +136,7 @@ void Post_master::post(Client* client) // add socket
 	createDirectoryIfNeeded("POSTED/");
 
 	if (!access(result.c_str(), F_OK))
-		throw FileAlreadyExists();
+		throw Error409Exception(client->getSocketFd(), client->getClientResponse(), client);
 
 	int out_fd = open(result.c_str(), O_WRONLY | O_CREAT);
 		write(out_fd, request->get_full_content(), atoi(request->get_content_length().c_str()));

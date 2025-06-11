@@ -116,6 +116,11 @@ void	printLog(std::string action, ServerBlock *serverBlock, Client *client, Resp
 			std::cout<<"["<<getTimeStamp()<<"]"<<YELLOW<<" ["<<action<<"] "<<RESET;
 			std::cout<<YELLOW<<"Completed "<<client->getClientRequest()->get_path()<<" with status "<<response->getStatusCode()<<RESET<<std::endl;
 			break;
+		case 9:
+			std::cout<<"["<<getTimeStamp()<<"]"<<YELLOW<<" ["<<action<<"] "<<RESET;
+			std::cout<<YELLOW<<client->getClientRequest()->get_method() + " " + client->getClientRequest()->get_path() + " "<<response->getStatusCode();
+			std::cout<<" from "<<client->getClientIp() + " - " + client->getClientRequest()->get_content_length() + " bytes received"<<RESET<<std::endl;
+			break;
 		case 400:
 			std::cout<<"["<<getTimeStamp()<<"]"<<RED<<" ["<<action<<"] "<<RESET;
 			std::cout<<RED<<"Bad Request "<<response->getStatusCode()<<RESET<<std::endl;

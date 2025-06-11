@@ -98,7 +98,7 @@ void	create201Response(Client *client, Response *response)
 	response->clearResponse();
 	client->setClientWritingFlag(true);
 	client->setClientPending(false);
-	//printLog("INFO", client->getServerBlockTriggered(), client, response, 6);
+	printLog("INFO", client->getServerBlockTriggered(), client, response, 9);
 }
 
 void	sendMsgToSocket(int client_socket, int lenght, Client *client, Response *response)
