@@ -139,6 +139,8 @@ void Post_master::post(Client* client) // add socket
 		throw Error409Exception(client->getSocketFd(), client->getClientResponse(), client);
 
 	int out_fd = open(result.c_str(), O_WRONLY | O_CREAT);
-		write(out_fd, request->get_full_content(), atoi(request->get_content_length().c_str()));
-		close(out_fd);
+	if (out_fd < 0)
+		throw Error404Exception(client->getSocketFd(), client->getClientResponse(), client);
+	write(out_fd, request->get_full_content(), atoi(request->get_content_length().c_str()));
+	close(out_fd);
 }

@@ -93,7 +93,8 @@ void	createPostResponse(Client *client, Response *response)
 	response->setStatusCode(201);
 	response->addToResponse(client->getClientRequest()->get_httpversion() + " 201 Created\r\n");
 	response->addToResponse("Connection: close\r\n");
-	response->addToResponse("Content-Length: 0\r\n\r\n");
+	response->addToResponse("Content-Length: 20\r\n\r\n");
+	response->addToResponse("Created successfully");
 	sendMsgToSocket(client->getSocketFd(), response->getResponse().size(), client, response);
 	response->clearResponse();
 	client->setClientWritingFlag(true);
