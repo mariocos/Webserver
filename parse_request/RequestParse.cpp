@@ -36,7 +36,6 @@ RequestParse::RequestParse(const char *request)
 
 void	RequestParse::buildRequest(const char *request)
 {
-	// std::vector<uint8_t>	algo(request);
 	full_content = ft_strstr(request, "\r\n\r\n") + 4;
 	if (!full_content)
 	{
@@ -177,6 +176,7 @@ void	RequestParse::readBinary(int client_socket, Client *client)
 			break;
 		binaryBuffer.insert(binaryBuffer.end(), tempBuffer, tempBuffer + bytes_read);
 		totalBytesRead += bytes_read;
+		//! This resolves the normal Body but fucks the binary body
   		if (!binaryBuffer.empty() && binaryBuffer.back() != '\0')
 		{
    	    	binaryBuffer.push_back('\0');
