@@ -176,8 +176,7 @@ void	RequestParse::readBinary(int client_socket, Client *client)
 			break;
 		binaryBuffer.insert(binaryBuffer.end(), tempBuffer, tempBuffer + bytes_read);
 		totalBytesRead += bytes_read;
-		//! This resolves the normal Body but fucks the binary body
-  		if (!binaryBuffer.empty() && binaryBuffer.back() != '\0')
+  		if (bytes_read == 0 && binaryBuffer.back() != '\0')
 		{
    	    	binaryBuffer.push_back('\0');
     	}
