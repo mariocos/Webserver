@@ -228,17 +228,13 @@ void	RequestParse::GET_response(int client_socket, Client *client)
 	//reading/write operations
 	if (client->getClientFile()->isReading())
 	{
-		std::cout<<YELLOW<<"Is Reading From the file"<<RESET<<std::endl;
 		if (client->getClientFile()->getFileStats()->st_size > 1048576)
 			client->getClientFile()->readFromFd(1048576);
 		else
 			client->getClientFile()->readFromFd(client->getClientFile()->getFileStats()->st_size);
 	}
 	else if (client->getClientFile()->isWriting())
-	{
-		std::cout<<YELLOW<<"Is Writing to the socket"<<RESET<<std::endl;
 		loadPage(client_socket, client->getClientResponse(), client);
-	}
 }
 
 std::string RequestParse::get_content()

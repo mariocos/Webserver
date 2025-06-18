@@ -21,6 +21,7 @@ Client::Client(int client_socket) : WebSocket(client_socket), _request(NULL), _r
 	this->_request->setBuffer(buffer);
 	this->_cgi = NULL;
 	this->_serverBlockTriggered = NULL;
+	this->resetTimer();
 }
 
 Client::~Client()
@@ -103,6 +104,13 @@ void	Client::setClientIp(std::string ip)
 	this->_clientIp = ip;
 }
 
+void	Client::resetTimer()
+{
+	struct timeval	tv;
+	gettimeofday(&tv, NULL);
+	this->_time = (uint64_t)tv.tv_sec;
+}
+
 bool	Client::getClientPending()
 {
 	return (this->_pending);
@@ -121,6 +129,24 @@ bool	Client::getClientReadingFlag()
 bool	Client::getClientWritingFlag()
 {
 	return (this->_finishedWriting);
+}
+
+bool	Client::hasToSendToCgi()
+{
+	std::string	cgiFolder = get_keyword(this->_request->get_path(), "/cgi-bin/");
+	if (cgiFolder.empty())
+		return (false);
+	return (true);
+}
+
+bool	Client::hasTimedOut()
+{
+	struct timeval	tv;
+	gettimeofday(&tv, NULL);
+	uint64_t	actualTime = (uint64_t)tv.tv_sec;
+	if (actualTime - this->_time >= TIMEOUT)
+		return (true);
+	return (false);
 }
 
 int	Client::getClientOpenFd()
@@ -181,16 +207,7 @@ void	Client::readRequest(int client_socket)
 
 void	Client::handle_connect(int client_socket)
 {
-	try
-	{
-		this->getClientRequest()->execute_response(client_socket, this);
-	}
-	catch(const std::exception& e)
-	{
-		std::cerr << e.what() << '\n';
-		this->setClientWritingFlag(true);
-		this->setClientPending(false);
-	}
+	this->getClientRequest()->execute_response(client_socket, this);
 }
 
 void	new_connection(std::vector<Client*> &clientList, std::vector<int> &errorFds, Server &server, int serverFd)

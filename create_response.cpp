@@ -51,14 +51,15 @@ void	createHeader(RequestParse *request, Response *response, Client *client)
 		throw Error413Exception(client->getSocketFd(), response, client); */
 
 	response->addToResponseLenght(client->getClientFile()->getFileStats()->st_size);
-	if (client->getClientConnection() == true)
-		response->addToResponse("Connection: close\r\n");
+	response->addToResponse("Connection: close\r\n");
 	response->addToResponse("Content-Length: " + response->getResponseLenghtAsString() + "\r\n\r\n");
+	response->addToBytesToSend(response->getResponse().size());
 	sendMsgToSocket(client->getSocketFd(), response->getResponse().size(), client, response);
-	std::cout<<"response head:\n"<<std::string(response->getResponse().begin(), response->getResponse().end());
+	//std::cout<<"response head:\n"<<std::string(response->getResponse().begin(), response->getResponse().end());
 	response->clearResponse();
 	client->getClientFile()->setReading(true);
 	client->getClientFile()->setWriting(false);
+	response->addToBytesToSend(client->getClientFile()->getFileStats()->st_size);
 	printLog("ACCESS", client->getServerBlockTriggered(), client, client->getClientResponse(), 5);
 }
 
@@ -73,15 +74,17 @@ void	loadPage(int client_socket, Response *response, Client *client)
 	client->getClientFile()->clearBuffer();
 	client->getClientFile()->setReading(true);
 	client->getClientFile()->setWriting(false);
-	response->addToBytesSent(client->getClientFile()->getBytesRead());
-	sendMsgToSocket(client_socket, client->getClientFile()->getBytesRead(), client, response);
+	if (response->getBytesSent() < client->getClientFile()->getFileStats()->st_size)
+		sendMsgToSocket(client_socket, client->getClientFile()->getBytesRead(), client, response);
 	if (response->getBytesSent() < client->getClientFile()->getFileStats()->st_size)
 	{
+		printLog("DEBUG", client->getServerBlockTriggered(), client, response, 11);
 		client->setClientWritingFlag(false);
 		client->setClientPending(true);
 		return ;
 	}
-	printLog("INFO", client->getServerBlockTriggered(), client, response, 6);
+	if (response->getBytesSent() == response->getBytesToSend() && !client->getClientWritingFlag())
+		printLog("INFO", client->getServerBlockTriggered(), client, response, 6);
 	response->clearResponse();
 	client->setClientWritingFlag(true);
 	client->setClientPending(false);
@@ -121,6 +124,8 @@ void	createDeleteResponse(Client *client, Response *response)
 void	sendMsgToSocket(int client_socket, int lenght, Client *client, Response *response)
 {
 	std::vector<uint8_t> data = response->getResponse();
-	if (send(client_socket, reinterpret_cast<const char*>(data.data()), lenght, MSG_NOSIGNAL) == -1)
+	ssize_t	bytesSent = send(client_socket, reinterpret_cast<const char*>(data.data()), lenght, MSG_NOSIGNAL);
+	if (bytesSent == -1)
 		throw SendException(client, response);
+	response->addToBytesSent(bytesSent);
 }

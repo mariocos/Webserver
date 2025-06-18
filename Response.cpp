@@ -1,7 +1,7 @@
 #include "includes/Response.hpp"
 
 
-Response::Response() : _response(), _path(""), _type("text/plain"), _totalResponseLenght(0), _bytesSent(0)
+Response::Response() : _response(), _path(""), _type("text/plain"), _totalResponseLenght(0), _bytesToSend(0), _bytesSent(0)
 {
 	this->_buffer = NULL;
 	for (size_t i = 0; i < this->_response.size(); i++)
@@ -51,6 +51,11 @@ std::string	Response::getResponseLenghtAsString()
 unsigned int Response::getResponseLenght()
 {
 	return (this->_totalResponseLenght);
+}
+
+ssize_t	Response::getBytesToSend()
+{
+	return (this->_bytesToSend);
 }
 
 ssize_t	Response::getBytesSent()
@@ -111,6 +116,11 @@ void	Response::addToResponse(std::string info)
 void	Response::addToResponseLenght(unsigned int bytes)
 {
 	this->_totalResponseLenght += bytes;
+}
+
+void	Response::addToBytesToSend(ssize_t bytes)
+{
+	this->_bytesToSend += bytes;
 }
 
 void	Response::addToBytesSent(ssize_t bytes)

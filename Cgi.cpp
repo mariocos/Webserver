@@ -126,8 +126,8 @@ void	Cgi::parentWork(Server &server, Client *client)
 	epoll_ctl(server.getEpollFd(), EPOLL_CTL_ADD, event.data.fd, &event);
 	close(this->_cgiStdIn[0]);
 	close(this->_cgiStdOut[1]);
-	client->setClientReadingFlag(true);
-	client->setClientWritingFlag(false);
+	client->getClientFile()->setReading(true);
+	client->getClientFile()->setWriting(false);
 	if (client->getClientRequest()->get_method() == "POST")
 	{
 		std::string	body = client->getClientRequest()->get_content();
@@ -155,8 +155,8 @@ void	Cgi::readCgiResponse(Server &server, Client *client)
 	server.removeFromEpoll(this->_cgiStdOut[0]);
 	close(this->_cgiStdOut[0]);
 	this->changeCgiState();
-	client->setClientReadingFlag(false);
-	client->setClientWritingFlag(true);
+	client->getClientFile()->setReading(false);
+	client->getClientFile()->setWriting(true);
 }
 
 void	Cgi::writeCgiResponse(Client *client)
@@ -172,6 +172,8 @@ void	Cgi::writeCgiResponse(Client *client)
 	std::vector<uint8_t> data = this->_cgiResponse;
 	if (send(client->getSocketFd(), reinterpret_cast<const char*>(data.data()), this->_cgiResponse.size(), MSG_NOSIGNAL) == -1)
 		throw SendException(client, client->getClientResponse());
+	client->getClientFile()->setReading(true);
+	client->getClientFile()->setWriting(true);
 	client->setClientReadingFlag(true);
 	client->setClientWritingFlag(true);
 }

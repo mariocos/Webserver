@@ -49,9 +49,9 @@ void	cgiHandler(Server &server, Client *client)
 			else
 				client->getClientCgi()->parentWork(server, client);
 		}
-		else if (client->getClientReadingFlag())
+		else if (client->getClientFile()->isReading())
 			client->getClientCgi()->readCgiResponse(server, client);
-		else if (client->getClientWritingFlag())
+		else if (client->getClientFile()->isWriting())
 			client->getClientCgi()->writeCgiResponse(client);
 	}
 	catch(const std::exception& e)

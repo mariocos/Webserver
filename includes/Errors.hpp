@@ -7,6 +7,7 @@ void	loadError400(int client_socket, Response *response, Client *client);
 void	loadError403(int client_socket, Response *response, Client *client);
 void	loadError404(int client_socket, Response *response, Client *client);
 void	loadError405(int client_socket, Response *response, Client *client);
+void	loadError408(int client_socket, Response *response, Client *client);
 void	loadError409(int client_socket, Response *response, Client *client);
 void	loadError413(int client_socket, Response *response, Client *client);
 void	loadError503(int error_socket);

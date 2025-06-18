@@ -22,6 +22,7 @@ runtime_error(RED"Error while sending"RESET)
 	client->setClientWritingFlag(true);
 	client->setClientPending(false);
 	client->getClientFile()->setReading(false);
+	//std::cout<<client->getClientIp()<<":"<<client->getClientPort()<<std::endl;
 }
 
 RedirectException::RedirectException(Server &server, std::vector<Client*>::iterator it) :
@@ -125,6 +126,14 @@ void	printLog(std::string action, ServerBlock *serverBlock, Client *client, Resp
 			std::cout<<"["<<getTimeStamp()<<"]"<<YELLOW<<" ["<<action<<"] "<<RESET;
 			std::cout<<YELLOW<<client->getClientRequest()->get_method() + " " + client->getClientRequest()->get_path() + " "<<response->getStatusCode();
 			std::cout<<" from "<<client->getClientIp()<<RESET<<std::endl;
+			break;
+		case 11:
+			std::cout<<"["<<getTimeStamp()<<"]"<<YELLOW<<" ["<<action<<"] "<<RESET;
+			std::cout<<YELLOW<<"Sent "<<response->getBytesSent()<<"KB of "<<client->getClientFile()->getFileStats()->st_size<<"KB"<<RESET<<std::endl;
+			break;
+		case 12:
+			std::cout<<"["<<getTimeStamp()<<"]"<<RED<<" ["<<action<<"] "<<RESET;
+			std::cout<<RED<<"TimedOut "<<client->getClientIp() + ":" + transformToString(client->getClientPort())<<RESET<<std::endl;
 			break;
 		case 400:
 			std::cout<<"["<<getTimeStamp()<<"]"<<RED<<" ["<<action<<"] "<<RESET;
@@ -251,13 +260,11 @@ void	handlePendingConnections(std::vector<Client*> &clientList, Server &server)
 		//in case the request was too big to be read in one instance
 		else if (!(*it)->getClientReadingFlag() && !(*it)->getServerBlockTriggered()->isCgi())
 			(*it)->readRequest((*it)->getSocketFd());
-		else if ((*it)->getServerBlockTriggered()->isCgi())
+		else if ((*it)->getServerBlockTriggered()->isCgi() && (*it)->hasToSendToCgi())
 		{
 			//handling the CGI before and after the child process is created
 			if (((*it)->getClientCgi() && !(*it)->getClientCgi()->isActive()) || !(*it)->getClientCgi())
 				cgiHandler(server, (*it));
-			else
-				continue;
 			if ((*it)->getClientWritingFlag() && (*it)->getClientReadingFlag())
 				clearClient(it, clientList);
 		}
@@ -269,6 +276,28 @@ void	handlePendingConnections(std::vector<Client*> &clientList, Server &server)
 				clearClient(it, clientList);
 		}
 		it = getNextPendingHole(clientList, it);
+	}
+}
+
+void	searchForTimeOut(std::vector<Client*> &clientList)
+{
+	std::vector<Client*>::iterator	it = clientList.begin();
+	if (it == clientList.end())
+		return ;
+	while (it != clientList.end())
+	{
+		if ((*it)->hasTimedOut())
+		{
+			loadError408((*it)->getSocketFd(), (*it)->getClientResponse(), (*it));
+			printLog("INFO", (*it)->getServerBlockTriggered(), (*it), (*it)->getClientResponse(), 12);
+			(*it)->removeSocketFromEpoll((*it)->getSocketFd());
+			delete (*it);
+			clientList.erase(it);
+			it = clientList.begin();
+			if (it == clientList.end())
+				return ;
+		}
+		it++;
 	}
 }
 
@@ -284,7 +313,6 @@ int	main(int ac, char **av)
 		config = av[1];
 	try
 	{
-		//std::vector<yaml>		configs;
 		std::vector<int>	ports;
 		ports.push_back(4243);
 		ports.push_back(8080);
@@ -299,15 +327,9 @@ int	main(int ac, char **av)
 		std::vector<Client*>	clientList;
 		std::vector<int>		errorFds;
 		run = true;
-		print = true;
 		signal(SIGINT, stopRunning);
 		while (run)
 		{
-			if (print)
-			{
-				std::cout<<"Waiting..."<<std::endl;
-				print = false;
-			}
 			server.setEpollCount(epoll_wait(server.getEpollFd(), server.getEpollEventArray(), server.getMaxEvents(), 100));
 			if (server.getEpollCount() == -1)
 			{
@@ -318,7 +340,9 @@ int	main(int ac, char **av)
 			{
 				print = true;
 				server.handle_connections(clientList, errorFds);
-				handlePendingConnections(clientList, server);
+				searchForTimeOut(clientList);
+				//* For now this function isnt needed but keep it because idk
+				//handlePendingConnections(clientList, server);
 			}
 			catch(const std::exception& e)
 			{

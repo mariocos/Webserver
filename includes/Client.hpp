@@ -7,6 +7,8 @@
 # include "File.hpp"
 # include "WebSocket.hpp"
 
+# define TIMEOUT 5
+
 
 class RequestParse;
 class Response;
@@ -30,6 +32,7 @@ private:
 	bool			_pending;
 	bool			_keepAlive;
 	int				_openFd;
+	uint64_t		_time;
 	bool			_finishedReading;
 	bool			_finishedWriting;
 public:
@@ -50,10 +53,13 @@ public:
 	void	setDomainTriggered(std::string name);
 	void	setClientPort(int port);
 	void	setClientIp(std::string ip);
+	void	resetTimer();
 	bool	getClientPending();
 	bool	getClientConnection();
 	bool	getClientReadingFlag();
 	bool	getClientWritingFlag();
+	bool	hasToSendToCgi();
+	bool	hasTimedOut();
 	int		getClientOpenFd();
 	int		getPortTriggered();
 	int		getClientPort();

@@ -143,6 +143,8 @@ void	Server::handle_connections(std::vector<Client*> &clientList, std::vector<in
 {
 	std::vector<Client*>::iterator	it;
 	//handling all the triggers made in epoll_wait
+	if (this->_epoll_count == 0)
+		print = false;
 	for (int i = 0; i < this->_epoll_count; i++)
 	{
 		struct epoll_event	&event = this->_events[i];
@@ -174,12 +176,45 @@ void	Server::handle_connections(std::vector<Client*> &clientList, std::vector<in
 				continue;
 			else if (event.events & EPOLLRDHUP)
 				clearClient(it, clientList);
-			else
+			else if (!(*it)->getClientReadingFlag())
 			{
 				//reading the request received
 				(*it)->readRequest((*it)->getSocketFd());
-				(*it)->setClientWritingFlag(false);
-				(*it)->setSocketToReading(this->_epoll_fd);
+				(*it)->resetTimer();
+				if ((*it)->getClientReadingFlag())
+				{
+					(*it)->setClientWritingFlag(false);
+					(*it)->setSocketToWriting(this->_epoll_fd);
+				}
+			}
+			else
+			{
+				if ((*it)->getServerBlockTriggered()->isCgi() && (*it)->hasToSendToCgi())
+				{
+					//handling the CGI before and after the child process is created
+					if (((*it)->getClientCgi() && !(*it)->getClientCgi()->isActive()) || !(*it)->getClientCgi())
+						cgiHandler(*this, (*it));
+					else
+						continue;
+					(*it)->resetTimer();
+					//if ((*it)->getClientWritingFlag() && (*it)->getClientReadingFlag())
+					//	clearClient(it, clientList);
+				}
+				else
+				{
+					try
+					{
+						//handling all the other connections
+						(*it)->handle_connect((*it)->getSocketFd());
+						if (!(*it)->getClientWritingFlag())
+							(*it)->resetTimer();
+					}
+					catch(const std::exception& e)
+					{
+						std::cerr << e.what() << '\n';
+						clearClient(it, clientList);
+					}
+				}
 			}
 		}
 	}

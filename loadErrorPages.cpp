@@ -132,6 +132,18 @@ void	loadError405(int client_socket, Response *response, Client *client)
 	client->setClientPending(false);
 }
 
+void	loadError408(int client_socket, Response *response, Client *client)
+{
+	response->clearResponse();
+	response->addToResponse("HTTP/1.1 408 Request Timeout\r\n");
+	response->addToResponse("Connection: close\r\n");
+	response->addToResponse("Content-Length: X\r\n\r\n");
+	sendMsgToSocket(client_socket, response->getResponse().size(), client, response);
+	response->clearResponse();
+	client->setClientWritingFlag(true);
+	client->setClientPending(false);
+}
+
 void	loadError409(int client_socket, Response *response, Client *client)
 {
 	response->clearResponse();

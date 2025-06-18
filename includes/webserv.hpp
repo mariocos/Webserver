@@ -23,6 +23,7 @@
 # include <sys/epoll.h>
 # include <sys/wait.h>
 # include <sys/stat.h>
+# include <sys/time.h>
 # include <string.h>
 # include <netdb.h>
 # include <errno.h>
@@ -80,6 +81,7 @@ bool	isConnectionGood(Server &server, std::vector<Client*>::iterator it);
 bool	doesPortsMatch(Server &server, std::vector<Client*>::iterator it);
 void	handlePortOrDomainMismatch(Server &server, std::vector<Client*> &clientList, std::vector<Client*>::iterator it);
 void	handlePendingConnections(std::vector<Client*> &clientList, Server &server);
+void	searchForTimeOut(std::vector<Client*> &clientList);
 
 //signal.cpp
 void	cleaner(Server &server, std::vector<Client*> &clientList, bool print);
