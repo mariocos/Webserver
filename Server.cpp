@@ -147,8 +147,8 @@ void	Server::handle_connections(std::vector<Client*> &clientList, std::vector<in
 		print = false;
 	for (int i = 0; i < this->_epoll_count; i++)
 	{
-		struct epoll_event	&event = this->_events[i];
 		error_connection_handler(errorFds, *this);
+		struct epoll_event	&event = this->_events[i];
 		if (this->getServerSocketTriggered(event.data.fd) != -1)
 		{
 			try
@@ -189,7 +189,9 @@ void	Server::handle_connections(std::vector<Client*> &clientList, std::vector<in
 			}
 			else
 			{
-				if ((*it)->getServerBlockTriggered()->isCgi() && (*it)->hasToSendToCgi())
+				if (!isConnectionGood(*this, it))
+					handlePortOrDomainMismatch(*this, clientList, it);
+				else if ((*it)->getServerBlockTriggered()->isCgi() && (*it)->hasToSendToCgi())
 				{
 					//handling the CGI before and after the child process is created
 					if (((*it)->getClientCgi() && !(*it)->getClientCgi()->isActive()) || !(*it)->getClientCgi())

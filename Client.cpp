@@ -229,7 +229,9 @@ void	new_connection(std::vector<Client*> &clientList, std::vector<int> &errorFds
 		clientList.push_back(newClient);
 	else
 	{
+		std::cout<<RED "SERVER FULL" RESET<<std::endl;
 		errorFds.push_back(newClient->getSocketFd());
+		newClient->setSocketFd(-1);
 		delete	newClient;
 		return ;
 	}

@@ -196,6 +196,7 @@ void	loadError503(int error_socket)
 	response.append("Server: WebServ\r\n");
 	response.append("Content-Type: text/plain\r\n");
 	response.append("Content-Lenght: 0\r\n");
+	response.append("Connection: close\r\n");
 	response.append("Retry-After: 5\r\n\r\n");
 	send(error_socket, response.c_str(), response.length(), MSG_NOSIGNAL);
 	close(error_socket);

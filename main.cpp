@@ -10,23 +10,22 @@ runtime_error("")
 }
 
 NewConnectionCreationException::NewConnectionCreationException(Server &server, std::vector<Client*> &clientList) :
-runtime_error(RED"Error adding a new client"RESET)
+runtime_error(RED "Error adding a new client" RESET)
 {
 	cleaner(server, clientList, true);
 }
 
 SendException::SendException(Client *client, Response *response) :
-runtime_error(RED"Error while sending"RESET)
+runtime_error(RED "Error while sending" RESET)
 {
 	response->clearResponse();
 	client->setClientWritingFlag(true);
 	client->setClientPending(false);
 	client->getClientFile()->setReading(false);
-	//std::cout<<client->getClientIp()<<":"<<client->getClientPort()<<std::endl;
 }
 
 RedirectException::RedirectException(Server &server, std::vector<Client*>::iterator it) :
-runtime_error(YELLOW"Redirecting Request To Default Server Block"RESET)
+runtime_error(YELLOW "Redirecting Request To Default Server Block" RESET)
 {
 	std::vector<ServerBlock*>::iterator	serverIt = server.getDefaultServerBlock();
 	(*it)->setDomainTriggered((*serverIt)->getBlockName());
@@ -41,10 +40,10 @@ runtime_error("Bad child")
 }
 
 BadPipeCreationException::BadPipeCreationException() :
-runtime_error(RED"Error opening the pipe"RESET) {}
+runtime_error(RED "Error opening the pipe" RESET) {}
 
 NonBlockingException::NonBlockingException(int fd) :
-runtime_error(RED"Failed To Set Server Fd To Non Blocking"RESET)
+runtime_error(RED "Failed To Set Server Fd To Non Blocking" RESET)
 {
 	print = false;
 	close(fd);
@@ -190,6 +189,8 @@ void	error_connection_handler(std::vector<int> &errorFds, Server &server)
 {
 	std::vector<int>::iterator	it = errorFds.begin();
 	std::vector<int>::iterator	end = errorFds.end();
+	if (it == end)
+		return ;
 	for (int i = 0; i < server.getEpollCount(); i++)
 	{
 		it = errorFds.begin();
@@ -197,6 +198,7 @@ void	error_connection_handler(std::vector<int> &errorFds, Server &server)
 		{
 			if (*it != 0 && *it == server.getEpollIndex(i).data.fd)
 			{
+				std::cout<<RED "HANDLING ERROR CONNECTION" RESET<<std::endl;
 				loadError503((*it));
 				server.removeFromEpoll((*it));
 				errorFds.erase(it);
@@ -323,7 +325,7 @@ int	main(int ac, char **av)
 		names.push_back("webserver.com");
 		names.push_back("127.0.0.1");
 		names.push_back("script");
-		Server	server(ports, names, 10);
+		Server	server(ports, names, 20);
 		std::vector<Client*>	clientList;
 		std::vector<int>		errorFds;
 		run = true;
@@ -372,3 +374,6 @@ int	main(int ac, char **av)
 //command to test POST with binary : "curl -X POST --data-binary @/bin/ls -H "Host: webserver.com" http://localhost:8080/chicken-jokey"
 //command to test GET to CGI : "curl -H "Host: script" http://localhost:2424/cgi-bin/hello.py\?name\=Jonh\&age\=30"
 //command to test POST to CGI : "curl -X POST -H "Host: script" -d "name=paul&lang=python" http://localhost:2424/cgi-bin/hello.py\?name\=Jonh\&age\=30"
+//command to test 1000 requests with siege : "siege -b -c 50 -r 20 http://localhost:4243/index.html"
+//command to test 1000 requests with siege : "siege -b -c 100 -r 10 http://localhost:4243/index.html"
+//command to test 1000 requests with siege : "siege -b -c 200 -r 5 http://localhost:4243/index.html"
