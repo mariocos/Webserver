@@ -67,6 +67,7 @@ void	Cgi::setCgiResponse(unsigned int buffer_size, Response *response)
 		else
 			this->_cgiResponse.insert(this->_cgiResponse.end(), binaryBuffer.begin(), binaryBuffer.begin() + bytesRead);
 	}
+	response->addToBytesToSend(this->_cgiResponse.size());
 }
 
 void	Cgi::changeCgiState()
@@ -161,17 +162,25 @@ void	Cgi::readCgiResponse(Server &server, Client *client)
 
 void	Cgi::writeCgiResponse(Client *client)
 {
+	//! Im sure the bytes sent are the same as the requested and as it should
 	client->getClientResponse()->clearResponse();
 	client->getClientResponse()->addToResponse(client->getClientRequest()->get_httpversion() + " 200 OK\r\n");
 	client->getClientResponse()->addToResponse("Content-Type: " + client->getClientResponse()->getType() + "\r\n");
 	client->getClientResponse()->addToResponseLenght(this->_cgiResponse.size());
 	client->getClientResponse()->addToResponse("Connection: close\r\n");
 	client->getClientResponse()->addToResponse("Content-Length: " + client->getClientResponse()->getResponseLenghtAsString() + "\r\n\r\n");
+	//std::cout<<"response head:\n"<<std::string(client->getClientResponse()->getResponse().begin(), client->getClientResponse()->getResponse().end());
+	client->getClientResponse()->addToBytesToSend(client->getClientResponse()->getResponse().size());
 	sendMsgToSocket(client->getSocketFd(), client->getClientResponse()->getResponse().size(), client, client->getClientResponse());
 	client->getClientResponse()->clearResponse();
 	std::vector<uint8_t> data = this->_cgiResponse;
-	if (send(client->getSocketFd(), reinterpret_cast<const char*>(data.data()), this->_cgiResponse.size(), MSG_NOSIGNAL) == -1)
-		throw SendException(client, client->getClientResponse());
+	while (client->getClientResponse()->getBytesSent() < client->getClientResponse()->getBytesToSend())
+	{
+		ssize_t	bytesSent = send(client->getSocketFd(), reinterpret_cast<const char*>(data.data()), this->_cgiResponse.size(), MSG_NOSIGNAL);
+		if (bytesSent <= 0)
+			break;
+		client->getClientResponse()->addToBytesSent(bytesSent);
+	}
 	client->getClientFile()->setReading(true);
 	client->getClientFile()->setWriting(true);
 	client->setClientReadingFlag(true);

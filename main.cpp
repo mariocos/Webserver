@@ -49,6 +49,11 @@ runtime_error(RED "Failed To Set Server Fd To Non Blocking" RESET)
 	close(fd);
 }
 
+BadClientException::BadClientException() :
+runtime_error("BadClient")
+{
+}
+
 std::string	getTimeStamp()
 {
 	time_t	now = time(NULL);
@@ -325,7 +330,7 @@ int	main(int ac, char **av)
 		names.push_back("webserver.com");
 		names.push_back("127.0.0.1");
 		names.push_back("script");
-		Server	server(ports, names, 20);
+		Server	server(ports, names, 10);
 		std::vector<Client*>	clientList;
 		std::vector<int>		errorFds;
 		run = true;

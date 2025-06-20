@@ -39,6 +39,8 @@ void	cgiHandler(Server &server, Client *client)
 {
 	try
 	{
+		if (client->getClientResponse()->getBytesToSend() != 0 && client->getClientResponse()->getBytesToSend() == client->getClientResponse()->getBytesSent())
+			return ;
 		if (client->getClientReadingFlag() && !client->getClientWritingFlag() && !client->getClientCgi())
 		{
 			prepareCgi(client);
@@ -53,12 +55,14 @@ void	cgiHandler(Server &server, Client *client)
 			client->getClientCgi()->readCgiResponse(server, client);
 		else if (client->getClientFile()->isWriting())
 			client->getClientCgi()->writeCgiResponse(client);
+		client->resetTimer();
 	}
 	catch(const std::exception& e)
 	{
 		if (std::string(e.what()) == "Bad child")
 			throw BadChildException();
 		std::cerr << e.what() << '\n';
+		throw BadClientException();
 	}
 }
 

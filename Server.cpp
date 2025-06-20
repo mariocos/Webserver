@@ -167,8 +167,17 @@ void	Server::handle_connections(std::vector<Client*> &clientList, std::vector<in
 			it = isThisPipe(event.data.fd, clientList);
 			if (it != clientList.end())
 			{
-				cgiHandler(*this, (*it));
-				continue;
+				try
+				{
+					cgiHandler(*this, (*it));
+					continue;
+				}
+				catch(const std::exception& e)
+				{
+					if (std::string(e.what()) != "BadClient")
+						std::cerr << e.what() << '\n';
+					clearClient(it, clientList);
+				}
 			}
 			//getting from the clientList which client was triggered/disconnected
 			it = getRightHole(clientList, event.data.fd);
@@ -180,9 +189,9 @@ void	Server::handle_connections(std::vector<Client*> &clientList, std::vector<in
 			{
 				//reading the request received
 				(*it)->readRequest((*it)->getSocketFd());
-				(*it)->resetTimer();
 				if ((*it)->getClientReadingFlag())
 				{
+					(*it)->resetTimer();
 					(*it)->setClientWritingFlag(false);
 					(*it)->setSocketToWriting(this->_epoll_fd);
 				}
@@ -193,14 +202,20 @@ void	Server::handle_connections(std::vector<Client*> &clientList, std::vector<in
 					handlePortOrDomainMismatch(*this, clientList, it);
 				else if ((*it)->getServerBlockTriggered()->isCgi() && (*it)->hasToSendToCgi())
 				{
-					//handling the CGI before and after the child process is created
-					if (((*it)->getClientCgi() && !(*it)->getClientCgi()->isActive()) || !(*it)->getClientCgi())
-						cgiHandler(*this, (*it));
-					else
-						continue;
-					(*it)->resetTimer();
-					//if ((*it)->getClientWritingFlag() && (*it)->getClientReadingFlag())
-					//	clearClient(it, clientList);
+					try
+					{
+						//handling the CGI before and after the child process is created
+						if (((*it)->getClientCgi() && !(*it)->getClientCgi()->isActive()) || !(*it)->getClientCgi())
+							cgiHandler(*this, (*it));
+						else
+							continue;
+					}
+					catch(const std::exception& e)
+					{
+						//if (std::string(e.what()) != "BadClient")
+							std::cerr << e.what() << '\n';
+						clearClient(it, clientList);
+					}
 				}
 				else
 				{
@@ -208,8 +223,6 @@ void	Server::handle_connections(std::vector<Client*> &clientList, std::vector<in
 					{
 						//handling all the other connections
 						(*it)->handle_connect((*it)->getSocketFd());
-						if (!(*it)->getClientWritingFlag())
-							(*it)->resetTimer();
 					}
 					catch(const std::exception& e)
 					{

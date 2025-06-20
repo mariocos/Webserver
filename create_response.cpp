@@ -74,10 +74,10 @@ void	loadPage(int client_socket, Response *response, Client *client)
 	client->getClientFile()->clearBuffer();
 	client->getClientFile()->setReading(true);
 	client->getClientFile()->setWriting(false);
-	//std::cout<<"BYTES SENT: "<<response->getBytesSent()<<std::endl;
-	//std::cout<<"BYTES TO SEND: "<<response->getBytesToSend()<<std::endl;
 	if (response->getBytesSent() < response->getBytesToSend())
 		sendMsgToSocket(client_socket, client->getClientFile()->getBytesRead(), client, response);
+	//std::cout<<"BYTES SENT: "<<response->getBytesSent()<<std::endl;
+	//std::cout<<"BYTES TO SEND: "<<response->getBytesToSend()<<std::endl;
 	if (response->getBytesSent() < response->getBytesToSend())
 	{
 		printLog("DEBUG", client->getServerBlockTriggered(), client, response, 11);

@@ -143,4 +143,10 @@ class	BadPipeCreationException : public std::runtime_error
 		BadPipeCreationException();
 };
 
+class	BadClientException : public std::runtime_error
+{
+	public:
+		BadClientException();
+};
+
 #endif
