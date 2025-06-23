@@ -253,7 +253,7 @@ void	handlePortOrDomainMismatch(Server &server, std::vector<Client*> &clientList
 	clientList.erase(it);
 }
 
-void	handlePendingConnections(std::vector<Client*> &clientList, Server &server)
+/* void	handlePendingConnections(std::vector<Client*> &clientList, Server &server)
 {
 	std::vector<Client*>::iterator	it;
 	it = getPendingHole(clientList);
@@ -284,7 +284,7 @@ void	handlePendingConnections(std::vector<Client*> &clientList, Server &server)
 		}
 		it = getNextPendingHole(clientList, it);
 	}
-}
+} */
 
 void	searchForTimeOut(std::vector<Client*> &clientList)
 {
@@ -330,7 +330,7 @@ int	main(int ac, char **av)
 		names.push_back("webserver.com");
 		names.push_back("127.0.0.1");
 		names.push_back("script");
-		Server	server(ports, names, 10);
+		Server	server(ports, names, 20);
 		std::vector<Client*>	clientList;
 		std::vector<int>		errorFds;
 		run = true;

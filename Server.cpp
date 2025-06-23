@@ -141,7 +141,6 @@ void	Server::removeFromEpoll(int fd)
 
 void	Server::handle_connections(std::vector<Client*> &clientList, std::vector<int> &errorFds)
 {
-	std::vector<Client*>::iterator	it;
 	//handling all the triggers made in epoll_wait
 	if (this->_epoll_count == 0)
 		print = false;
@@ -162,75 +161,83 @@ void	Server::handle_connections(std::vector<Client*> &clientList, std::vector<in
 			}
 		}
 		else
+			this->manageConnection(clientList, event);
+	}
+}
+
+void	Server::manageConnection(std::vector<Client*> &clientList, epoll_event	&event)
+{
+	std::vector<Client*>::iterator	it;
+
+	//checking if the fd triggered was a fd from a pipe of a cgi
+	it = isThisPipe(event.data.fd, clientList);
+	if (it != clientList.end())
+	{
+		try
 		{
-			//checking if the fd triggered was a fd from a pipe of a cgi
-			it = isThisPipe(event.data.fd, clientList);
-			if (it != clientList.end())
-			{
-				try
-				{
-					cgiHandler(*this, (*it));
-					continue;
-				}
-				catch(const std::exception& e)
-				{
-					if (std::string(e.what()) != "BadClient")
-						std::cerr << e.what() << '\n';
-					clearClient(it, clientList);
-				}
-			}
-			//getting from the clientList which client was triggered/disconnected
-			it = getRightHole(clientList, event.data.fd);
-			if (it == clientList.end())
-				continue;
-			else if (event.events & EPOLLRDHUP)
-				clearClient(it, clientList);
-			else if (!(*it)->getClientReadingFlag())
-			{
-				//reading the request received
-				(*it)->readRequest((*it)->getSocketFd());
-				if ((*it)->getClientReadingFlag())
-				{
-					(*it)->resetTimer();
-					(*it)->setClientWritingFlag(false);
-					(*it)->setSocketToWriting(this->_epoll_fd);
-				}
-			}
+			cgiHandler(*this, (*it));
+			return;
+		}
+		catch(const std::exception& e)
+		{
+			if (std::string(e.what()) != "BadClient")
+				std::cerr << e.what() << '\n';
+			clearClient(it, clientList);
+		}
+	}
+	//getting from the clientList which client was triggered/disconnected
+	it = getRightHole(clientList, event.data.fd);
+	if (it == clientList.end())
+		return;
+	else if ((event.events & EPOLLRDHUP) && (*it)->getClientReadingFlag() && (*it)->getClientWritingFlag())
+		clearClient(it, clientList);
+	else if (!(*it)->getClientReadingFlag())
+	{
+		//reading the request received
+		(*it)->readRequest((*it)->getSocketFd());
+		if ((*it)->getClientReadingFlag())
+		{
+			(*it)->resetTimer();
+			(*it)->setClientWritingFlag(false);
+			(*it)->setSocketToWriting(this->_epoll_fd);
+		}
+	}
+	else
+		this->manageClient(clientList, it);
+}
+
+void	Server::manageClient(std::vector<Client*> &clientList, std::vector<Client*>::iterator it)
+{
+	if (!isConnectionGood(*this, it))
+		handlePortOrDomainMismatch(*this, clientList, it);
+	else if ((*it)->getServerBlockTriggered()->isCgi() && (*it)->hasToSendToCgi())
+	{
+		try
+		{
+			//handling the CGI before and after the child process is created
+			if (((*it)->getClientCgi() && !(*it)->getClientCgi()->isActive()) || !(*it)->getClientCgi())
+				cgiHandler(*this, (*it));
 			else
-			{
-				if (!isConnectionGood(*this, it))
-					handlePortOrDomainMismatch(*this, clientList, it);
-				else if ((*it)->getServerBlockTriggered()->isCgi() && (*it)->hasToSendToCgi())
-				{
-					try
-					{
-						//handling the CGI before and after the child process is created
-						if (((*it)->getClientCgi() && !(*it)->getClientCgi()->isActive()) || !(*it)->getClientCgi())
-							cgiHandler(*this, (*it));
-						else
-							continue;
-					}
-					catch(const std::exception& e)
-					{
-						//if (std::string(e.what()) != "BadClient")
-							std::cerr << e.what() << '\n';
-						clearClient(it, clientList);
-					}
-				}
-				else
-				{
-					try
-					{
-						//handling all the other connections
-						(*it)->handle_connect((*it)->getSocketFd());
-					}
-					catch(const std::exception& e)
-					{
-						std::cerr << e.what() << '\n';
-						clearClient(it, clientList);
-					}
-				}
-			}
+				return ;
+		}
+		catch(const std::exception& e)
+		{
+			if (std::string(e.what()) != "BadClient")
+				std::cerr << e.what() << '\n';
+			clearClient(it, clientList);
+		}
+	}
+	else
+	{
+		try
+		{
+			//handling all the other connections
+			(*it)->handle_connect((*it)->getSocketFd());
+		}
+		catch(const std::exception& e)
+		{
+			std::cerr << e.what() << '\n';
+			clearClient(it, clientList);
 		}
 	}
 }

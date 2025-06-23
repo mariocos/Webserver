@@ -178,7 +178,6 @@ void	RequestParse::readBinary(int client_socket, Client *client)
 		totalBytesRead += bytes_read;
 	}
 	binaryBuffer.push_back('\0');
-	//! This print will give a invalid read because of the missing '\0' ate the end
 	//std::cout<<"Buffer:\n"<<binaryBuffer.data()<<std::endl;
 	this->_binaryBuffer = binaryBuffer;
 	if (bytes_read >= 1048574)

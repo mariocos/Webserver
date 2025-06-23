@@ -54,7 +54,9 @@ void	Cgi::setCgiResponse(unsigned int buffer_size, Response *response)
 	while (bytesRead > 0)
 	{
 		bytesRead = read(this->_cgiStdOut[0], reinterpret_cast<char*>(binaryBuffer.data()), buffer_size);
-		if (bytesRead <= 0)
+		if (bytesRead < 0)
+			return ;
+		else if (bytesRead == 0)
 			break;
 		buffer = transformToString(binaryBuffer.data());
 		if (buffer.find("Content-Type:") != std::string::npos)
@@ -110,6 +112,8 @@ void	Cgi::executeCgi(Client *client)
 		throw BadChildException();
 	close(this->_cgiStdIn[1]);
 	close(this->_cgiStdOut[0]);
+	this->_cgiStdIn[1] = -1;
+	this->_cgiStdOut[0] = -1;
 	scriptDir = path.substr(0, path.find_last_of("/"));
 	if (chdir(scriptDir.c_str()) == -1)
 		throw BadChildException();
@@ -127,6 +131,8 @@ void	Cgi::parentWork(Server &server, Client *client)
 	epoll_ctl(server.getEpollFd(), EPOLL_CTL_ADD, event.data.fd, &event);
 	close(this->_cgiStdIn[0]);
 	close(this->_cgiStdOut[1]);
+	this->_cgiStdIn[0] = -1;
+	this->_cgiStdOut[1] = -1;
 	client->getClientFile()->setReading(true);
 	client->getClientFile()->setWriting(false);
 	if (client->getClientRequest()->get_method() == "POST")
@@ -143,6 +149,7 @@ void	Cgi::parentWork(Server &server, Client *client)
 		}
 	}
 	close(this->_cgiStdIn[1]);
+	this->_cgiStdIn[1] = -1;
 	this->changeCgiState();
 	client->getClientResponse()->setStatusCode(200);
 }
@@ -155,6 +162,7 @@ void	Cgi::readCgiResponse(Server &server, Client *client)
 	printLog("CGI", client->getServerBlockTriggered(), client, client->getClientResponse(), 8);
 	server.removeFromEpoll(this->_cgiStdOut[0]);
 	close(this->_cgiStdOut[0]);
+	this->_cgiStdOut[0] = -1;
 	this->changeCgiState();
 	client->getClientFile()->setReading(false);
 	client->getClientFile()->setWriting(true);
@@ -177,7 +185,9 @@ void	Cgi::writeCgiResponse(Client *client)
 	while (client->getClientResponse()->getBytesSent() < client->getClientResponse()->getBytesToSend())
 	{
 		ssize_t	bytesSent = send(client->getSocketFd(), reinterpret_cast<const char*>(data.data()), this->_cgiResponse.size(), MSG_NOSIGNAL);
-		if (bytesSent <= 0)
+		if (bytesSent < 0)
+			throw SendException(client, client->getClientResponse());
+		else if (bytesSent == 0)
 			break;
 		client->getClientResponse()->addToBytesSent(bytesSent);
 	}
