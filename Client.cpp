@@ -205,11 +205,6 @@ void	Client::readRequest(int client_socket)
 	this->getClientRequest()->buildRequest(reinterpret_cast<char*>(this->getClientRequest()->getBufferInfo().data()));
 }
 
-void	Client::handle_connect(int client_socket)
-{
-	this->getClientRequest()->execute_response(client_socket, this);
-}
-
 void	new_connection(std::vector<Client*> &clientList, std::vector<int> &errorFds, Server &server, int serverFd)
 {
 	struct sockaddr_in clientaddr;

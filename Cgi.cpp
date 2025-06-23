@@ -170,7 +170,6 @@ void	Cgi::readCgiResponse(Server &server, Client *client)
 
 void	Cgi::writeCgiResponse(Client *client)
 {
-	//! Im sure the bytes sent are the same as the requested and as it should
 	client->getClientResponse()->clearResponse();
 	client->getClientResponse()->addToResponse(client->getClientRequest()->get_httpversion() + " 200 OK\r\n");
 	client->getClientResponse()->addToResponse("Content-Type: " + client->getClientResponse()->getType() + "\r\n");

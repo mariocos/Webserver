@@ -142,8 +142,6 @@ void	Server::removeFromEpoll(int fd)
 void	Server::handle_connections(std::vector<Client*> &clientList, std::vector<int> &errorFds)
 {
 	//handling all the triggers made in epoll_wait
-	if (this->_epoll_count == 0)
-		print = false;
 	for (int i = 0; i < this->_epoll_count; i++)
 	{
 		error_connection_handler(errorFds, *this);
@@ -152,7 +150,6 @@ void	Server::handle_connections(std::vector<Client*> &clientList, std::vector<in
 		{
 			try
 			{
-				//accepting new connections using the corresponding socket triggered
 				new_connection(clientList, errorFds, *this, this->getServerSocketTriggered(event.data.fd));
 			}
 			catch(const std::exception& e)
@@ -189,11 +186,11 @@ void	Server::manageConnection(std::vector<Client*> &clientList, epoll_event	&eve
 	it = getRightHole(clientList, event.data.fd);
 	if (it == clientList.end())
 		return;
-	else if ((event.events & EPOLLRDHUP) && (*it)->getClientReadingFlag() && (*it)->getClientWritingFlag())
+	else if ((event.events & EPOLLRDHUP) && \
+		(*it)->getClientReadingFlag() && (*it)->getClientWritingFlag())
 		clearClient(it, clientList);
 	else if (!(*it)->getClientReadingFlag())
 	{
-		//reading the request received
 		(*it)->readRequest((*it)->getSocketFd());
 		if ((*it)->getClientReadingFlag())
 		{
@@ -215,10 +212,10 @@ void	Server::manageClient(std::vector<Client*> &clientList, std::vector<Client*>
 		try
 		{
 			//handling the CGI before and after the child process is created
-			if (((*it)->getClientCgi() && !(*it)->getClientCgi()->isActive()) || !(*it)->getClientCgi())
-				cgiHandler(*this, (*it));
-			else
+			if ((*it)->getClientCgi() && (*it)->getClientCgi()->isActive())
 				return ;
+			else
+				cgiHandler(*this, (*it));
 		}
 		catch(const std::exception& e)
 		{
@@ -231,8 +228,7 @@ void	Server::manageClient(std::vector<Client*> &clientList, std::vector<Client*>
 	{
 		try
 		{
-			//handling all the other connections
-			(*it)->handle_connect((*it)->getSocketFd());
+			(*it)->getClientRequest()->execute_response((*it)->getSocketFd(), (*it));
 		}
 		catch(const std::exception& e)
 		{

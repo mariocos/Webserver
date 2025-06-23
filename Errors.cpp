@@ -76,7 +76,7 @@ runtime_error("Error 413 found")
 Error503Exception::Error503Exception(Client *errorClient, Server &server) :
 runtime_error("Error 503 found") 
 {
-	//printLog("ERROR", client->getServerBlockTriggered(), client, response, 503);
+	printLog("ERROR", NULL, errorClient, errorClient->getClientResponse(), 503);
 	errorClient->getClientResponse()->setStatusCode(503);
 	loadError503(errorClient->getSocketFd());
 	server.removeFromEpoll(errorClient->getSocketFd());

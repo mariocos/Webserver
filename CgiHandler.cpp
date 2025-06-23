@@ -39,7 +39,8 @@ void	cgiHandler(Server &server, Client *client)
 {
 	try
 	{
-		if (client->getClientResponse()->getBytesToSend() != 0 && client->getClientResponse()->getBytesToSend() == client->getClientResponse()->getBytesSent())
+		if (client->getClientResponse()->getBytesToSend() != 0 && \
+			client->getClientResponse()->getBytesToSend() == client->getClientResponse()->getBytesSent())
 			return ;
 		if (client->getClientReadingFlag() && !client->getClientWritingFlag() && !client->getClientCgi())
 		{

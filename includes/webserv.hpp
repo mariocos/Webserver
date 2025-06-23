@@ -54,7 +54,6 @@
 # include "Cgi.hpp"
 
 extern bool	run;
-extern bool	print;
 
 class RequestParse;
 class Response;
@@ -117,6 +116,12 @@ class	SendException : public std::runtime_error
 {
 	public:
 		SendException(Client *client, Response *response);
+};
+
+class	ReadException : public std::runtime_error
+{
+	public:
+		ReadException(Client *client, Response *response);
 };
 
 class	RedirectException : public std::runtime_error

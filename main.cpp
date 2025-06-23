@@ -1,12 +1,10 @@
 #include "includes/webserv.hpp"
 
 bool	run;
-bool	print;
 
 NoPendingConnectionsException::NoPendingConnectionsException() :
 runtime_error("")
 {
-	print = false;
 }
 
 NewConnectionCreationException::NewConnectionCreationException(Server &server, std::vector<Client*> &clientList) :
@@ -22,6 +20,15 @@ runtime_error(RED "Error while sending" RESET)
 	client->setClientWritingFlag(true);
 	client->setClientPending(false);
 	client->getClientFile()->setReading(false);
+}
+
+ReadException::ReadException(Client *client, Response *response) :
+runtime_error(RED "Error while reading" RESET)
+{
+	response->clearResponse();
+	client->setClientReadingFlag(true);
+	client->setClientPending(false);
+	client->getClientFile()->setWriting(false);
 }
 
 RedirectException::RedirectException(Server &server, std::vector<Client*>::iterator it) :
@@ -45,7 +52,6 @@ runtime_error(RED "Error opening the pipe" RESET) {}
 NonBlockingException::NonBlockingException(int fd) :
 runtime_error(RED "Failed To Set Server Fd To Non Blocking" RESET)
 {
-	print = false;
 	close(fd);
 }
 
@@ -345,7 +351,6 @@ int	main(int ac, char **av)
 			}
 			try
 			{
-				print = true;
 				server.handle_connections(clientList, errorFds);
 				searchForTimeOut(clientList);
 				//* For now this function isnt needed but keep it because idk
@@ -359,8 +364,7 @@ int	main(int ac, char **av)
 					cleaner(server, clientList, false);
 					throw BadChildException();
 				}
-				if (print)
-					std::cerr << e.what() << '\n';
+				std::cerr << e.what() << '\n';
 			}
 		}
 		cleaner(server, clientList, true);
