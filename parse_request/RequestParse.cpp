@@ -201,12 +201,23 @@ void	RequestParse::execute_response(int client_socket, Client *client)
 	if (method.compare("GET") == 0)
 		GET_response(client_socket, client);
 	else if (method.compare("POST") == 0)
-	{	
+	{
+		if (client->getClientResponse()->getBytesSent() > 0)
+			return;
+		if (client->getClientOpenFd() != -1)
+		{
+			write(client->getClientOpenFd(), client->getClientRequest()->get_full_content(), atoi(client->getClientRequest()->get_content_length().c_str()));
+			close(client->getClientOpenFd());
+			client->setClientOpenFd(-1);
+			createPostResponse(client, client->getClientResponse());
+			return;
+		}
 		Post_master::post(client);
-		createPostResponse(client, client->getClientResponse());
 	}
 	else if (method.compare("DELETE") == 0)
 	{
+		if (client->getClientResponse()->getBytesSent() > 0)
+			return;
 		delete_resource(client, client->getClientRequest());
 		createDeleteResponse(client, client->getClientResponse());
 	}

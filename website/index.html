@@ -21,8 +21,10 @@
             	<button onclick="fetchData()">Fetch Data</button>
 				<button onclick="document.getElementById('donkey').play();">Make Sound</button>
 				<button onclick="window.location.href='dummy.html'">Go to a Giant Page</button>
+				<button onclick="uploadFile()">Post Something</button>
+				<input type="file" id="fileInput" style="display:none">
+				<button onclick="window.location.href='/cgi-bin/listFiles.py'">Delete Something</button>
 				<button onclick="window.location.href='404.html'">Go to Unknown Place</button>
-				<!-- <button onclick="sayHello()">Post</button> -->
         	</div>
 		</div>
 		<script>
@@ -36,6 +38,26 @@
         	        .then(data => alert("Server says: " + data))
         	        .catch(error => console.error("Error fetching data:", error));
         	}
+			function uploadFile() {
+			    const fileInput = document.getElementById('fileInput');
+			    fileInput.click();
+
+			    fileInput.onchange = () => {
+			        const file = fileInput.files[0];
+			        if (!file) return;
+				
+			        const formData = new FormData();
+			        formData.append("file", file);
+				
+			        fetch('/cgi-bin/postFile.py', {
+			            method: 'POST',
+			            body: formData
+			        })
+			        .then(response => response.text())
+			        .then(data => alert("Server says: " + data))
+			        .catch(error => console.error("Upload error:", error));
+			    };
+			}
 		</script>
 	</body>
 </html>

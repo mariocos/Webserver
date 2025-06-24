@@ -106,6 +106,10 @@ void	Cgi::executeCgi(Client *client)
 		env.push_back(const_cast<char*>(this->_envp[i].c_str()));
 	}
 	env.push_back(NULL);
+	scriptDir = path.substr(0, path.find_last_of("/"));
+	if (chdir(scriptDir.c_str()) == -1)
+		throw BadChildException();
+	scriptName = path.substr(path.find_last_of("/") + 1);
 	if (dup2(this->_cgiStdIn[0], STDIN_FILENO) == -1)
 		throw BadChildException();
 	if (dup2(this->_cgiStdOut[1], STDOUT_FILENO) == -1)
@@ -114,10 +118,6 @@ void	Cgi::executeCgi(Client *client)
 	close(this->_cgiStdOut[0]);
 	this->_cgiStdIn[1] = -1;
 	this->_cgiStdOut[0] = -1;
-	scriptDir = path.substr(0, path.find_last_of("/"));
-	if (chdir(scriptDir.c_str()) == -1)
-		throw BadChildException();
-	scriptName = path.substr(path.find_last_of("/") + 1);
 	char	*av[] = {const_cast<char*>(scriptName.c_str()), NULL};
 	execve(scriptName.c_str(), av, env.data());
 	throw BadChildException();

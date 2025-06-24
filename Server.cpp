@@ -177,6 +177,8 @@ void	Server::manageConnection(std::vector<Client*> &clientList, epoll_event	&eve
 		}
 		catch(const std::exception& e)
 		{
+			if (std::string(e.what()) == "Bad child")
+				throw BadChildException();
 			if (std::string(e.what()) != "BadClient")
 				std::cerr << e.what() << '\n';
 			clearClient(it, clientList);
@@ -187,7 +189,7 @@ void	Server::manageConnection(std::vector<Client*> &clientList, epoll_event	&eve
 	if (it == clientList.end())
 		return;
 	else if ((event.events & EPOLLRDHUP) && \
-		(*it)->getClientReadingFlag() && (*it)->getClientWritingFlag())
+		(*it)->getClientReadingFlag() && (*it)->getClientWritingFlag() && (*it)->getClientOpenFd() == -1)
 		clearClient(it, clientList);
 	else if (!(*it)->getClientReadingFlag())
 	{
@@ -219,6 +221,8 @@ void	Server::manageClient(std::vector<Client*> &clientList, std::vector<Client*>
 		}
 		catch(const std::exception& e)
 		{
+			if (std::string(e.what()) == "Bad child")
+				throw BadChildException();
 			if (std::string(e.what()) != "BadClient")
 				std::cerr << e.what() << '\n';
 			clearClient(it, clientList);

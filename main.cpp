@@ -130,12 +130,12 @@ void	printLog(std::string action, ServerBlock *serverBlock, Client *client, Resp
 		case 9:
 			std::cout<<"["<<getTimeStamp()<<"]"<<YELLOW<<" ["<<action<<"] "<<RESET;
 			std::cout<<YELLOW<<client->getClientRequest()->get_method() + " " + client->getClientRequest()->get_path() + " "<<response->getStatusCode();
-			std::cout<<" from "<<client->getClientIp() + " - " + client->getClientRequest()->get_content_length() + " bytes received"<<RESET<<std::endl;
+			std::cout<<" from "<<client->getClientIp() + ":" + transformToString(client->getClientPort()) + " - " + client->getClientRequest()->get_content_length() + " bytes received"<<RESET<<std::endl;
 			break;
 		case 10:
 			std::cout<<"["<<getTimeStamp()<<"]"<<YELLOW<<" ["<<action<<"] "<<RESET;
 			std::cout<<YELLOW<<client->getClientRequest()->get_method() + " " + client->getClientRequest()->get_path() + " "<<response->getStatusCode();
-			std::cout<<" from "<<client->getClientIp()<<RESET<<std::endl;
+			std::cout<<" from "<<client->getClientIp() + ":" + transformToString(client->getClientPort())<<RESET<<std::endl;
 			break;
 		case 11:
 			std::cout<<"["<<getTimeStamp()<<"]"<<YELLOW<<" ["<<action<<"] "<<RESET;

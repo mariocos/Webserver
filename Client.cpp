@@ -32,6 +32,8 @@ Client::~Client()
 	delete this->_file;
 	if (this->_cgi)
 		delete this->_cgi;
+	if (this->_openFd != -1)
+		close(this->_openFd);
 }
 
 void	Client::setClientPending(bool pending)
