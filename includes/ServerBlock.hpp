@@ -14,6 +14,8 @@ enum methods {
 	DELETE,
 };
 
+class Routes;
+
 class ServerBlock : public WebSocket
 {
 private:
@@ -27,6 +29,7 @@ private:
 public:
 	ServerBlock();
 	ServerBlock(int port, int backlog, std::string name, int socket, bool flag);
+	ServerBlock(int port, int backlog, std::string domainName);
 	ServerBlock(const ServerBlock &copy);
 	ServerBlock	&operator=(const ServerBlock &copy);
 	~ServerBlock();
@@ -36,11 +39,14 @@ public:
 	bool		canDoMethod(int method);
 	bool		isDefault();
 	bool		isCgi();
+	std::vector<Routes>	&getRoutesVector();
+	Routes		getRoute(int index);
 	void		setBlockName(std::string name);
 	void		setBlockMaxConnections(int value);
 	void		setBlockPort(int port);
 	void		setBlockMethod(int method, bool flag);
 	void		setBlockAsCgi();
+	void		setBlockRoutes(std::vector<Routes> &routes);
 };
 
 #endif

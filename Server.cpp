@@ -14,6 +14,57 @@ Server::Server(std::vector<int> ports, std::vector<std::string> names, int backl
 	this->_epoll_fd = epoll_create(1);
 	if (this->_epoll_fd == -1)
 		throw EpollCreationException();
+	/*
+	while (a < port.size())
+	{
+		newServerBlock = new ServerBlock();
+		std::vector<Routes>	tmpRoutes;
+		while (i < list.size)
+			tmpRoutes.assing_back(Routes());
+		newServerBlock->setBlockRoutes(tmpRoutes);
+	}
+	 */
+
+	/* for (size_t i = 0; i < ports.size(); i++)
+	{
+		std::vector<Routes>	tmp;
+		newServerBlock = new ServerBlock(ports[i], backlog, names[i]);
+		servaddr.sin_family = AF_INET;
+		servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
+		servaddr.sin_port = htons(newServerBlock->getBlockPort());
+
+		//TODO implement this as long as the routes list size
+		// for (size_t n = 0; i < list.size(); n++)
+		// {
+		// 	tmp.emplace_back(Routes(socket(AF_INET, SOCK_STREAM, 0), backlog, -1, false, "/", "/"));
+		// }
+
+		// PUT THIS inside the for loop when i get the route list size
+		tmp.push_back(Routes(socket(AF_INET, SOCK_STREAM, 0), backlog, -1, false, "/", "/"));
+		if (tmp.back().getSocketFd() == -1)
+		{
+			delete newServerBlock;
+			close(this->_epoll_fd);
+			throw SocketCreationException();
+		}
+		if (ports[i] == 2424)
+			tmp.back().setAsCgi();
+		if (setsockopt(tmp.back().getSocketFd(), SOL_SOCKET, SO_REUSEADDR, &option, sizeof(option)) == -1 \
+			|| bind(tmp.back().getSocketFd(), (const sockaddr *)&servaddr, sizeof(servaddr)) == -1 \
+			|| listen(tmp.back().getSocketFd(), tmp.back().getMaxConnections()) == -1)
+		{
+			delete newServerBlock;
+			close(this->_epoll_fd);
+			throw SocketBindException();
+		}
+		event.events = EPOLLIN;
+		event.data.fd = tmp.back().getSocketFd();
+		if (epoll_ctl(this->_epoll_fd, EPOLL_CTL_ADD, event.data.fd, &event) == -1)
+			throw EpollCtlException();
+		newServerBlock->setBlockRoutes(tmp);
+		this->_serverBlocks.push_back(newServerBlock);
+	} */
+	
 	for (size_t i = 0; i < ports.size() && i < names.size(); i++)
 	{
 		//hardcoded, need to receive from parsing which is default
@@ -45,6 +96,8 @@ Server::Server(std::vector<int> ports, std::vector<std::string> names, int backl
 		if (epoll_ctl(this->_epoll_fd, EPOLL_CTL_ADD, event.data.fd, &event) == -1)
 			throw EpollCtlException();
 		this->_serverBlocks.push_back(newServerBlock);
+
+		//TODO change log to receive the Route instead of the ServerBlock
 		printLog("INFO", newServerBlock, NULL, NULL, 0);
 		printLog("INFO", newServerBlock, NULL, NULL, 1);
 	}

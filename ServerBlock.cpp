@@ -14,6 +14,10 @@ ServerBlock::ServerBlock(int port, int backlog, std::string name, int socket, bo
 		_methods[i] = false;
 }
 
+ServerBlock::ServerBlock(int port, int backlog, std::string domainName) : _name(domainName), _maxConnections(backlog), _port(port)
+{
+}
+
 ServerBlock::ServerBlock(const ServerBlock &copy) : WebSocket(copy)
 {
 	*this = copy;
@@ -77,6 +81,16 @@ bool	ServerBlock::isCgi()
 	return (this->_isCgi);
 }
 
+std::vector<Routes>	&ServerBlock::getRoutesVector()
+{
+	return (this->_routes);
+}
+
+Routes	ServerBlock::getRoute(int index)
+{
+	return (this->_routes[index]);
+}
+
 void	ServerBlock::setBlockName(std::string name)
 {
 	this->_name = name;
@@ -111,4 +125,9 @@ void	ServerBlock::setBlockMethod(int method, bool flag)
 void	ServerBlock::setBlockAsCgi()
 {
 	this->_isCgi = true;
+}
+
+void	ServerBlock::setBlockRoutes(std::vector<Routes> &routes)
+{
+	this->_routes = routes;
 }
