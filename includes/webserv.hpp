@@ -52,6 +52,7 @@
 # include "WebSocket.hpp"
 # include "ServerBlock.hpp"
 # include "Cgi.hpp"
+# include "Routes.hpp"
 
 extern bool	run;
 

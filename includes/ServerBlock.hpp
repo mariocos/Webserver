@@ -17,6 +17,7 @@ enum methods {
 class ServerBlock : public WebSocket
 {
 private:
+	std::vector<Routes>	_routes;
 	std::string	_name;
 	int			_maxConnections;
 	int			_port;
