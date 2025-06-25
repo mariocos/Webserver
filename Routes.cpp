@@ -1,18 +1,18 @@
 #include "includes/Routes.hpp"
 
-Routes::Routes() : WebSocket(), _maxConnections(-1), _maxBodySize(-1), _default(false), _isCgi(false), _directoryListening(false)
+Routes::Routes() : _maxConnections(-1), _maxBodySize(-1), _defaultRoute(false), _isCgi(false), _directoryListening(false)
 {
 	for (int i = 0; i < 3; i++)
 		this->_methods[i] = false;
 }
 
-Routes::Routes(int socket, int maxConnections, int maxBodySize, bool flag, std::string root, std::string uri) : WebSocket(socket), _root(root), _uri(uri), _maxConnections(maxConnections), _maxBodySize(maxBodySize), _default(flag), _isCgi(false), _directoryListening(false)
+Routes::Routes(int maxConnections, int maxBodySize, bool flag, std::string root, std::string uri) : _root(root), _uri(uri), _maxConnections(maxConnections), _maxBodySize(maxBodySize), _defaultRoute(flag), _isCgi(false), _directoryListening(false)
 {
 	for (int i = 0; i < 3; i++)
 		this->_methods[i] = false;
 }
 
-Routes::Routes(const Routes &copy) : WebSocket(copy)
+Routes::Routes(const Routes &copy)
 {
 	*this = copy;
 }
@@ -72,7 +72,7 @@ bool	Routes::canDoMethod(int method)
 
 bool	Routes::isDefault()
 {
-	return (this->_default);
+	return (this->_defaultRoute);
 }
 
 bool	Routes::isCgi()

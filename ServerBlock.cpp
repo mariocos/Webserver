@@ -6,19 +6,15 @@ ServerBlock::ServerBlock() : WebSocket(), _maxConnections(-1), _port(-1), _defau
 		_methods[i] = false;
 }
 
-ServerBlock::ServerBlock(int port, int backlog, std::string name, int socket, bool flag) : WebSocket(socket), _name(name), _maxConnections(backlog), _port(port), _default(flag), _isCgi(false)
+ServerBlock::ServerBlock(int socket, int port, int backlog, std::string domainName, bool flag) : WebSocket(socket), _name(domainName), _maxConnections(backlog), _port(port), _default(flag), _isCgi(false)
 {
-	if (setNonBlocking(this->getSocketFd()) == -1)
-		throw NonBlockingException(this->getSocketFd());
+	/* if (setNonBlocking(this->getSocketFd()) == -1)
+		throw NonBlockingException(this->getSocketFd()); */
 	for (int i = 0; i < 3; i++)
 		_methods[i] = false;
 }
 
-ServerBlock::ServerBlock(int port, int backlog, std::string domainName) : _name(domainName), _maxConnections(backlog), _port(port)
-{
-}
-
-ServerBlock::ServerBlock(const ServerBlock &copy) : WebSocket(copy)
+ServerBlock::ServerBlock(const ServerBlock &copy)
 {
 	*this = copy;
 }
@@ -81,12 +77,24 @@ bool	ServerBlock::isCgi()
 	return (this->_isCgi);
 }
 
-std::vector<Routes>	&ServerBlock::getRoutesVector()
+std::vector<Routes*>	&ServerBlock::getRoutesVector()
 {
 	return (this->_routes);
 }
 
-Routes	ServerBlock::getRoute(int index)
+std::vector<Routes*>::iterator	ServerBlock::getDefaultRoute()
+{
+	std::vector<Routes*>::iterator	it = this->_routes.begin();
+	while (it != this->_routes.end())
+	{
+		if ((*it)->isDefault())
+			return (it);
+		it++;
+	}
+	return (this->_routes.end());
+}
+
+Routes	*ServerBlock::getRoute(int index)
 {
 	return (this->_routes[index]);
 }
@@ -127,7 +135,7 @@ void	ServerBlock::setBlockAsCgi()
 	this->_isCgi = true;
 }
 
-void	ServerBlock::setBlockRoutes(std::vector<Routes> &routes)
+void	ServerBlock::setBlockRoutes(std::vector<Routes*> &routes)
 {
 	this->_routes = routes;
 }

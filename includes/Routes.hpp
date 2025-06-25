@@ -8,7 +8,7 @@
 
 # include "webserv.hpp"
 
-class Routes : public WebSocket
+class Routes
 {
     private:
         std::string _root;
@@ -16,12 +16,12 @@ class Routes : public WebSocket
         int			_maxConnections;
 		int			_maxBodySize;
         bool		_methods[3];
-		bool		_default;
+		bool		_defaultRoute;
         bool		_isCgi;
 		bool		_directoryListening;
     public:
         Routes();
-		Routes(int socket, int maxConnections, int maxBodySize, bool flag, std::string root, std::string uri);
+		Routes(int maxConnections, int maxBodySize, bool flag, std::string root, std::string uri);
 		Routes(const Routes &copy);
 		Routes	&operator=(const Routes &copy);
         ~Routes();

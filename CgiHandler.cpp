@@ -45,7 +45,7 @@ void	cgiHandler(Server &server, Client *client)
 		if (client->getClientReadingFlag() && !client->getClientWritingFlag() && !client->getClientCgi())
 		{
 			prepareCgi(client);
-			printLog("CGI", client->getServerBlockTriggered(), client, client->getClientResponse(), 7);
+			printLog("CGI", NULL, client, client->getClientResponse(), 7);
 			client->getClientCgi()->setPid(fork());
 			if (client->getClientCgi()->getPid() == 0)
 				client->getClientCgi()->executeCgi(client);

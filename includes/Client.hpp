@@ -7,7 +7,7 @@
 # include "File.hpp"
 # include "WebSocket.hpp"
 
-# define TIMEOUT 5
+# define TIMEOUT 10
 
 
 class RequestParse;
@@ -16,6 +16,7 @@ class Server;
 class ServerBlock;
 class File;
 class Cgi;
+class Routes;
 
 class Client : public WebSocket
 {
@@ -29,6 +30,7 @@ private:
 	File			*_file;
 	Cgi				*_cgi;
 	ServerBlock		*_serverBlockTriggered;
+	Routes			*_routeTriggered;
 	bool			_pending;
 	bool			_keepAlive;
 	int				_openFd;
@@ -48,6 +50,7 @@ public:
 	void	setClientWritingFlag(bool flag);
 	void	setClientFile(File *file);
 	void	setClientCgi(Cgi *cgi);
+	void	setRouteTriggered(Routes *route);
 	void	setServerBlockTriggered(ServerBlock *serverBlock);
 	void	setPortTriggered(int port);
 	void	setDomainTriggered(std::string name);
@@ -70,6 +73,7 @@ public:
 	File			*getClientFile();
 	Cgi				*getClientCgi();
 	ServerBlock		*getServerBlockTriggered();
+	Routes			*getRouteTriggered();
 	void	readRequest(int client_socket);
 };
 

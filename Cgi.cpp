@@ -159,7 +159,7 @@ void	Cgi::readCgiResponse(Server &server, Client *client)
 	this->setCgiResponse(1048576, client->getClientResponse());
 	if (this->_cgiResponse.size() == 0)
 		client->getClientResponse()->setStatusCode(403);
-	printLog("CGI", client->getServerBlockTriggered(), client, client->getClientResponse(), 8);
+	printLog("CGI", NULL, client, client->getClientResponse(), 8);
 	server.removeFromEpoll(this->_cgiStdOut[0]);
 	close(this->_cgiStdOut[0]);
 	this->_cgiStdOut[0] = -1;
@@ -171,7 +171,10 @@ void	Cgi::readCgiResponse(Server &server, Client *client)
 void	Cgi::writeCgiResponse(Client *client)
 {
 	client->getClientResponse()->clearResponse();
-	client->getClientResponse()->addToResponse(client->getClientRequest()->get_httpversion() + " 200 OK\r\n");
+	if (client->getClientResponse()->getStatusCode() == 200)
+		client->getClientResponse()->addToResponse(client->getClientRequest()->get_httpversion() + " " + transformToString(client->getClientResponse()->getStatusCode()) + " OK\r\n");
+	else
+		client->getClientResponse()->addToResponse(client->getClientRequest()->get_httpversion() + " " + transformToString(client->getClientResponse()->getStatusCode()) + " KO\r\n");
 	client->getClientResponse()->addToResponse("Content-Type: " + client->getClientResponse()->getType() + "\r\n");
 	client->getClientResponse()->addToResponseLenght(this->_cgiResponse.size());
 	client->getClientResponse()->addToResponse("Connection: close\r\n");

@@ -34,11 +34,19 @@ runtime_error(RED "Error while reading" RESET)
 RedirectException::RedirectException(Server &server, std::vector<Client*>::iterator it) :
 runtime_error(YELLOW "Redirecting Request To Default Server Block" RESET)
 {
-	std::vector<ServerBlock*>::iterator	serverIt = server.getDefaultServerBlock();
+	std::vector<ServerBlock*>	serverBlocks = server.getServerBlocks();
+	std::vector<ServerBlock*>::iterator	serverIt = serverBlocks.begin();
+	while (serverIt != serverBlocks.end())
+	{
+		if ((*serverIt)->isDefault())
+			break;
+		serverIt++;
+	}
 	(*it)->setDomainTriggered((*serverIt)->getBlockName());
 	(*it)->getClientRequest()->setNewHost((*serverIt)->getBlockName());
 	(*it)->setPortTriggered((*serverIt)->getBlockPort());
 	(*it)->setServerBlockTriggered(*serverIt);
+	(*it)->setRouteTriggered((*(*serverIt)->getDefaultRoute()));
 }
 
 BadChildException::BadChildException() :
@@ -302,8 +310,9 @@ void	searchForTimeOut(std::vector<Client*> &clientList)
 		if ((*it)->hasTimedOut())
 		{
 			loadError408((*it)->getSocketFd(), (*it)->getClientResponse(), (*it));
-			printLog("INFO", (*it)->getServerBlockTriggered(), (*it), (*it)->getClientResponse(), 12);
+			printLog("INFO", NULL, (*it), (*it)->getClientResponse(), 12);
 			(*it)->removeSocketFromEpoll((*it)->getSocketFd());
+			close((*it)->getSocketFd());
 			delete (*it);
 			clientList.erase(it);
 			it = clientList.begin();

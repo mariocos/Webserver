@@ -8,7 +8,7 @@ std::string	findFileExtension(std::string path)
 	return ("");
 }
 
-void	findType(RequestParse *request, Response *response)
+void	findType(RequestParse *request, Response *response, Client *client)
 {
 	std::map<std::string, std::string> fileTypes;
 	fileTypes[".html"] = "text/html";
@@ -23,8 +23,8 @@ void	findType(RequestParse *request, Response *response)
 	fileTypes[".mp4"] = "video/mp4";
 	fileTypes[".txt"] = "text/plain";
 
-	if (request->get_path() == "/")
-		request->set_path("/dummy.html");
+	//if (request->get_path() == "/")
+	//	request->set_path("website/dummy.html");
 
 	std::string	extension = findFileExtension(request->get_path());
 	//for some reason with this type when requesting a directory in the browser
@@ -35,7 +35,14 @@ void	findType(RequestParse *request, Response *response)
 		type = fileTypes.at(extension);
 
 	response->setType(type);
-	response->setPath("website" + request->get_path());
+	Routes*	route = client->getRouteTriggered();
+	if (route->getURI() != "/")
+	{
+		std::string newPath = request->get_path().substr(route->getURI().length());
+		response->setPath(route->getRoot() + newPath);
+	}
+	else
+		response->setPath(route->getRoot() + request->get_path());
 }
 
 void	createHeader(RequestParse *request, Response *response, Client *client)
@@ -60,7 +67,7 @@ void	createHeader(RequestParse *request, Response *response, Client *client)
 	client->getClientFile()->setReading(true);
 	client->getClientFile()->setWriting(false);
 	response->addToBytesToSend(client->getClientFile()->getFileStats()->st_size);
-	printLog("ACCESS", client->getServerBlockTriggered(), client, client->getClientResponse(), 5);
+	printLog("ACCESS", NULL, client, client->getClientResponse(), 5);
 }
 
 int setNonBlocking(int fd)
@@ -80,13 +87,13 @@ void	loadPage(int client_socket, Response *response, Client *client)
 	//std::cout<<"BYTES TO SEND: "<<response->getBytesToSend()<<std::endl;
 	if (response->getBytesSent() < response->getBytesToSend())
 	{
-		printLog("DEBUG", client->getServerBlockTriggered(), client, response, 11);
+		printLog("DEBUG", NULL, client, response, 11);
 		client->setClientWritingFlag(false);
 		client->setClientPending(true);
 		return ;
 	}
 	if (response->getBytesSent() == response->getBytesToSend() && !client->getClientWritingFlag())
-		printLog("INFO", client->getServerBlockTriggered(), client, response, 6);
+		printLog("INFO", NULL, client, response, 6);
 	response->clearResponse();
 	client->setClientWritingFlag(true);
 	client->setClientPending(false);
@@ -104,7 +111,7 @@ void	createPostResponse(Client *client, Response *response)
 	response->clearResponse();
 	client->setClientWritingFlag(true);
 	client->setClientPending(false);
-	printLog("INFO", client->getServerBlockTriggered(), client, response, 9);
+	printLog("INFO", NULL, client, response, 9);
 }
 
 void	createDeleteResponse(Client *client, Response *response)
@@ -120,7 +127,7 @@ void	createDeleteResponse(Client *client, Response *response)
 	response->clearResponse();
 	client->setClientWritingFlag(true);
 	client->setClientPending(false);
-	printLog("INFO", client->getServerBlockTriggered(), client, response, 10);
+	printLog("INFO", NULL, client, response, 10);
 }
 
 void	sendMsgToSocket(int client_socket, int lenght, Client *client, Response *response)

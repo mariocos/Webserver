@@ -10,11 +10,13 @@ Server::Server(std::vector<int> ports, std::vector<std::string> names, int backl
 	struct sockaddr_in servaddr;
 	struct epoll_event	event;
 	ServerBlock	*newServerBlock;
+	Routes		*newRoute;
 
 	this->_epoll_fd = epoll_create(1);
 	if (this->_epoll_fd == -1)
 		throw EpollCreationException();
 	/*
+	Pseudo Code
 	while (a < port.size())
 	{
 		newServerBlock = new ServerBlock();
@@ -25,61 +27,19 @@ Server::Server(std::vector<int> ports, std::vector<std::string> names, int backl
 	}
 	 */
 
-	/* for (size_t i = 0; i < ports.size(); i++)
+	for (size_t i = 0; i < ports.size(); i++)
 	{
-		std::vector<Routes>	tmp;
-		newServerBlock = new ServerBlock(ports[i], backlog, names[i]);
-		servaddr.sin_family = AF_INET;
-		servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
-		servaddr.sin_port = htons(newServerBlock->getBlockPort());
-
-		//TODO implement this as long as the routes list size
-		// for (size_t n = 0; i < list.size(); n++)
-		// {
-		// 	tmp.emplace_back(Routes(socket(AF_INET, SOCK_STREAM, 0), backlog, -1, false, "/", "/"));
-		// }
-
-		// PUT THIS inside the for loop when i get the route list size
-		tmp.push_back(Routes(socket(AF_INET, SOCK_STREAM, 0), backlog, -1, false, "/", "/"));
-		if (tmp.back().getSocketFd() == -1)
-		{
-			delete newServerBlock;
-			close(this->_epoll_fd);
-			throw SocketCreationException();
-		}
-		if (ports[i] == 2424)
-			tmp.back().setAsCgi();
-		if (setsockopt(tmp.back().getSocketFd(), SOL_SOCKET, SO_REUSEADDR, &option, sizeof(option)) == -1 \
-			|| bind(tmp.back().getSocketFd(), (const sockaddr *)&servaddr, sizeof(servaddr)) == -1 \
-			|| listen(tmp.back().getSocketFd(), tmp.back().getMaxConnections()) == -1)
-		{
-			delete newServerBlock;
-			close(this->_epoll_fd);
-			throw SocketBindException();
-		}
-		event.events = EPOLLIN;
-		event.data.fd = tmp.back().getSocketFd();
-		if (epoll_ctl(this->_epoll_fd, EPOLL_CTL_ADD, event.data.fd, &event) == -1)
-			throw EpollCtlException();
-		newServerBlock->setBlockRoutes(tmp);
-		this->_serverBlocks.push_back(newServerBlock);
-	} */
-	
-	for (size_t i = 0; i < ports.size() && i < names.size(); i++)
-	{
-		//hardcoded, need to receive from parsing which is default
+		std::vector<Routes*>	tmp;
 		if (names[i] == "localhost")
-			newServerBlock = new ServerBlock(ports[i], backlog, names[i], socket(AF_INET, SOCK_STREAM, 0), true);
+			newServerBlock = new ServerBlock(socket(AF_INET, SOCK_STREAM, 0), ports[i], backlog, names[i], true);
 		else
-			newServerBlock = new ServerBlock(ports[i], backlog, names[i], socket(AF_INET, SOCK_STREAM, 0), false);
+			newServerBlock = new ServerBlock(socket(AF_INET, SOCK_STREAM, 0), ports[i], backlog, names[i], false);
 		if (newServerBlock->getSocketFd() == -1)
 		{
 			delete newServerBlock;
 			close(this->_epoll_fd);
 			throw SocketCreationException();
 		}
-		if (ports[i] == 2424)
-			newServerBlock->setBlockAsCgi();
 		servaddr.sin_family = AF_INET;
 		servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
 		servaddr.sin_port = htons(newServerBlock->getBlockPort());
@@ -95,11 +55,28 @@ Server::Server(std::vector<int> ports, std::vector<std::string> names, int backl
 		event.data.fd = newServerBlock->getSocketFd();
 		if (epoll_ctl(this->_epoll_fd, EPOLL_CTL_ADD, event.data.fd, &event) == -1)
 			throw EpollCtlException();
-		this->_serverBlocks.push_back(newServerBlock);
 
-		//TODO change log to receive the Route instead of the ServerBlock
+		// TODO implement this as long as the routes list size
+		// for (size_t n = 0; i < list.size(); n++)
+		// {
+		// 		newRoute = new Routes(backlog, -1, false, "/", "/");
+		// 		tmp.push_back(newRoute);
+		// }
+		// newServerBlock->setBlockRoutes(tmp);
+		// this->_serverBlocks.push_back(newServerBlock);
+
+		// PUT THIS inside the for loop when i get the route list size
+		if (names[i] == "localhost")
+			newRoute = new Routes(backlog, -1, true, "website", "/");
+		else
+			newRoute = new Routes(backlog, -1, false, "website/cgi-bin", "/find-this");
+		if (ports[i] == 2424)
+			newRoute->setAsCgi();
+		tmp.push_back(newRoute);
+		newServerBlock->setBlockRoutes(tmp);
 		printLog("INFO", newServerBlock, NULL, NULL, 0);
 		printLog("INFO", newServerBlock, NULL, NULL, 1);
+		this->_serverBlocks.push_back(newServerBlock);
 	}
 	this->_events = new epoll_event[this->_maxEvents];
 }
@@ -141,6 +118,40 @@ int	Server::getServerSocketTriggered(int fd)
 		it++;
 	}
 	return (-1);
+}
+
+std::vector<Routes*>::iterator	Server::getRouteTriggered(std::string uri)
+{
+	std::vector<ServerBlock*>::iterator	it = this->_serverBlocks.begin();
+	while (it != this->_serverBlocks.end())
+	{
+		std::vector<Routes*>::iterator	routeIt = (*it)->getRoutesVector().begin();
+		while (routeIt != (*it)->getRoutesVector().end())
+		{
+			if (uri == (*routeIt)->getURI())
+				return (routeIt);
+			routeIt++;
+		}
+		it++;
+	}
+	return (this->getDefaultRoute());
+}
+
+std::vector<Routes*>::iterator	Server::getDefaultRoute()
+{
+	std::vector<ServerBlock*>::iterator	it = this->_serverBlocks.begin();
+	while (it != this->_serverBlocks.end())
+	{
+		std::vector<Routes*>::iterator	routeIt = (*it)->getRoutesVector().begin();
+		while (routeIt != (*it)->getRoutesVector().end())
+		{
+			if ((*routeIt)->isDefault())
+				return (routeIt);
+			routeIt++;
+		}
+		it++;
+	}
+	return (this->_serverBlocks.back()->getRoutesVector().end());
 }
 
 std::vector<ServerBlock*>::iterator	Server::getServerBlockTriggered(int fd)
@@ -253,6 +264,16 @@ void	Server::manageConnection(std::vector<Client*> &clientList, epoll_event	&eve
 			(*it)->setClientWritingFlag(false);
 			(*it)->setSocketToWriting(this->_epoll_fd);
 		}
+		if ((*it)->getClientRequest()->get_path().find('/', 1) != std::string::npos)
+		{
+			std::string uri = (*it)->getClientRequest()->get_path().substr(0, (*it)->getClientRequest()->get_path().find('/', 1));
+			(*it)->setRouteTriggered((*this->getRouteTriggered(uri)));
+		}
+		else
+			(*it)->setRouteTriggered((*this->getDefaultRoute()));
+		std::cout<<"ServerBlock TRIGGERED NAME: "<<(*it)->getServerBlockTriggered()->getBlockName()<<std::endl;
+		std::cout<<"ServerBlock TRIGGERED PORT: "<<(*it)->getServerBlockTriggered()->getBlockPort()<<std::endl;
+		std::cout<<"ROUTE TRIGGERED: "<<(*it)->getRouteTriggered()->getURI()<<std::endl;
 	}
 	else
 		this->manageClient(clientList, it);
@@ -262,7 +283,7 @@ void	Server::manageClient(std::vector<Client*> &clientList, std::vector<Client*>
 {
 	if (!isConnectionGood(*this, it))
 		handlePortOrDomainMismatch(*this, clientList, it);
-	else if ((*it)->getServerBlockTriggered()->isCgi() && (*it)->hasToSendToCgi())
+	else if ((*it)->getRouteTriggered()->isCgi() && (*it)->hasToSendToCgi())
 	{
 		try
 		{

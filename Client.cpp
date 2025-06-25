@@ -21,6 +21,7 @@ Client::Client(int client_socket) : WebSocket(client_socket), _request(NULL), _r
 	this->_request->setBuffer(buffer);
 	this->_cgi = NULL;
 	this->_serverBlockTriggered = NULL;
+	this->_routeTriggered = NULL;
 	this->resetTimer();
 }
 
@@ -64,6 +65,11 @@ void	Client::setClientFile(File *file)
 void	Client::setClientCgi(Cgi *cgi)
 {
 	this->_cgi = cgi;
+}
+
+void	Client::setRouteTriggered(Routes *route)
+{
+	this->_routeTriggered = route;
 }
 
 void	Client::setServerBlockTriggered(ServerBlock *serverBlock)
@@ -135,6 +141,7 @@ bool	Client::getClientWritingFlag()
 
 bool	Client::hasToSendToCgi()
 {
+	std::cout<<"REQUESTED PATH: "<<this->_request->get_path()<<std::endl;
 	std::string	cgiFolder = get_keyword(this->_request->get_path(), "/cgi-bin/");
 	if (cgiFolder.empty())
 		return (false);
@@ -201,6 +208,11 @@ ServerBlock	*Client::getServerBlockTriggered()
 	return (this->_serverBlockTriggered);
 }
 
+Routes	*Client::getRouteTriggered()
+{
+	return (this->_routeTriggered);
+}
+
 void	Client::readRequest(int client_socket)
 {
 	this->getClientRequest()->readBinary(client_socket, this);
@@ -232,14 +244,15 @@ void	new_connection(std::vector<Client*> &clientList, std::vector<int> &errorFds
 		delete	newClient;
 		return ;
 	}
-	printLog("INFO", newClient->getServerBlockTriggered(), newClient, NULL, 3);
+	printLog("INFO", NULL, newClient, NULL, 3);
 }
 
 void	clearClient(std::vector<Client*>::iterator	it, std::vector<Client*> &clientList)
 {
-	printLog("INFO", (*it)->getServerBlockTriggered(), (*it), (*it)->getClientResponse(), 4);
+	printLog("INFO", NULL, (*it), NULL, 4);
 	(*it)->setClientOpenFd(-1);
 	(*it)->removeSocketFromEpoll((*it)->getSocketFd());
+	close((*it)->getSocketFd());
 	delete (*it);
 	clientList.erase(it);
 }
