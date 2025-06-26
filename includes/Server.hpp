@@ -28,8 +28,8 @@ public:
 	int	getEpollCount();
 	int	getMaxEvents();
 	int	getServerSocketTriggered(int fd);
-	std::vector<Routes*>::iterator	getRouteTriggered(std::string uri);
-	std::vector<Routes*>::iterator	getDefaultRoute();
+	std::vector<Routes*>::iterator	getRouteTriggered(std::string uri, int fd);
+	std::vector<Routes*>::iterator	getDefaultRoute(int fd);
 	std::vector<ServerBlock*>::iterator getServerBlockTriggered(int fd);
 	std::vector<ServerBlock*>::iterator	getDefaultServerBlock();
 	std::vector<ServerBlock*>	getServerBlocks();

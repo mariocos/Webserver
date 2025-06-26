@@ -66,13 +66,35 @@ Server::Server(std::vector<int> ports, std::vector<std::string> names, int backl
 		// this->_serverBlocks.push_back(newServerBlock);
 
 		// PUT THIS inside the for loop when i get the route list size
-		if (names[i] == "localhost")
-			newRoute = new Routes(backlog, -1, true, "website", "/");
-		else
-			newRoute = new Routes(backlog, -1, false, "website/cgi-bin", "/find-this");
-		if (ports[i] == 2424)
-			newRoute->setAsCgi();
-		tmp.push_back(newRoute);
+		for (size_t n = 0; n < 5; n++)
+		{
+			if (n == 0)
+				newRoute = new Routes(backlog, -1, true, "website", "/");
+			else if (n == 1)
+				newRoute = new Routes(backlog, -1, false, "website/cgi-bin", "/find-this");
+			else if (n == 2)
+			{
+				newRoute = new Routes(backlog, -1, false, "/home/pauberna/Desktop/projetos_42", "/projects/");
+				newRoute->setAsListing();
+			}
+			else if (n == 3)
+			{
+				newRoute = new Routes(backlog, -1, false, "website", "/google");
+				newRoute->setAsPermanentRedirect();
+				std::string path = "https://google.com";
+				newRoute->setRedirectPath(path);
+			}
+			else
+			{
+				newRoute = new Routes(backlog, -1, false, "website", "/redirect");
+				newRoute->setAsTemporaryRedirect();
+				std::string path = "https://youtube.com";
+				newRoute->setRedirectPath(path);
+			}
+			if (ports[i] == 2424)
+				newRoute->setAsCgi();
+			tmp.push_back(newRoute);
+		}
 		newServerBlock->setBlockRoutes(tmp);
 		printLog("INFO", newServerBlock, NULL, NULL, 0);
 		printLog("INFO", newServerBlock, NULL, NULL, 1);
@@ -120,27 +142,23 @@ int	Server::getServerSocketTriggered(int fd)
 	return (-1);
 }
 
-std::vector<Routes*>::iterator	Server::getRouteTriggered(std::string uri)
+std::vector<Routes*>::iterator	Server::getRouteTriggered(std::string uri, int fd)
 {
-	std::vector<ServerBlock*>::iterator	it = this->_serverBlocks.begin();
-	while (it != this->_serverBlocks.end())
+	std::vector<ServerBlock*>::iterator	it = this->getServerBlockTriggered(fd);
+	std::vector<Routes*>::iterator	routeIt = (*it)->getRoutesVector().begin();
+	while (routeIt != (*it)->getRoutesVector().end())
 	{
-		std::vector<Routes*>::iterator	routeIt = (*it)->getRoutesVector().begin();
-		while (routeIt != (*it)->getRoutesVector().end())
-		{
-			if (uri == (*routeIt)->getURI())
-				return (routeIt);
-			routeIt++;
-		}
-		it++;
+		if (uri == (*routeIt)->getURI())
+			return (routeIt);
+		routeIt++;
 	}
-	return (this->getDefaultRoute());
+	return (this->getDefaultRoute(fd));
 }
 
-std::vector<Routes*>::iterator	Server::getDefaultRoute()
+std::vector<Routes*>::iterator	Server::getDefaultRoute(int fd)
 {
-	std::vector<ServerBlock*>::iterator	it = this->_serverBlocks.begin();
-	while (it != this->_serverBlocks.end())
+	std::vector<ServerBlock*>::iterator	it = this->getServerBlockTriggered(fd);
+	if (it != this->getServerBlocks().end())
 	{
 		std::vector<Routes*>::iterator	routeIt = (*it)->getRoutesVector().begin();
 		while (routeIt != (*it)->getRoutesVector().end())
@@ -149,9 +167,9 @@ std::vector<Routes*>::iterator	Server::getDefaultRoute()
 				return (routeIt);
 			routeIt++;
 		}
-		it++;
+		return ((*it)->getRoutesVector().end());
 	}
-	return (this->_serverBlocks.back()->getRoutesVector().end());
+	return ((*this->getDefaultServerBlock())->getDefaultRoute());
 }
 
 std::vector<ServerBlock*>::iterator	Server::getServerBlockTriggered(int fd)
@@ -264,16 +282,7 @@ void	Server::manageConnection(std::vector<Client*> &clientList, epoll_event	&eve
 			(*it)->setClientWritingFlag(false);
 			(*it)->setSocketToWriting(this->_epoll_fd);
 		}
-		if ((*it)->getClientRequest()->get_path().find('/', 1) != std::string::npos)
-		{
-			std::string uri = (*it)->getClientRequest()->get_path().substr(0, (*it)->getClientRequest()->get_path().find('/', 1));
-			(*it)->setRouteTriggered((*this->getRouteTriggered(uri)));
-		}
-		else
-			(*it)->setRouteTriggered((*this->getDefaultRoute()));
-		std::cout<<"ServerBlock TRIGGERED NAME: "<<(*it)->getServerBlockTriggered()->getBlockName()<<std::endl;
-		std::cout<<"ServerBlock TRIGGERED PORT: "<<(*it)->getServerBlockTriggered()->getBlockPort()<<std::endl;
-		std::cout<<"ROUTE TRIGGERED: "<<(*it)->getRouteTriggered()->getURI()<<std::endl;
+		(*it)->setRouteTriggered((*this->getRouteTriggered((*it)->getURIRequested(), (*it)->getSocketTriggered())));
 	}
 	else
 		this->manageClient(clientList, it);
@@ -283,7 +292,7 @@ void	Server::manageClient(std::vector<Client*> &clientList, std::vector<Client*>
 {
 	if (!isConnectionGood(*this, it))
 		handlePortOrDomainMismatch(*this, clientList, it);
-	else if ((*it)->getRouteTriggered()->isCgi() && (*it)->hasToSendToCgi())
+	else if ((*it)->getRouteTriggered()->isCgi())
 	{
 		try
 		{

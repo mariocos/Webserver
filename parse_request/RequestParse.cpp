@@ -178,7 +178,7 @@ void	RequestParse::readBinary(int client_socket, Client *client)
 		totalBytesRead += bytes_read;
 	}
 	binaryBuffer.push_back('\0');
-	//std::cout<<"Buffer:\n"<<binaryBuffer.data()<<std::endl;
+	std::cout<<"Buffer:\n"<<binaryBuffer.data()<<std::endl;
 	this->_binaryBuffer = binaryBuffer;
 	if (bytes_read >= 1048574)
 		client->setClientReadingFlag(false);
@@ -198,6 +198,12 @@ std::vector<uint8_t>	&RequestParse::getBufferInfo()
 
 void	RequestParse::execute_response(int client_socket, Client *client)
 {
+	if (client->getRouteTriggered()->isPermanentRedirect())
+		throw Load301Exception(client_socket, client->getClientResponse(), client);
+	else if (client->getRouteTriggered()->isTemporaryRedirect())
+		throw Load307Exception(client_socket, client->getClientResponse(), client);
+	else if (client->getRouteTriggered()->isListing())
+		throw LoadListingException(client_socket, client->getClientResponse(), client);
 	if (method.compare("GET") == 0)
 		GET_response(client_socket, client);
 	else if (method.compare("POST") == 0)
@@ -250,4 +256,9 @@ void	RequestParse::GET_response(int client_socket, Client *client)
 std::string RequestParse::get_content()
 {
 	return (content);
+}
+
+std::string RequestParse::get_connection()
+{
+	return (connection);
 }

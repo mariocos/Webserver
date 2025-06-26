@@ -1,5 +1,31 @@
 #include "includes/Errors.hpp"
 
+Load301Exception::Load301Exception(int client_socket, Response *response, Client *client) :
+runtime_error("") 
+{
+	response->setStatusCode(301);
+	printLog("INFO", NULL, client, NULL, 301);
+	load301(client_socket, response, client);
+	if (client->getRouteTriggered()->isCgi())
+	{
+		client->setClientWritingFlag(true);
+		client->setClientReadingFlag(true);
+	}
+}
+
+Load307Exception::Load307Exception(int client_socket, Response *response, Client *client) :
+runtime_error("") 
+{
+	response->setStatusCode(307);
+	printLog("INFO", NULL, client, NULL, 307);
+	load307(client_socket, response, client);
+	if (client->getRouteTriggered()->isCgi())
+	{
+		client->setClientWritingFlag(true);
+		client->setClientReadingFlag(true);
+	}
+}
+
 Error400Exception::Error400Exception(int client_socket, Response *response, Client *client) :
 runtime_error("Error 400 found") 
 {

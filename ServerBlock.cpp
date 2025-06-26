@@ -8,8 +8,8 @@ ServerBlock::ServerBlock() : WebSocket(), _maxConnections(-1), _port(-1), _defau
 
 ServerBlock::ServerBlock(int socket, int port, int backlog, std::string domainName, bool flag) : WebSocket(socket), _name(domainName), _maxConnections(backlog), _port(port), _default(flag), _isCgi(false)
 {
-	/* if (setNonBlocking(this->getSocketFd()) == -1)
-		throw NonBlockingException(this->getSocketFd()); */
+	if (setNonBlocking(this->getSocketFd()) == -1)
+		throw NonBlockingException(this->getSocketFd());
 	for (int i = 0; i < 3; i++)
 		_methods[i] = false;
 }

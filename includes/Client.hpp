@@ -34,6 +34,7 @@ private:
 	bool			_pending;
 	bool			_keepAlive;
 	int				_openFd;
+	int				_socketTriggered;
 	uint64_t		_time;
 	bool			_finishedReading;
 	bool			_finishedWriting;
@@ -57,6 +58,7 @@ public:
 	void	setClientPort(int port);
 	void	setClientIp(std::string ip);
 	void	resetTimer();
+	void	setSocketTriggered(int fd);
 	bool	getClientPending();
 	bool	getClientConnection();
 	bool	getClientReadingFlag();
@@ -66,8 +68,11 @@ public:
 	int		getClientOpenFd();
 	int		getPortTriggered();
 	int		getClientPort();
+	int		getSocketTriggered();
 	std::string	getClientIp();
 	std::string	getDomainTriggered();
+	std::string	getNewPath();
+	std::string	getURIRequested();
 	RequestParse	*getClientRequest();
 	Response		*getClientResponse();
 	File			*getClientFile();

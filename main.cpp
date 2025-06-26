@@ -153,6 +153,16 @@ void	printLog(std::string action, ServerBlock *serverBlock, Client *client, Resp
 			std::cout<<"["<<getTimeStamp()<<"]"<<RED<<" ["<<action<<"] "<<RESET;
 			std::cout<<RED<<"TimedOut "<<client->getClientIp() + ":" + transformToString(client->getClientPort())<<RESET<<std::endl;
 			break;
+		case 301:
+			std::cout<<"["<<getTimeStamp()<<"]"<<YELLOW<<" ["<<action<<"] "<<RESET;
+			std::cout<<YELLOW<<"Redirected permanently "<<client->getClientIp() + ":" + transformToString(client->getClientPort());
+			std::cout<<" to: "<<client->getRouteTriggered()->getRedirectPath()<<RESET<<std::endl;
+			break;
+		case 307:
+			std::cout<<"["<<getTimeStamp()<<"]"<<YELLOW<<" ["<<action<<"] "<<RESET;
+			std::cout<<YELLOW<<"Redirected temporarily "<<client->getClientIp() + ":" + transformToString(client->getClientPort());
+			std::cout<<" to: "<<client->getRouteTriggered()->getRedirectPath()<<RESET<<std::endl;
+			break;
 		case 400:
 			std::cout<<"["<<getTimeStamp()<<"]"<<RED<<" ["<<action<<"] "<<RESET;
 			std::cout<<RED<<"Bad Request "<<response->getStatusCode()<<RESET<<std::endl;

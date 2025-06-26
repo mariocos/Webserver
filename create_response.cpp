@@ -23,9 +23,6 @@ void	findType(RequestParse *request, Response *response, Client *client)
 	fileTypes[".mp4"] = "video/mp4";
 	fileTypes[".txt"] = "text/plain";
 
-	//if (request->get_path() == "/")
-	//	request->set_path("website/dummy.html");
-
 	std::string	extension = findFileExtension(request->get_path());
 	//for some reason with this type when requesting a directory in the browser
 	//it presents a menu like for downloading a file when requesting for a unknown type of file
@@ -35,14 +32,7 @@ void	findType(RequestParse *request, Response *response, Client *client)
 		type = fileTypes.at(extension);
 
 	response->setType(type);
-	Routes*	route = client->getRouteTriggered();
-	if (route->getURI() != "/")
-	{
-		std::string newPath = request->get_path().substr(route->getURI().length());
-		response->setPath(route->getRoot() + newPath);
-	}
-	else
-		response->setPath(route->getRoot() + request->get_path());
+	response->setPath(client->getNewPath());
 }
 
 void	createHeader(RequestParse *request, Response *response, Client *client)
@@ -58,7 +48,10 @@ void	createHeader(RequestParse *request, Response *response, Client *client)
 		throw Error413Exception(client->getSocketFd(), response, client); */
 
 	response->addToResponseLenght(client->getClientFile()->getFileStats()->st_size);
-	response->addToResponse("Connection: close\r\n");
+	if (request->get_connection() == "keep-alive")
+		response->addToResponse("Connection: keep-alive\r\n");
+	else
+		response->addToResponse("Connection: close\r\n");
 	response->addToResponse("Content-Length: " + response->getResponseLenghtAsString() + "\r\n\r\n");
 	response->addToBytesToSend(response->getResponse().size());
 	sendMsgToSocket(client->getSocketFd(), response->getResponse().size(), client, response);
@@ -83,8 +76,6 @@ void	loadPage(int client_socket, Response *response, Client *client)
 	client->getClientFile()->setWriting(false);
 	if (response->getBytesSent() < response->getBytesToSend())
 		sendMsgToSocket(client_socket, client->getClientFile()->getBytesRead(), client, response);
-	//std::cout<<"BYTES SENT: "<<response->getBytesSent()<<std::endl;
-	//std::cout<<"BYTES TO SEND: "<<response->getBytesToSend()<<std::endl;
 	if (response->getBytesSent() < response->getBytesToSend())
 	{
 		printLog("DEBUG", NULL, client, response, 11);

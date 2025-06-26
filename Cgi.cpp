@@ -97,7 +97,7 @@ bool	Cgi::isActive()
 
 void	Cgi::executeCgi(Client *client)
 {
-	std::string	path = "website" + client->getClientRequest()->get_path();
+	std::string	path = client->getNewPath();
 	std::vector<char*>	env;
 	std::string	scriptDir;
 	std::string	scriptName;

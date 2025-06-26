@@ -1,10 +1,10 @@
 #include "includes/Client.hpp"
 
-Client::Client() : WebSocket(-1), _request(NULL), _response(NULL), _pending(false), _keepAlive(false), _openFd(-1), _finishedReading(false), _finishedWriting(true)
+Client::Client() : WebSocket(-1), _request(NULL), _response(NULL), _pending(false), _keepAlive(false), _openFd(-1), _socketTriggered(-1), _finishedReading(false), _finishedWriting(true)
 {
 }
 
-Client::Client(int client_socket) : WebSocket(client_socket), _request(NULL), _response(NULL), _pending(false), _keepAlive(false),_openFd(-1), _finishedReading(false), _finishedWriting(true)
+Client::Client(int client_socket) : WebSocket(client_socket), _request(NULL), _response(NULL), _pending(false), _keepAlive(false),_openFd(-1), _socketTriggered(-1), _finishedReading(false), _finishedWriting(true)
 {
 	if (setNonBlocking(this->getSocketFd()) == -1)
 	{
@@ -119,6 +119,11 @@ void	Client::resetTimer()
 	this->_time = (uint64_t)tv.tv_sec;
 }
 
+void	Client::setSocketTriggered(int fd)
+{
+	this->_socketTriggered = fd;
+}
+
 bool	Client::getClientPending()
 {
 	return (this->_pending);
@@ -141,7 +146,6 @@ bool	Client::getClientWritingFlag()
 
 bool	Client::hasToSendToCgi()
 {
-	std::cout<<"REQUESTED PATH: "<<this->_request->get_path()<<std::endl;
 	std::string	cgiFolder = get_keyword(this->_request->get_path(), "/cgi-bin/");
 	if (cgiFolder.empty())
 		return (false);
@@ -173,6 +177,11 @@ int	Client::getClientPort()
 	return (this->_clientPort);
 }
 
+int	Client::getSocketTriggered()
+{
+	return (this->_socketTriggered);
+}
+
 std::string	Client::getClientIp()
 {
 	return (this->_clientIp);
@@ -181,6 +190,29 @@ std::string	Client::getClientIp()
 std::string	Client::getDomainTriggered()
 {
 	return (this->_domainTriggered);
+}
+
+std::string	Client::getNewPath()
+{
+	std::string path;
+	if (this->_routeTriggered->getURI() != "/")
+	{
+		std::string newPath = this->_request->get_path().substr(this->_routeTriggered->getURI().length());
+		path = this->_routeTriggered->getRoot() + "/" + newPath;
+	}
+	else
+		path = this->_routeTriggered->getRoot() + this->_request->get_path();
+	return (path);
+}
+
+std::string	Client::getURIRequested()
+{
+	std::string	uri;
+	if (this->_request->get_path().find('/', 1) != std::string::npos)
+		uri = this->_request->get_path().substr(0, this->_request->get_path().find('/', 1) + 1);
+	else
+		uri = this->_request->get_path();
+	return (uri);
 }
 
 RequestParse	*Client::getClientRequest()
@@ -233,6 +265,7 @@ void	new_connection(std::vector<Client*> &clientList, std::vector<int> &errorFds
 	newClient->setPortTriggered((*it)->getBlockPort());
 	newClient->setDomainTriggered((*it)->getBlockName());
 	newClient->setServerBlockTriggered((*it));
+	newClient->setSocketTriggered(serverFd);
 	newClient->addSocketToEpoll(server.getEpollFd());
 	if (clientList.size() < 60)
 		clientList.push_back(newClient);

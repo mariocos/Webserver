@@ -1,5 +1,37 @@
 #include "includes/webserv.hpp"
 
+void	load301(int client_socket, Response *response, Client *client)
+{
+	response->clearResponse();
+	response->addToResponse("HTTP/1.1 301 Moved Permanently\r\n");
+	response->addToResponse("Location: " + client->getRouteTriggered()->getRedirectPath() + "\r\n");
+	if (client->getClientRequest()->get_connection() == "keep-alive")
+		response->addToResponse("Connection: keep-alive\r\n");
+	else
+		response->addToResponse("Connection: close\r\n");
+	response->addToResponse("Content-Length: 0\r\n\r\n");
+	sendMsgToSocket(client_socket, response->getResponse().size(), client, response);
+	response->clearResponse();
+	client->setClientWritingFlag(true);
+	client->setClientPending(false);
+}
+
+void	load307(int client_socket, Response *response, Client *client)
+{
+	response->clearResponse();
+	response->addToResponse("HTTP/1.1 307 Temporary Redirect\r\n");
+	response->addToResponse("Location: " + client->getRouteTriggered()->getRedirectPath() + "\r\n");
+	if (client->getClientRequest()->get_connection() == "keep-alive")
+		response->addToResponse("Connection: keep-alive\r\n");
+	else
+		response->addToResponse("Connection: close\r\n");
+	response->addToResponse("Content-Length: 0\r\n\r\n");
+	sendMsgToSocket(client_socket, response->getResponse().size(), client, response);
+	response->clearResponse();
+	client->setClientWritingFlag(true);
+	client->setClientPending(false);
+}
+
 void	loadError400(int client_socket, Response *response, Client *client)
 {
 	std::ifstream	input;
@@ -204,5 +236,4 @@ void	loadError503(int error_socket)
 
 void	loadError505()
 {
-	
 }

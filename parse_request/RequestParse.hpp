@@ -40,6 +40,7 @@ public:
 	std::string	get_buffer();
 	std::string	get_query_str();
 	std::string get_content();
+	std::string	get_connection();
 	char* get_full_content();
 	void		buildRequest(const char *req);
 	/*  setters  */

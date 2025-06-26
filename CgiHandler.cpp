@@ -9,7 +9,7 @@ void	prepareCgi(Client *client)
 	env.push_back("REQUEST_METHOD="+ client->getClientRequest()->get_method());
 	name = client->getClientRequest()->get_path().substr(client->getClientRequest()->get_path().rfind("/") + 1);
 	env.push_back("SCRIPT_NAME="+ name);
-	path = "website" + client->getClientRequest()->get_path();
+	path = client->getNewPath();
 	env.push_back("QUERY_STRING=" + client->getClientRequest()->get_query_str());
 	if (client->getClientRequest()->get_method() == "POST")
 		env.push_back("CONTENT_LENGHT=" + transformToString(client->getClientRequest()->get_content().size()));
