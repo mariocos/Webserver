@@ -148,8 +148,13 @@ std::vector<Routes*>::iterator	Server::getRouteTriggered(std::string uri, int fd
 	std::vector<Routes*>::iterator	routeIt = (*it)->getRoutesVector().begin();
 	while (routeIt != (*it)->getRoutesVector().end())
 	{
-		if (uri == (*routeIt)->getURI())
+		if ((*routeIt)->getURI().rfind('/') == (*routeIt)->getURI().length() - 1 && uri == (*routeIt)->getURI())
 			return (routeIt);
+		else if ((*routeIt)->getURI().rfind('/') != (*routeIt)->getURI().length() - 1)
+		{
+			if (uri == (*routeIt)->getURI() || uri == (*routeIt)->getURI() + "/")
+				return (routeIt);
+		}
 		routeIt++;
 	}
 	return (this->getDefaultRoute(fd));
@@ -319,7 +324,8 @@ void	Server::manageClient(std::vector<Client*> &clientList, std::vector<Client*>
 		}
 		catch(const std::exception& e)
 		{
-			std::cerr << e.what() << '\n';
+			if (std::string(e.what()) != "Loading Listing")
+				std::cerr << e.what() << '\n';
 			clearClient(it, clientList);
 		}
 	}

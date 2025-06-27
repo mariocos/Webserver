@@ -175,7 +175,7 @@ void	Routes::setAsTemporaryRedirect()
 	this->_isPermanentRedirect = false;
 }
 
-std::string	generateListingHTML(std::string &dirPath)
+std::string	generateListingHTML(std::string &dirPath, Client *client)
 {
 	std::stringstream	html;
 
@@ -184,24 +184,41 @@ std::string	generateListingHTML(std::string &dirPath)
     html<<"<title>Index of " + dirPath + "</title>\n";
     html<<"</head>\n<body>\n";
 	html<<"<h1>Index of " + dirPath + "</h1>\n";
+
+	if (dirPath != "/" && dirPath != "." && \
+		dirPath != client->getRouteTriggered()->getRoot() && dirPath != client->getRouteTriggered()->getRoot() + "/")
+	{
+		std::string	parentDir = client->getClientRequest()->get_path().substr(0, client->getClientRequest()->get_path().rfind('/') + 1);
+		if (parentDir == client->getRouteTriggered()->getURI())
+			html<<"<p><a href=\"" + parentDir + "\"> Go to parent directory</a></p>\n";
+		else
+			html<<"<p><a href=\"" + parentDir.substr(0, parentDir.length() - 1) + "\"> Go to parent directory</a></p>\n";
+	}
     html<<"<ul>\n";
 
 	DIR	*dir = opendir(dirPath.c_str());
 	if (!dir)
+	{
 		html<<"<p>Could not open directory.</p>\n";
+		client->getClientResponse()->setStatusCode(404);
+	}
 	else
 	{
+		client->getClientResponse()->setStatusCode(200);
 		struct dirent* entry;
 
 		while ((entry = readdir(dir)) != NULL)
 		{
 			std::string name = entry->d_name;
-			//if (name == "." || name == "..")
-            //    continue;
+			if (name == "." || name == "..")
+                continue;
 			std::string fullPath = dirPath + "/" + name;
             struct stat st;
             bool isDir = (stat(fullPath.c_str(), &st) == 0) && S_ISDIR(st.st_mode);
-			html<<"<li><a href=\"" + name + "\">" + name;
+			if (client->getClientRequest()->get_path().rfind('/') == client->getClientRequest()->get_path().length() - 1)
+				html<<"<li><a href=\"" + client->getClientRequest()->get_path() + name + "\">" + name;
+			else
+				html<<"<li><a href=\"" + client->getClientRequest()->get_path() + "/" + name + "\">" + name;
             if (isDir)
 				html<<"/";
             html<<"</a></li>\n";
@@ -212,26 +229,32 @@ std::string	generateListingHTML(std::string &dirPath)
 	return (html.str());
 }
 
-LoadListingException::LoadListingException(int client_socket, Response *response, Client *client) :
-runtime_error("") 
+std::string	constructListingPath(Client *client)
 {
-	std::string path;
+	std::string	path = "";
+	std::string	uri = client->getRouteTriggered()->getURI();
+	std::string	requestPath = client->getClientRequest()->get_path();
 	if (client->getRouteTriggered()->getSavedPath().empty())
-	{
-		path = client->getNewPath().substr(0, client->getNewPath().length() - 1);
-		client->getRouteTriggered()->setSavedPath(path);
-	}
+		path = client->getNewPath();
 	else
 	{
-		if (client->getRouteTriggered()->getURI().find(1, '/') != std::string::npos)
-			path = client->getRouteTriggered()->getSavedPath() + client->getClientRequest()->get_path().substr(client->getRouteTriggered()->getURI().length());
+		if (uri.find('/', 1) != std::string::npos)
+			path = client->getRouteTriggered()->getRoot() + requestPath.substr(uri.length() - 1);
 		else
-			path = client->getRouteTriggered()->getSavedPath() + client->getClientRequest()->get_path().substr(client->getRouteTriggered()->getURI().length() - 1);
-		client->getRouteTriggered()->setSavedPath(path);
+			path = client->getRouteTriggered()->getRoot() + requestPath.substr(uri.length());
 	}
-	std::cout<<"SEARCHING FOR PATH: " + path<<std::endl;
-	std::string	body = generateListingHTML(path);
-	response->setStatusCode(200);
+	client->getRouteTriggered()->setSavedPath(path);
+	return (path);
+}
+
+LoadListingException::LoadListingException(int client_socket, Response *response, Client *client) :
+runtime_error("Loading Listing")
+{
+	if (response->getBytesSent() == response->getBytesToSend() && response->getBytesToSend() != 0)
+		return ;
+	std::string	path = constructListingPath(client);
+	std::string	body = generateListingHTML(path, client);
+	printLog("ACCESS", NULL, client, client->getClientResponse(), 13);
 	response->clearResponse();
 	response->addToResponse("HTTP/1.1 " + transformToString(response->getStatusCode()) + " OK\r\n");
 	if (client->getClientRequest()->get_connection() == "keep-alive")
@@ -249,7 +272,7 @@ runtime_error("")
 	response->addToBytesSent(bytesSent);
 	client->setClientWritingFlag(true);
 	client->setClientPending(false);
-	//printLog("INFO", NULL, client, NULL, 301);
+	printLog("INFO", NULL, client, client->getClientResponse(), 14);
 	if (client->getRouteTriggered()->isCgi())
 	{
 		client->setClientWritingFlag(true);

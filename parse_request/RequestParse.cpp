@@ -178,7 +178,7 @@ void	RequestParse::readBinary(int client_socket, Client *client)
 		totalBytesRead += bytes_read;
 	}
 	binaryBuffer.push_back('\0');
-	std::cout<<"Buffer:\n"<<binaryBuffer.data()<<std::endl;
+	//std::cout<<"Buffer:\n"<<binaryBuffer.data()<<std::endl;
 	this->_binaryBuffer = binaryBuffer;
 	if (bytes_read >= 1048574)
 		client->setClientReadingFlag(false);

@@ -93,6 +93,43 @@ std::string	convertIpToString(struct in_addr s_addr)
 	return (output);
 }
 
+bool	checkInt(const std::string &str, size_t len)
+{
+	size_t	n = 0;
+	bool	signal = false;
+	if (str[n] == '-' || str[n] == '+')
+	{
+		signal = true;
+		n++;
+	}
+	while (n < len)
+	{
+		if (!isdigit(str[n]))
+			break ;
+		n++;
+	}
+	if (n == len && ((signal == true && len < 11) || (signal == false && len < 10)))
+		return (true);
+	return (false);
+}
+/*
+	0 -> Bool
+	1 -> Int
+	2 -> YamlNode
+	3 -> std::string
+ */
+int		returnVariableType(std::string &value)
+{
+	if (value == "true" || value == "false" || value == "on" || value == "off" || value == "yes" || value == "no")
+		return (0);
+	else if (checkInt(value, value.length()))
+		return (1);
+	else if ("")
+		return (2);
+	else
+		return (3);
+}
+
 void	printLog(std::string action, ServerBlock *serverBlock, Client *client, Response *response, int mode)
 {
 	switch (mode)
@@ -152,6 +189,15 @@ void	printLog(std::string action, ServerBlock *serverBlock, Client *client, Resp
 		case 12:
 			std::cout<<"["<<getTimeStamp()<<"]"<<RED<<" ["<<action<<"] "<<RESET;
 			std::cout<<RED<<"TimedOut "<<client->getClientIp() + ":" + transformToString(client->getClientPort())<<RESET<<std::endl;
+			break;
+		case 13:
+			std::cout<<"["<<getTimeStamp()<<"]"<<YELLOW<<" ["<<action<<"] "<<RESET;
+			std::cout<<YELLOW<<client->getClientIp() + ":" + transformToString(client->getClientPort()) + " - " + client->getClientRequest()->get_method();
+			std::cout<<" " + client->getClientRequest()->get_path() + " " + transformToString(response->getStatusCode())<<RESET<<std::endl;
+			break;
+		case 14:
+			std::cout<<"["<<getTimeStamp()<<"]"<<YELLOW<<" ["<<action<<"] "<<RESET;
+			std::cout<<YELLOW<<"Generated directory listing for: "<<client->getRouteTriggered()->getSavedPath()<<RESET<<std::endl;
 			break;
 		case 301:
 			std::cout<<"["<<getTimeStamp()<<"]"<<YELLOW<<" ["<<action<<"] "<<RESET;

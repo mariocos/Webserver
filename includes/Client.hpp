@@ -7,7 +7,7 @@
 # include "File.hpp"
 # include "WebSocket.hpp"
 
-# define TIMEOUT 10
+# define TIMEOUT 5
 
 
 class RequestParse;

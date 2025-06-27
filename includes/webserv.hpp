@@ -59,6 +59,8 @@ extern bool	run;
 class RequestParse;
 class Response;
 
+int		returnVariableType(std::string &value);
+
 template <typename T>
 std::string	transformToString(const T &value)
 {
@@ -70,9 +72,31 @@ std::string	transformToString(const T &value)
 	return (lenght);
 }
 
+template <typename I>
+I	transformStringToSomething(std::string &value)
+{
+	int	check = returnVariableType(value);
+	switch (check)
+	{
+		case 0:
+			if (value == "true" || value == "on" || value == "yes")
+				return (true);
+			else
+				return (false);
+		case 1:
+			return (atoi(value.c_str()));
+		//still to decide what to do
+		case 2:
+			return (value);
+		default:
+			return (value);
+	}
+}
+
 //main.cpp
 std::string	getTimeStamp();
 std::string	convertIpToString(struct in_addr s_addr);
+bool	checkInt(const std::string &str, size_t len);
 void	printLog(std::string action, ServerBlock *serverBlock, Client *client, Response *response, int mode);
 void	stopRunning(int signal);
 void	ft_bzero(void *s, size_t n);

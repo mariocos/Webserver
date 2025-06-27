@@ -54,7 +54,8 @@ class Routes
 		void		setAsTemporaryRedirect();
 };
 
-std::string	generateListingHTML(std::string &dirPath);
+std::string	generateListingHTML(std::string &dirPath, Client *client);
+std::string	constructListingPath(Client *client);
 
 class	LoadListingException : public std::runtime_error
 {
