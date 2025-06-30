@@ -68,6 +68,15 @@ runtime_error("BadClient")
 {
 }
 
+FinishedException::FinishedException(Client *client, Server &server) :
+runtime_error("Finished")
+{
+	client->getClientResponse()->resetResponseLenght();
+	client->getClientResponse()->resetBytesToSend();
+	client->getClientResponse()->resetBytesSent();
+	client->setSocketToReading(server.getEpollFd());
+}
+
 std::string	getTimeStamp()
 {
 	time_t	now = time(NULL);
