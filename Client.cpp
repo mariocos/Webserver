@@ -251,6 +251,19 @@ void	Client::readRequest(int client_socket)
 	this->getClientRequest()->buildRequest(reinterpret_cast<char*>(this->getClientRequest()->getBufferInfo().data()));
 }
 
+void	Client::resetClient(Server &server)
+{
+	this->setClientWritingFlag(false);
+	this->setClientReadingFlag(false);
+	this->setClientPending(false);
+	this->getClientFile()->setReading(false);
+	this->getClientFile()->setWriting(false);
+	this->getClientResponse()->resetResponseLenght();
+	this->getClientResponse()->resetBytesToSend();
+	this->getClientResponse()->resetBytesSent();
+	this->setSocketToReading(server.getEpollFd());
+}
+
 void	new_connection(std::vector<Client*> &clientList, std::vector<int> &errorFds, Server &server, int serverFd)
 {
 	struct sockaddr_in clientaddr;

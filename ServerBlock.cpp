@@ -14,7 +14,7 @@ ServerBlock::ServerBlock(int socket, int port, int backlog, std::string domainNa
 		_methods[i] = false;
 }
 
-ServerBlock::ServerBlock(const ServerBlock &copy)
+ServerBlock::ServerBlock(const ServerBlock &copy) : WebSocket(copy)
 {
 	*this = copy;
 }

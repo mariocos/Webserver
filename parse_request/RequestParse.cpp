@@ -177,6 +177,8 @@ void	RequestParse::readBinary(int client_socket, Client *client)
 		binaryBuffer.insert(binaryBuffer.end(), tempBuffer, tempBuffer + bytes_read);
 		totalBytesRead += bytes_read;
 	}
+	if (binaryBuffer.empty())
+		throw EmptyBufferException();
 	binaryBuffer.push_back('\0');
 	//std::cout<<"Buffer:\n"<<binaryBuffer.data()<<std::endl;
 	this->_binaryBuffer = binaryBuffer;

@@ -80,6 +80,7 @@ public:
 	ServerBlock		*getServerBlockTriggered();
 	Routes			*getRouteTriggered();
 	void	readRequest(int client_socket);
+	void	resetClient(Server &server);
 };
 
 void	new_connection(std::vector<Client*> &clientList, std::vector<int> &errorFds, Server &server, int serverFd);

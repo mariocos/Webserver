@@ -85,12 +85,9 @@ void	loadPage(int client_socket, Response *response, Client *client)
 	if (response->getBytesSent() == response->getBytesToSend() && !client->getClientWritingFlag())
 		printLog("INFO", NULL, client, response, 6);
 	response->clearResponse();
-	client->setClientWritingFlag(false);
-	client->setClientReadingFlag(false);
-	client->setClientPending(false);
-	client->getClientFile()->closeFile();
 	client->getClientFile()->setReading(false);
 	client->getClientFile()->setWriting(false);
+	client->getClientFile()->closeFile();
 }
 
 void	createPostResponse(Client *client, Response *response)
@@ -98,13 +95,18 @@ void	createPostResponse(Client *client, Response *response)
 	response->clearResponse();
 	response->setStatusCode(201);
 	response->addToResponse(client->getClientRequest()->get_httpversion() + " 201 Created\r\n");
-	response->addToResponse("Connection: close\r\n");
+	if (client->getClientRequest()->get_connection() == "keep-alive")
+		response->addToResponse("Connection: keep-alive\r\n");
+	else
+		response->addToResponse("Connection: close\r\n");
 	response->addToResponse("Content-Length: 20\r\n\r\n");
 	response->addToResponse("Created successfully");
 	sendMsgToSocket(client->getSocketFd(), response->getResponse().size(), client, response);
 	response->clearResponse();
 	client->setClientWritingFlag(true);
 	client->setClientPending(false);
+	client->getClientFile()->setReading(false);
+	client->getClientFile()->setWriting(false);
 	printLog("INFO", NULL, client, response, 9);
 }
 
@@ -114,13 +116,18 @@ void	createDeleteResponse(Client *client, Response *response)
 	response->setStatusCode(200);
 	response->addToResponse(client->getClientRequest()->get_httpversion() + " 200 OK\r\n");
 	response->addToResponse("Content-Type: text/plain");
-	response->addToResponse("Connection: close\r\n");
+	if (client->getClientRequest()->get_connection() == "keep-alive")
+		response->addToResponse("Connection: keep-alive\r\n");
+	else
+		response->addToResponse("Connection: close\r\n");
 	response->addToResponse("Content-Length: 20\r\n\r\n");
 	response->addToResponse("Deleted successfully");
 	sendMsgToSocket(client->getSocketFd(), response->getResponse().size(), client, response);
 	response->clearResponse();
 	client->setClientWritingFlag(true);
 	client->setClientPending(false);
+	client->getClientFile()->setReading(false);
+	client->getClientFile()->setWriting(false);
 	printLog("INFO", NULL, client, response, 10);
 }
 

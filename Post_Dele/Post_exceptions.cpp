@@ -142,4 +142,5 @@ void Post_master::post(Client* client) // add socket
 	if (out_fd < 0)
         throw Error404Exception(client->getSocketFd(), client->getClientResponse(), client);
     client->setClientOpenFd(out_fd);
+	client->getClientFile()->setWriting(true);
 }

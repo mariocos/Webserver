@@ -177,7 +177,10 @@ void	Cgi::writeCgiResponse(Client *client)
 		client->getClientResponse()->addToResponse(client->getClientRequest()->get_httpversion() + " " + transformToString(client->getClientResponse()->getStatusCode()) + " KO\r\n");
 	client->getClientResponse()->addToResponse("Content-Type: " + client->getClientResponse()->getType() + "\r\n");
 	client->getClientResponse()->addToResponseLenght(this->_cgiResponse.size());
-	client->getClientResponse()->addToResponse("Connection: close\r\n");
+	if (client->getClientRequest()->get_connection() == "keep-alive")
+		client->getClientResponse()->addToResponse("Connection: keep-alive\r\n");
+	else
+		client->getClientResponse()->addToResponse("Connection: close\r\n");
 	client->getClientResponse()->addToResponse("Content-Length: " + client->getClientResponse()->getResponseLenghtAsString() + "\r\n\r\n");
 	//std::cout<<"response head:\n"<<std::string(client->getClientResponse()->getResponse().begin(), client->getClientResponse()->getResponse().end());
 	client->getClientResponse()->addToBytesToSend(client->getClientResponse()->getResponse().size());

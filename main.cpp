@@ -68,13 +68,9 @@ runtime_error("BadClient")
 {
 }
 
-FinishedException::FinishedException(Client *client, Server &server) :
-runtime_error("Finished")
+EmptyBufferException::EmptyBufferException() :
+runtime_error("EmptyBuffer")
 {
-	client->getClientResponse()->resetResponseLenght();
-	client->getClientResponse()->resetBytesToSend();
-	client->getClientResponse()->resetBytesSent();
-	client->setSocketToReading(server.getEpollFd());
 }
 
 std::string	getTimeStamp()

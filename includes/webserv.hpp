@@ -179,10 +179,10 @@ class	BadClientException : public std::runtime_error
 		BadClientException();
 };
 
-class	FinishedException : public std::runtime_error
+class	EmptyBufferException : public std::runtime_error
 {
 	public:
-		FinishedException(Client *client, Server &server);
+		EmptyBufferException();
 };
 
 #endif

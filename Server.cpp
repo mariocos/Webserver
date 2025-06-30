@@ -74,7 +74,7 @@ Server::Server(std::vector<int> ports, std::vector<std::string> names, int backl
 				newRoute = new Routes(backlog, -1, false, "website/cgi-bin", "/find-this");
 			else if (n == 2)
 			{
-				newRoute = new Routes(backlog, -1, false, "/home/pauberna/Desktop/projetos_42", "/projects/");
+				newRoute = new Routes(backlog, -1, false, "/home/pbjr/Desktop", "/projects/");
 				newRoute->setAsListing();
 			}
 			else if (n == 3)
@@ -91,7 +91,7 @@ Server::Server(std::vector<int> ports, std::vector<std::string> names, int backl
 				std::string path = "https://youtube.com";
 				newRoute->setRedirectPath(path);
 			}
-			if (ports[i] == 2424)
+			if (ports[i] == 2424 && n != 0)
 				newRoute->setAsCgi();
 			tmp.push_back(newRoute);
 		}
@@ -280,14 +280,22 @@ void	Server::manageConnection(std::vector<Client*> &clientList, epoll_event	&eve
 		clearClient(it, clientList);
 	else if (!(*it)->getClientReadingFlag() && (event.events & EPOLLIN))
 	{
-		(*it)->readRequest((*it)->getSocketFd());
-		if ((*it)->getClientReadingFlag())
+		try
 		{
-			(*it)->resetTimer();
-			(*it)->setClientWritingFlag(false);
-			(*it)->setSocketToWriting(this->_epoll_fd);
+			(*it)->readRequest((*it)->getSocketFd());
+			if ((*it)->getClientReadingFlag())
+			{
+				(*it)->resetTimer();
+				(*it)->setClientWritingFlag(false);
+				(*it)->setSocketToWriting(this->_epoll_fd);
+			}
+			(*it)->setRouteTriggered((*this->getRouteTriggered((*it)->getURIRequested(), (*it)->getSocketTriggered())));
 		}
-		(*it)->setRouteTriggered((*this->getRouteTriggered((*it)->getURIRequested(), (*it)->getSocketTriggered())));
+		catch(const std::exception& e)
+		{
+			if (std::string(e.what()) != "EmptyBuffer")
+				std::cerr << e.what() << '\n';
+		}
 	}
 	else
 		this->manageClient(clientList, it, event);
@@ -304,8 +312,13 @@ void	Server::manageClient(std::vector<Client*> &clientList, std::vector<Client*>
 			//handling the CGI before and after the child process is created
 			if ((*it)->getClientCgi() && (*it)->getClientCgi()->isActive())
 				return ;
-			else
-				cgiHandler(*this, (*it));
+			cgiHandler(*this, (*it));
+			if ((*it)->getClientWritingFlag() && (*it)->getClientReadingFlag())
+			{
+				(*it)->resetClient(*this);
+				delete (*it)->getClientCgi();
+				(*it)->setClientCgi(NULL);
+			}
 		}
 		catch(const std::exception& e)
 		{
@@ -325,13 +338,7 @@ void	Server::manageClient(std::vector<Client*> &clientList, std::vector<Client*>
 			else
 				return ;
 			if (!(*it)->getClientFile()->isReading() && !(*it)->getClientFile()->isWriting())
-			{
-				(*it)->getClientResponse()->resetResponseLenght();
-				(*it)->getClientResponse()->resetBytesToSend();
-				(*it)->getClientResponse()->resetBytesSent();
-				(*it)->setSocketToReading(this->_epoll_fd);
-			}
-			
+				(*it)->resetClient(*this);
 		}
 		catch(const std::exception& e)
 		{
@@ -341,12 +348,7 @@ void	Server::manageClient(std::vector<Client*> &clientList, std::vector<Client*>
 				clearClient(it, clientList);
 			}
 			else if (!(*it)->getClientFile()->getFile()->is_open())
-			{
-				(*it)->getClientResponse()->resetResponseLenght();
-				(*it)->getClientResponse()->resetBytesToSend();
-				(*it)->getClientResponse()->resetBytesSent();
-				(*it)->setSocketToReading(this->_epoll_fd);
-			}
+				(*it)->resetClient(*this);
 		}
 	}
 }

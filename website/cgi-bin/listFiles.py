@@ -27,7 +27,7 @@ print("<button onclick=\"window.location.href='../index.html'\">Go to the Dummy 
 print("""
 <script>
 function deleteFile(filename) {
-    fetch(`/cgi-bin/deleteFile.py?filename=${encodeURIComponent(filename)}`)
+    fetch(`/find-this/deleteFile.py?filename=${encodeURIComponent(filename)}`)
         .then(res => res.text())
         .then(data => {
             alert(data);
