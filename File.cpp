@@ -117,6 +117,12 @@ void	File::openFile(const char *path, int client_socket)
 	}
 }
 
+void	File::closeFile()
+{
+	if (this->_file.is_open())
+		this->_file.close();
+}
+
 bool	File::checkFileInfo(const char *path, int client_socket)
 {
 	if (stat(path, &this->_fileStats))

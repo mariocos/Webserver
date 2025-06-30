@@ -202,7 +202,7 @@ void	RequestParse::execute_response(int client_socket, Client *client)
 		throw Load301Exception(client_socket, client->getClientResponse(), client);
 	else if (client->getRouteTriggered()->isTemporaryRedirect())
 		throw Load307Exception(client_socket, client->getClientResponse(), client);
-	else if (client->getRouteTriggered()->isListing())
+	else if (client->getRouteTriggered()->isListing() && !client->getClientFile()->getFile()->is_open())
 		throw LoadListingException(client_socket, client->getClientResponse(), client);
 	if (method.compare("GET") == 0)
 		GET_response(client_socket, client);

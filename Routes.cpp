@@ -199,6 +199,7 @@ std::string	generateListingHTML(std::string &dirPath, Client *client)
 	DIR	*dir = opendir(dirPath.c_str());
 	if (!dir)
 	{
+		client->getClientFile()->openFile(dirPath.c_str(), client->getSocketFd());
 		html<<"<p>Could not open directory.</p>\n";
 		client->getClientResponse()->setStatusCode(404);
 	}
@@ -254,6 +255,14 @@ runtime_error("Loading Listing")
 		return ;
 	std::string	path = constructListingPath(client);
 	std::string	body = generateListingHTML(path, client);
+	if (client->getClientFile()->getFile()->is_open())
+	{
+		findType(client->getClientRequest(), client->getClientResponse(), client);
+		if (client->getClientResponse()->getType() == "application/octet-stream")
+			client->getClientResponse()->setType("text/plain");
+		createHeader(client->getClientRequest(), client->getClientResponse(), client);
+		return ;
+	}
 	printLog("ACCESS", NULL, client, client->getClientResponse(), 13);
 	response->clearResponse();
 	response->addToResponse("HTTP/1.1 " + transformToString(response->getStatusCode()) + " OK\r\n");
@@ -264,14 +273,18 @@ runtime_error("Loading Listing")
 	response->addToResponse("Content-Type: text/html\r\n");
 	ssize_t	bodyLenght = body.size();
 	response->addToResponse("Content-Length: " + transformToString(bodyLenght) + "\r\n\r\n");
+	response->addToBytesToSend(response->getResponse().size() + body.size());
 	sendMsgToSocket(client_socket, response->getResponse().size(), client, response);
 	response->clearResponse();
 	ssize_t	bytesSent = send(client_socket, body.c_str(), body.size(), MSG_NOSIGNAL);
 	if (bytesSent == -1)
 		throw SendException(client, response);
 	response->addToBytesSent(bytesSent);
-	client->setClientWritingFlag(true);
+	client->setClientWritingFlag(false);
+	client->setClientReadingFlag(false);
 	client->setClientPending(false);
+	client->getClientFile()->setReading(false);
+	client->getClientFile()->setWriting(false);
 	printLog("INFO", NULL, client, client->getClientResponse(), 14);
 	if (client->getRouteTriggered()->isCgi())
 	{

@@ -38,7 +38,7 @@ public:
 	epoll_event	getEpollIndex(int index);
 	void	handle_connections(std::vector<Client*> &clientList, std::vector<int> &errorFds);
 	void	manageConnection(std::vector<Client*> &clientList, epoll_event	&event);
-	void	manageClient(std::vector<Client*> &clientList, std::vector<Client*>::iterator it);
+	void	manageClient(std::vector<Client*> &clientList, std::vector<Client*>::iterator it, epoll_event	&event);
 	void	removeFromEpoll(int fd);
 	class	SocketCreationException : public std::runtime_error
 	{

@@ -179,4 +179,10 @@ class	BadClientException : public std::runtime_error
 		BadClientException();
 };
 
+/* class	Finished : public std::runtime_error
+{
+	public:
+		NoPendingConnectionsException();
+}; */
+
 #endif

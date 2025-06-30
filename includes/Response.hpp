@@ -46,6 +46,9 @@ public:
 	void	addToResponseLenght(unsigned int bytes);
 	void	addToBytesToSend(ssize_t bytes);
 	void	addToBytesSent(ssize_t bytes);
+	void	resetResponseLenght();
+	void	resetBytesToSend();
+	void	resetBytesSent();
 	void	clearResponse();
 	std::string	readFromBuffer();
 	std::vector<uint8_t> &readFromBinaryBuffer();

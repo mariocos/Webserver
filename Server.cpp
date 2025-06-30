@@ -278,7 +278,7 @@ void	Server::manageConnection(std::vector<Client*> &clientList, epoll_event	&eve
 	else if ((event.events & EPOLLRDHUP) && \
 		(*it)->getClientReadingFlag() && (*it)->getClientWritingFlag() && (*it)->getClientOpenFd() == -1)
 		clearClient(it, clientList);
-	else if (!(*it)->getClientReadingFlag())
+	else if (!(*it)->getClientReadingFlag() && (event.events & EPOLLIN))
 	{
 		(*it)->readRequest((*it)->getSocketFd());
 		if ((*it)->getClientReadingFlag())
@@ -290,10 +290,10 @@ void	Server::manageConnection(std::vector<Client*> &clientList, epoll_event	&eve
 		(*it)->setRouteTriggered((*this->getRouteTriggered((*it)->getURIRequested(), (*it)->getSocketTriggered())));
 	}
 	else
-		this->manageClient(clientList, it);
+		this->manageClient(clientList, it, event);
 }
 
-void	Server::manageClient(std::vector<Client*> &clientList, std::vector<Client*>::iterator it)
+void	Server::manageClient(std::vector<Client*> &clientList, std::vector<Client*>::iterator it, epoll_event	&event)
 {
 	if (!isConnectionGood(*this, it))
 		handlePortOrDomainMismatch(*this, clientList, it);
@@ -320,13 +320,33 @@ void	Server::manageClient(std::vector<Client*> &clientList, std::vector<Client*>
 	{
 		try
 		{
-			(*it)->getClientRequest()->execute_response((*it)->getSocketFd(), (*it));
+			if (event.events & EPOLLOUT)
+				(*it)->getClientRequest()->execute_response((*it)->getSocketFd(), (*it));
+			else
+				return ;
+			if (!(*it)->getClientFile()->isReading() && !(*it)->getClientFile()->isWriting())
+			{
+				(*it)->getClientResponse()->resetResponseLenght();
+				(*it)->getClientResponse()->resetBytesToSend();
+				(*it)->getClientResponse()->resetBytesSent();
+				(*it)->setSocketToReading(this->_epoll_fd);
+			}
+			
 		}
 		catch(const std::exception& e)
 		{
 			if (std::string(e.what()) != "Loading Listing")
+			{
 				std::cerr << e.what() << '\n';
-			clearClient(it, clientList);
+				clearClient(it, clientList);
+			}
+			else if (!(*it)->getClientFile()->getFile()->is_open())
+			{
+				(*it)->getClientResponse()->resetResponseLenght();
+				(*it)->getClientResponse()->resetBytesToSend();
+				(*it)->getClientResponse()->resetBytesSent();
+				(*it)->setSocketToReading(this->_epoll_fd);
+			}
 		}
 	}
 }

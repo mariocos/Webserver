@@ -34,6 +34,7 @@ public:
 	void			adjustBuffer();
 	void			readFromFd(unsigned int buffer_size);
 	void			openFile(const char *path, int client_socket);
+	void			closeFile();
 	bool			checkFileInfo(const char *path, int client_socket);
 };
 

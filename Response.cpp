@@ -128,6 +128,21 @@ void	Response::addToBytesSent(ssize_t bytes)
 	this->_bytesSent += bytes;
 }
 
+void	Response::resetResponseLenght()
+{
+	this->_totalResponseLenght = 0;
+}
+
+void	Response::resetBytesToSend()
+{
+	this->_bytesToSend = 0;
+}
+
+void	Response::resetBytesSent()
+{
+	this->_bytesSent = 0;
+}
+
 void	Response::clearResponse()
 {
 	this->_response.clear();

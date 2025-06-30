@@ -71,13 +71,13 @@ void	loadPage(int client_socket, Response *response, Client *client)
 {
 	response->setResponse(client->getClientFile()->readFromBuffer());
 	client->getClientFile()->clearBuffer();
-	client->getClientFile()->setReading(true);
-	client->getClientFile()->setWriting(false);
 	if (response->getBytesSent() < response->getBytesToSend())
 		sendMsgToSocket(client_socket, client->getClientFile()->getBytesRead(), client, response);
 	if (response->getBytesSent() < response->getBytesToSend())
 	{
 		printLog("DEBUG", NULL, client, response, 11);
+		client->getClientFile()->setReading(true);
+		client->getClientFile()->setWriting(false);
 		client->setClientWritingFlag(false);
 		client->setClientPending(true);
 		return ;
@@ -85,8 +85,12 @@ void	loadPage(int client_socket, Response *response, Client *client)
 	if (response->getBytesSent() == response->getBytesToSend() && !client->getClientWritingFlag())
 		printLog("INFO", NULL, client, response, 6);
 	response->clearResponse();
-	client->setClientWritingFlag(true);
+	client->setClientWritingFlag(false);
+	client->setClientReadingFlag(false);
 	client->setClientPending(false);
+	client->getClientFile()->closeFile();
+	client->getClientFile()->setReading(false);
+	client->getClientFile()->setWriting(false);
 }
 
 void	createPostResponse(Client *client, Response *response)
