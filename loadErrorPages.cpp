@@ -223,14 +223,25 @@ void	loadError413(int client_socket, Response *response, Client *client)
 void	loadError503(int error_socket)
 {
 	std::string response;
+	std::string	body = "Webserv is busy. Try again later.";
+	ssize_t	bytesSent = 0;
+	ssize_t bytesToSend;
 
 	response.append("HTTP/1.1 503 Service Unavailable\r\n");
 	response.append("Server: WebServ\r\n");
 	response.append("Content-Type: text/plain\r\n");
-	response.append("Content-Lenght: 0\r\n");
-	response.append("Connection: close\r\n");
-	response.append("Retry-After: 5\r\n\r\n");
-	send(error_socket, response.c_str(), response.length(), MSG_NOSIGNAL);
+	response.append("Content-Length: " + transformToString(body.length()) + "\r\n");
+	response.append("Connection: close\r\n\r\n");
+	response.append(body);
+	bytesToSend = response.length();
+	const char	*str = response.c_str();
+	while (bytesSent < bytesToSend)
+	{
+		ssize_t	bytes = send(error_socket, str + bytesSent, bytesToSend - bytesSent, MSG_NOSIGNAL);
+		if (bytes <= 0)
+			break;
+		bytesSent += bytes;
+	}
 	close(error_socket);
 }
 

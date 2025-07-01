@@ -280,11 +280,11 @@ void	new_connection(std::vector<Client*> &clientList, std::vector<int> &errorFds
 	newClient->setServerBlockTriggered((*it));
 	newClient->setSocketTriggered(serverFd);
 	newClient->addSocketToEpoll(server.getEpollFd());
-	if (clientList.size() < 60)
+	if (clientList.size() < 3000)
 		clientList.push_back(newClient);
 	else
 	{
-		std::cout<<RED "SERVER FULL" RESET<<std::endl;
+		printLog("ERROR", NULL, newClient, NULL, 503);
 		errorFds.push_back(newClient->getSocketFd());
 		newClient->setSocketFd(-1);
 		delete	newClient;

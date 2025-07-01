@@ -239,6 +239,9 @@ void	printLog(std::string action, ServerBlock *serverBlock, Client *client, Resp
 			std::cout<<RED<<"Payload Too Large "<<response->getStatusCode()<<" "<<response->getPath()<<RESET<<std::endl;
 			break;
 		case 503:
+			std::cout<<"["<<getTimeStamp()<<"]"<<RED<<" ["<<action<<"] "<<RESET;
+			std::cout<<RED<<client->getClientIp() + ":" + transformToString(client->getClientPort());
+			std::cout<<" - 503 Webserver Busy"<<RESET<<std::endl;
 			break;
 		default:
 			break;
@@ -274,11 +277,11 @@ void	error_connection_handler(std::vector<int> &errorFds, Server &server)
 	for (int i = 0; i < server.getEpollCount(); i++)
 	{
 		it = errorFds.begin();
-		while (it != end)
+		epoll_event event = server.getEpollIndex(i);
+		while (it != errorFds.end())
 		{
-			if (*it != 0 && *it == server.getEpollIndex(i).data.fd)
+			if (*it == event.data.fd && ((event.events & EPOLLIN) || (event.events & EPOLLOUT)))
 			{
-				std::cout<<RED "HANDLING ERROR CONNECTION" RESET<<std::endl;
 				loadError503((*it));
 				server.removeFromEpoll((*it));
 				errorFds.erase(it);

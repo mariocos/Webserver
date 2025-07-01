@@ -249,7 +249,7 @@ void	Server::handle_connections(std::vector<Client*> &clientList, std::vector<in
 	}
 }
 
-void	Server::manageConnection(std::vector<Client*> &clientList, epoll_event	&event)
+void	Server::manageConnection(std::vector<Client*> &clientList, epoll_event &event)
 {
 	std::vector<Client*>::iterator	it;
 
