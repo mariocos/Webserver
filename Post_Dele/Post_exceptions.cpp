@@ -131,9 +131,9 @@ void Post_master::post(Client* client) // add socket
 	}
 	result += targetPath;//change name for readability
 
-
     // // TODO: when should this be done?
-	createDirectoryIfNeeded("POSTED/");
+	std::string	directories = result.substr(2);
+	createDirectoryIfNeeded(directories);
 
 	if (!access(result.c_str(), F_OK))
 		throw Error409Exception(client->getSocketFd(), client->getClientResponse(), client);

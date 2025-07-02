@@ -74,7 +74,7 @@ Server::Server(std::vector<int> ports, std::vector<std::string> names, int backl
 				newRoute = new Routes(backlog, -1, false, "website/cgi-bin", "/find-this");
 			else if (n == 2)
 			{
-				newRoute = new Routes(backlog, -1, false, "/home/pbjr/Desktop", "/projects/");
+				newRoute = new Routes(backlog, -1, false, "/home/pauberna/Desktop/projetos_42", "/projects/");
 				newRoute->setAsListing();
 			}
 			else if (n == 3)

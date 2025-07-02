@@ -179,10 +179,13 @@ std::string	generateListingHTML(std::string &dirPath, Client *client)
 {
 	std::stringstream	html;
 
-	html<<"<!DOCTYPE html>\n<html>\n<head>\n";
+	html<<"<!DOCTYPE html>\n";
+	html<<"<html>\n";
+	html<<"<head>\n";
     html<<"<meta charset=\"UTF-8\">\n";
     html<<"<title>Index of " + dirPath + "</title>\n";
-    html<<"</head>\n<body>\n";
+    html<<"</head>\n";
+	html<<"<body>\n";
 	html<<"<h1>Index of " + dirPath + "</h1>\n";
 
 	if (dirPath != "/" && dirPath != "." && \
@@ -226,7 +229,9 @@ std::string	generateListingHTML(std::string &dirPath, Client *client)
 		}
 		closedir(dir);
 	}
-	html<<"</ul>\n</body>\n</html>\n";
+	html<<"</ul>\n";
+	html<<"</body>\n";
+	html<<"</html>\n";
 	return (html.str());
 }
 
@@ -265,7 +270,10 @@ runtime_error("Loading Listing")
 	}
 	printLog("ACCESS", NULL, client, client->getClientResponse(), 13);
 	response->clearResponse();
-	response->addToResponse("HTTP/1.1 " + transformToString(response->getStatusCode()) + " OK\r\n");
+	if (response->getStatusCode() == 200)
+		response->addToResponse("HTTP/1.1 " + transformToString(response->getStatusCode()) + " OK\r\n");
+	else
+		response->addToResponse("HTTP/1.1 " + transformToString(response->getStatusCode()) + " Not Found\r\n");
 	if (client->getClientRequest()->get_connection() == "keep-alive")
 		response->addToResponse("Connection: keep-alive\r\n");
 	else

@@ -22,6 +22,7 @@ void	findType(RequestParse *request, Response *response, Client *client)
 	fileTypes[".mp3"] = "audio/mpeg";
 	fileTypes[".mp4"] = "video/mp4";
 	fileTypes[".txt"] = "text/plain";
+	fileTypes[".pdf"] = "application/pdf";
 
 	std::string	extension = findFileExtension(request->get_path());
 	//for some reason with this type when requesting a directory in the browser
@@ -76,6 +77,7 @@ void	loadPage(int client_socket, Response *response, Client *client)
 	if (response->getBytesSent() < response->getBytesToSend())
 	{
 		printLog("DEBUG", NULL, client, response, 11);
+		response->clearResponse();
 		client->getClientFile()->setReading(true);
 		client->getClientFile()->setWriting(false);
 		client->setClientWritingFlag(false);
