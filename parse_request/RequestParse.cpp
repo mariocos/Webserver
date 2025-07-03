@@ -78,6 +78,7 @@ void	RequestParse::buildRequest(const char *request)
 	Accepts = get_keyword(req, "Accept: ");
 	connection = get_keyword(req, "Connection: ");
 	Host = get_keyword(req, "Host: ");
+	expect_something = get_keyword(req, "Expect: ");
 	if (Host.find(":") != std::string::npos)
 		Host.erase(Host.find(":"), 5);
 	if (req.find("\r\n\r\n"))
@@ -243,4 +244,14 @@ std::string RequestParse::get_content()
 std::string RequestParse::get_connection()
 {
 	return (connection);
+}
+
+std::string	RequestParse::get_expect()
+{
+	return (expect_something);
+}
+
+void	RequestParse::setFullContent(char *req)
+{
+	full_content = req;
 }

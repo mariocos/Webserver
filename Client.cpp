@@ -249,6 +249,24 @@ void	Client::readRequest(int client_socket)
 {
 	this->getClientRequest()->readBinary(client_socket, this);
 	this->getClientRequest()->buildRequest(reinterpret_cast<char*>(this->getClientRequest()->getBufferInfo().data()));
+	/* if (reinterpret_cast<char*>(this->getClientRequest()->getBufferInfo().empty()))
+	{
+		this->getClientRequest()->readBinary(client_socket, this);
+		this->getClientRequest()->buildRequest(reinterpret_cast<char*>(this->getClientRequest()->getBufferInfo().data()));
+		if (this->getClientRequest()->get_expect() == "100-continue")
+			this->_finishedReading = false;
+	}
+	else if (this->getClientRequest()->get_expect() == "100-continue" && this->getClientRequest()->get_content().empty())
+	{
+		send(this->_socket, "HTTP/1.1 100 Continue\r\n\r\n", 25, MSG_NOSIGNAL);
+		this->_finishedReading = false;
+	}
+	else
+	{
+		this->getClientRequest()->readBinary(client_socket, this);
+		this->getClientRequest()->setFullContent(reinterpret_cast<char*>(this->getClientRequest()->getBufferInfo().data()));
+		this->_finishedReading = true;
+	} */
 }
 
 void	Client::resetClient(Server &server)

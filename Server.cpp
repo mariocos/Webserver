@@ -287,10 +287,10 @@ void	Server::manageConnection(std::vector<Client*> &clientList, epoll_event &eve
 	it = getRightHole(clientList, event.data.fd);
 	if (it == clientList.end())
 		return;
-	else if ((event.events & EPOLLRDHUP) && \
+	else if ((event.events == EPOLLRDHUP) && \
 		(*it)->getClientReadingFlag() && (*it)->getClientWritingFlag() && (*it)->getClientOpenFd() == -1)
 		clearClient(it, clientList);
-	else if (!(*it)->getClientReadingFlag() && (event.events & EPOLLIN))
+	else if (!(*it)->getClientReadingFlag() && (event.events == EPOLLIN))
 	{
 		try
 		{
@@ -345,7 +345,7 @@ void	Server::manageClient(std::vector<Client*> &clientList, std::vector<Client*>
 	{
 		try
 		{
-			if (event.events & EPOLLOUT)
+			if (event.events == EPOLLOUT)
 				(*it)->getClientRequest()->execute_response((*it)->getSocketFd(), (*it));
 			else
 				return ;

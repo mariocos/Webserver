@@ -19,6 +19,7 @@ private:
 	std::string	content_length;
 	std::string	connection;
 	std::string	queryString;
+	std::string	expect_something;
 	std::string	*_buffer;
 	int			error_code;
 	std::string	content;
@@ -41,12 +42,14 @@ public:
 	std::string	get_query_str();
 	std::string get_content();
 	std::string	get_connection();
+	std::string	get_expect();
 	char* get_full_content();
 	void		buildRequest(const char *req);
 	/*  setters  */
 	void	set_path(std::string path);
 	void	setBuffer(std::string *buffer);
 	void	setNewHost(std::string str);
+	void	setFullContent(char *req);
 	void	readBinary(int client_socket, Client *client);
 	void	clearBuffer();
 	std::vector<uint8_t>	&getBufferInfo();
