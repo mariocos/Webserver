@@ -69,10 +69,4 @@ class	Error503Exception : public std::runtime_error
 		Error503Exception(Client *errorClient, Server &server);
 };
 
-class	Error505Exception : public std::runtime_error
-{
-	public:
-		Error505Exception();
-};
-
 #endif

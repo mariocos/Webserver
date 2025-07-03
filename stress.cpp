@@ -33,16 +33,16 @@ void	*stress(void *p)
 
 int	main(void)
 {
-	pthread_t	id[700];
+	pthread_t	id[1000];
 	pthread_mutex_t	lock;
 
 	pthread_mutex_lock(&lock);
-	for (int i = 0; i < 700; i++)
+	for (int i = 0; i < 1000; i++)
 	{
 		pthread_create(&id[i], NULL, stress, &lock);
 	}
 	pthread_mutex_unlock(&lock);
-	for (int i = 0; i < 700; i++)
+	for (int i = 0; i < 1000; i++)
 	{
 		pthread_join(id[i], NULL);
 	}

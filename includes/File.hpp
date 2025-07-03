@@ -30,8 +30,6 @@ public:
 	void			setReading(bool flag);
 	void			setWriting(bool flag);
 	void			clearBuffer();
-	void			writeToBuffer(uint8_t *info, size_t len);
-	void			adjustBuffer();
 	void			readFromFd(unsigned int buffer_size);
 	void			openFile(const char *path, int client_socket);
 	void			closeFile();

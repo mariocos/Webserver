@@ -273,22 +273,24 @@ void	new_connection(std::vector<Client*> &clientList, std::vector<int> &errorFds
 		throw NewConnectionCreationException(server, clientList);
 	newClient->setClientIp(convertIpToString(clientaddr.sin_addr));
 	newClient->setClientPort(ntohs(clientaddr.sin_port));
-	//still kinda hardcoded to store the information about the server block triggered
 	std::vector<ServerBlock*>::iterator	it = server.getServerBlockTriggered(serverFd);
 	newClient->setPortTriggered((*it)->getBlockPort());
 	newClient->setDomainTriggered((*it)->getBlockName());
 	newClient->setServerBlockTriggered((*it));
 	newClient->setSocketTriggered(serverFd);
 	newClient->addSocketToEpoll(server.getEpollFd());
-	if (clientList.size() < 3000)
-		clientList.push_back(newClient);
-	else
+	if ((*it)->getBlockMaxConnections() != -1 && (*it)->getBlockActualConnections() == (*it)->getBlockMaxConnections())
 	{
 		printLog("ERROR", NULL, newClient, NULL, 503);
 		errorFds.push_back(newClient->getSocketFd());
 		newClient->setSocketFd(-1);
 		delete	newClient;
 		return ;
+	}
+	else
+	{
+		(*it)->increaseConnections();
+		clientList.push_back(newClient);
 	}
 	printLog("INFO", NULL, newClient, NULL, 3);
 }
@@ -299,6 +301,7 @@ void	clearClient(std::vector<Client*>::iterator	it, std::vector<Client*> &client
 	(*it)->setClientOpenFd(-1);
 	(*it)->removeSocketFromEpoll((*it)->getSocketFd());
 	close((*it)->getSocketFd());
+	(*it)->getServerBlockTriggered()->decreaseConnections();
 	delete (*it);
 	clientList.erase(it);
 }

@@ -1,13 +1,13 @@
 #include "includes/Routes.hpp"
 
-Routes::Routes() : _maxConnections(-1), _maxBodySize(-1), _defaultRoute(false), _isCgi(false), _directoryListing(false), _isPermanentRedirect(false), _isTemporaryRedirect(false)
+Routes::Routes() : _maxBodySize(-1), _defaultRoute(false), _isCgi(false), _directoryListing(false), _isPermanentRedirect(false), _isTemporaryRedirect(false)
 {
 	for (int i = 0; i < 3; i++)
 		this->_methods[i] = false;
 	this->_savedPath = "";
 }
 
-Routes::Routes(int maxConnections, int maxBodySize, bool flag, std::string root, std::string uri) : _root(root), _uri(uri), _maxConnections(maxConnections), _maxBodySize(maxBodySize), _defaultRoute(flag), _isCgi(false), _directoryListing(false), _isPermanentRedirect(false), _isTemporaryRedirect(false)
+Routes::Routes(int maxBodySize, bool flag, std::string root, std::string uri) : _root(root), _uri(uri), _maxBodySize(maxBodySize), _defaultRoute(flag), _isCgi(false), _directoryListing(false), _isPermanentRedirect(false), _isTemporaryRedirect(false)
 {
 	for (int i = 0; i < 3; i++)
 		this->_methods[i] = false;
@@ -25,7 +25,6 @@ Routes	&Routes::operator=(const Routes &copy)
 	{
 		this->_root = copy._root;
 		this->_uri = copy._uri;
-		this->_maxConnections = copy._maxConnections;
 		this->_maxBodySize = copy._maxBodySize;
 		for (size_t i = 0; i < 3; i++)
 			this->_methods[i] = copy._methods[i];
@@ -55,11 +54,6 @@ std::string	&Routes::getRedirectPath()
 std::string	&Routes::getSavedPath()
 {
 	return (this->_savedPath);
-}
-
-int	Routes::getMaxConnections()
-{
-	return (this->_maxConnections);
 }
 
 int	Routes::getMaxBodySize()
@@ -125,11 +119,6 @@ void	Routes::setRedirectPath(std::string &path)
 void	Routes::setSavedPath(std::string &path)
 {
 	this->_savedPath = path;
-}
-
-void	Routes::setMaxConnections(int value)
-{
-	this->_maxConnections = value;
 }
 
 void	Routes::setMaxBodySize(int value)

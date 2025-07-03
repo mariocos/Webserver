@@ -69,21 +69,6 @@ void	File::clearBuffer()
 	this->_buffer.clear();
 }
 
-void	File::writeToBuffer(uint8_t* info, size_t len)
-{
-    adjustBuffer();
-    this->_buffer.insert(this->_buffer.end(), info, info + len);
-}
-
-void	File::adjustBuffer()
-{
-    if (!this->_buffer.empty())
-	{
-		std::vector<uint8_t> copy = this->_buffer;
-		this->_buffer.insert(this->_buffer.begin(), copy.begin(), copy.end());
-    }
-}
-
 void	File::readFromFd(unsigned int buffer_size)
 {
 	if (this->_buffer.empty())

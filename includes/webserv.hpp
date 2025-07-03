@@ -97,15 +97,16 @@ I	transformStringToSomething(std::string &value)
 std::string	getTimeStamp();
 std::string	convertIpToString(struct in_addr s_addr);
 bool	checkInt(const std::string &str, size_t len);
-void	printLog(std::string action, ServerBlock *serverBlock, Client *client, Response *response, int mode);
 void	stopRunning(int signal);
 void	ft_bzero(void *s, size_t n);
 void	error_connection_handler(std::vector<int> &errorFds, Server &server);
 bool	isConnectionGood(Server &server, std::vector<Client*>::iterator it);
 bool	doesPortsMatch(Server &server, std::vector<Client*>::iterator it);
 void	handlePortOrDomainMismatch(Server &server, std::vector<Client*> &clientList, std::vector<Client*>::iterator it);
-void	handlePendingConnections(std::vector<Client*> &clientList, Server &server);
 void	searchForTimeOut(std::vector<Client*> &clientList);
+
+//printLog.cpp
+void	printLog(std::string action, ServerBlock *serverBlock, Client *client, Response *response, int mode);
 
 //signal.cpp
 void	cleaner(Server &server, std::vector<Client*> &clientList, bool print);

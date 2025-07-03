@@ -170,7 +170,14 @@ void	loadError408(int client_socket, Response *response, Client *client)
 	response->addToResponse("HTTP/1.1 408 Request Timeout\r\n");
 	response->addToResponse("Connection: close\r\n");
 	response->addToResponse("Content-Length: X\r\n\r\n");
-	sendMsgToSocket(client_socket, response->getResponse().size(), client, response);
+	std::vector<uint8_t> data = response->getResponse();
+	ssize_t	bytesSent = send(client_socket, reinterpret_cast<const char*>(data.data()), data.size(), MSG_NOSIGNAL);
+	if (bytesSent == -1)
+	{
+		printLog("ERROR", NULL, client, NULL, 15);
+		return ;
+	}
+	response->addToBytesSent(bytesSent);
 	response->clearResponse();
 	client->setClientWritingFlag(true);
 	client->setClientPending(false);
@@ -243,8 +250,4 @@ void	loadError503(int error_socket)
 		bytesSent += bytes;
 	}
 	close(error_socket);
-}
-
-void	loadError505()
-{
 }

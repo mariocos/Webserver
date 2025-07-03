@@ -42,7 +42,7 @@ void	RequestParse::buildRequest(const char *request)
 		std::cout << "\nfuck me in the but\n\n";//change to exceptions
 	}
 	error_code = 0;
-	std::cout << "calling request parse cstring constructor\n";
+	//std::cout << "calling request parse cstring constructor\n";
 	if (!request)
 	{
 		std::cout << "im getting a null cstring\n";
@@ -61,7 +61,7 @@ void	RequestParse::buildRequest(const char *request)
 		queryString = get_keyword(path_to_request, "?");
 		path_to_request = path_to_request.substr(0, path_to_request.find("?"));
 	}
-	std::cout << "path to request is: [" << path_to_request << "]\n";
+	//std::cout << "path to request is: [" << path_to_request << "]\n";
 	if (ft_strstr(path_to_request.c_str(), ".."))
 	{
 		std::cout<< "what is naughty about this [" << path_to_request.find("..") << "]\n";
@@ -130,38 +130,6 @@ void	RequestParse::setNewHost(std::string str)
 	this->Host = str;
 }
 
-void	RequestParse::writeToBuffer(char *info)
-{
-	adjustBuffer();
-	_buffer->append(info);
-}
-
-void	RequestParse::adjustBuffer()
-{
-	if (_buffer)
-		_buffer->insert(0, *_buffer);
-}
-
-void	RequestParse::readToBuffer(int client_socket, Client *client)
-{
-	ssize_t	bytes_read;
-	char	buffer[1048576];
-
-	ft_bzero(buffer, 1048576);
-	bytes_read = read(client_socket, buffer, sizeof(buffer));
-	if (bytes_read == -1)
-	{
-		perror("read: ");
-		close(client_socket);
-	}
-	//std::cout<<"Buffer:\n"<<buffer<<std::endl;
-	writeToBuffer(buffer);
-	if (bytes_read >= 1048574)
-		client->setClientReadingFlag(false);
-	else
-		client->setClientReadingFlag(true);
-}
-
 void	RequestParse::readBinary(int client_socket, Client *client)
 {
 	ssize_t	bytes_read = 1;
@@ -200,18 +168,30 @@ std::vector<uint8_t>	&RequestParse::getBufferInfo()
 
 void	RequestParse::execute_response(int client_socket, Client *client)
 {
-	if (client->getRouteTriggered()->isPermanentRedirect())
+	int	methodAsInt;
+	if (this->method == "GET")
+		methodAsInt = GET;
+	else if (this->method == "POST")
+		methodAsInt = POST;
+	else if (this->method == "DELETE")
+		methodAsInt = DELETE;
+	else
+		methodAsInt = -1;
+	if (client->getRouteTriggered()->isPermanentRedirect() && client->getRouteTriggered()->canDoMethod(methodAsInt))
 		throw Load301Exception(client_socket, client->getClientResponse(), client);
-	else if (client->getRouteTriggered()->isTemporaryRedirect())
+	else if (client->getRouteTriggered()->isTemporaryRedirect() && client->getRouteTriggered()->canDoMethod(methodAsInt))
 		throw Load307Exception(client_socket, client->getClientResponse(), client);
-	else if (client->getRouteTriggered()->isListing() && !client->getClientFile()->getFile()->is_open())
+	else if (client->getRouteTriggered()->isListing() && !client->getClientFile()->getFile()->is_open() && client->getRouteTriggered()->canDoMethod(methodAsInt))
 		throw LoadListingException(client_socket, client->getClientResponse(), client);
-	if (method.compare("GET") == 0)
+	if (method.compare("GET") == 0 && client->getRouteTriggered()->canDoMethod(GET))
 		GET_response(client_socket, client);
-	else if (method.compare("POST") == 0)
+	else if (method.compare("POST") == 0 && client->getRouteTriggered()->canDoMethod(POST))
 	{
 		if (client->getClientResponse()->getBytesSent() > 0)
 			return;
+		if (client->getRouteTriggered()->getMaxBodySize() != -1 && \
+			atoi(client->getClientRequest()->get_content_length().c_str()) > client->getRouteTriggered()->getMaxBodySize())
+			throw Error413Exception(client_socket, client->getClientResponse(), client);
 		if (client->getClientOpenFd() != -1)
 		{
 			write(client->getClientOpenFd(), client->getClientRequest()->get_full_content(), atoi(client->getClientRequest()->get_content_length().c_str()));
@@ -222,7 +202,7 @@ void	RequestParse::execute_response(int client_socket, Client *client)
 		}
 		Post_master::post(client);
 	}
-	else if (method.compare("DELETE") == 0)
+	else if (method.compare("DELETE") == 0 && client->getRouteTriggered()->canDoMethod(DELETE))
 	{
 		if (client->getClientResponse()->getBytesSent() > 0)
 			return;

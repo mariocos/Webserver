@@ -1,12 +1,12 @@
 #include "includes/ServerBlock.hpp"
 
-ServerBlock::ServerBlock() : WebSocket(), _maxConnections(-1), _port(-1), _default(false)
+ServerBlock::ServerBlock() : WebSocket(), _maxConnections(-1), _connections(0), _port(-1), _default(false)
 {
 	for (int i = 0; i < 3; i++)
 		_methods[i] = false;
 }
 
-ServerBlock::ServerBlock(int socket, int port, int backlog, std::string domainName, bool flag) : WebSocket(socket), _name(domainName), _maxConnections(backlog), _port(port), _default(flag), _isCgi(false)
+ServerBlock::ServerBlock(int socket, int port, int backlog, std::string domainName, bool flag) : WebSocket(socket), _name(domainName), _maxConnections(backlog), _connections(0), _port(port), _default(flag), _isCgi(false)
 {
 	if (setNonBlocking(this->getSocketFd()) == -1)
 		throw NonBlockingException(this->getSocketFd());
@@ -45,6 +45,11 @@ std::string	ServerBlock::getBlockName()
 int	ServerBlock::getBlockMaxConnections()
 {
 	return (this->_maxConnections);
+}
+
+int	ServerBlock::getBlockActualConnections()
+{
+	return (this->_connections);
 }
 
 int	ServerBlock::getBlockPort()
@@ -107,6 +112,17 @@ void	ServerBlock::setBlockName(std::string name)
 void	ServerBlock::setBlockMaxConnections(int value)
 {
 	this->_maxConnections = value;
+}
+
+void	ServerBlock::increaseConnections()
+{
+	this->_connections += 1;
+}
+
+void	ServerBlock::decreaseConnections()
+{
+	if (this->_connections > 0)
+		this->_connections -= 1;
 }
 
 void	ServerBlock::setBlockPort(int port)

@@ -47,9 +47,6 @@ public:
 	void	set_path(std::string path);
 	void	setBuffer(std::string *buffer);
 	void	setNewHost(std::string str);
-	void	writeToBuffer(char *info);
-	void	adjustBuffer();
-	void	readToBuffer(int client_socket, Client *client);
 	void	readBinary(int client_socket, Client *client);
 	void	clearBuffer();
 	std::vector<uint8_t>	&getBufferInfo();

@@ -9,6 +9,8 @@ void	cleaner(Server &server, std::vector<Client*> &clientList, bool print)
 			close((*clientIt)->getSocketFd());
 		if ((*clientIt)->getClientOpenFd() != -1)
 			close((*clientIt)->getClientOpenFd());
+		if (print)
+			printLog("INFO", NULL, *clientIt, NULL, 4);
 		delete (*clientIt);
 		clientIt++;
 	}

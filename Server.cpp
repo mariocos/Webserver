@@ -31,9 +31,9 @@ Server::Server(std::vector<int> ports, std::vector<std::string> names, int backl
 	{
 		std::vector<Routes*>	tmp;
 		if (names[i] == "localhost")
-			newServerBlock = new ServerBlock(socket(AF_INET, SOCK_STREAM, 0), ports[i], backlog, names[i], true);
+			newServerBlock = new ServerBlock(socket(AF_INET, SOCK_STREAM, 0), ports[i], -1, names[i], true);
 		else
-			newServerBlock = new ServerBlock(socket(AF_INET, SOCK_STREAM, 0), ports[i], backlog, names[i], false);
+			newServerBlock = new ServerBlock(socket(AF_INET, SOCK_STREAM, 0), ports[i], -1, names[i], false);
 		if (newServerBlock->getSocketFd() == -1)
 		{
 			delete newServerBlock;
@@ -59,7 +59,7 @@ Server::Server(std::vector<int> ports, std::vector<std::string> names, int backl
 		// TODO implement this as long as the routes list size
 		// for (size_t n = 0; i < list.size(); n++)
 		// {
-		// 		newRoute = new Routes(backlog, -1, false, "/", "/");
+		// 		newRoute = new Routes(-1, false, "/", "/");
 		// 		tmp.push_back(newRoute);
 		// }
 		// newServerBlock->setBlockRoutes(tmp);
@@ -69,27 +69,40 @@ Server::Server(std::vector<int> ports, std::vector<std::string> names, int backl
 		for (size_t n = 0; n < 5; n++)
 		{
 			if (n == 0)
-				newRoute = new Routes(backlog, -1, true, "website", "/");
+			{
+				newRoute = new Routes(-1, true, "website", "/");
+				newRoute->setMethod(GET, true);
+				newRoute->setMethod(POST, true);
+				newRoute->setMethod(DELETE, true);
+			}
 			else if (n == 1)
-				newRoute = new Routes(backlog, -1, false, "website/cgi-bin", "/find-this");
+			{
+				newRoute = new Routes(-1, false, "website/cgi-bin", "/find-this");
+				newRoute->setMethod(GET, true);
+				newRoute->setMethod(POST, true);
+				newRoute->setMethod(DELETE, true);
+			}
 			else if (n == 2)
 			{
-				newRoute = new Routes(backlog, -1, false, "/home/pauberna/Desktop/projetos_42", "/projects/");
+				newRoute = new Routes(-1, false, "/home/pauberna/Desktop/projetos_42", "/projects/");
 				newRoute->setAsListing();
+				newRoute->setMethod(GET, true);
 			}
 			else if (n == 3)
 			{
-				newRoute = new Routes(backlog, -1, false, "website", "/google");
+				newRoute = new Routes(-1, false, "website", "/google");
 				newRoute->setAsPermanentRedirect();
 				std::string path = "https://google.com";
 				newRoute->setRedirectPath(path);
+				newRoute->setMethod(GET, true);
 			}
 			else
 			{
-				newRoute = new Routes(backlog, -1, false, "website", "/redirect");
+				newRoute = new Routes(-1, false, "website", "/redirect");
 				newRoute->setAsTemporaryRedirect();
 				std::string path = "https://youtube.com";
 				newRoute->setRedirectPath(path);
+				newRoute->setMethod(GET, true);
 			}
 			if (ports[i] == 2424 && n != 0)
 				newRoute->setAsCgi();
@@ -253,7 +266,6 @@ void	Server::manageConnection(std::vector<Client*> &clientList, epoll_event &eve
 {
 	std::vector<Client*>::iterator	it;
 
-	//checking if the fd triggered was a fd from a pipe of a cgi
 	it = isThisPipe(event.data.fd, clientList);
 	if (it != clientList.end())
 	{
@@ -342,7 +354,14 @@ void	Server::manageClient(std::vector<Client*> &clientList, std::vector<Client*>
 		}
 		catch(const std::exception& e)
 		{
-			if (std::string(e.what()) != "Loading Listing")
+			if (std::string(e.what()) == "Redirect")
+			{
+				if ((*it)->getClientRequest()->get_connection() == "keep-alive")
+					(*it)->resetClient(*this);
+				else
+					clearClient(it, clientList);
+			}
+			else if (std::string(e.what()) != "Loading Listing")
 			{
 				std::cerr << e.what() << '\n';
 				clearClient(it, clientList);

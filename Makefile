@@ -6,7 +6,7 @@ SOURCES =	main.cpp \
 			parse_request/RequestParse.cpp \
 			parse_request/request_gets.cpp \
 			signal.cpp Client.cpp Response.cpp create_response.cpp \
-			HoleExplorer.cpp Server.cpp loadErrorPages.cpp Routes.cpp\
+			HoleExplorer.cpp Server.cpp loadErrorPages.cpp Routes.cpp printLog.cpp \
 			Errors.cpp File.cpp WebSocket.cpp ServerBlock.cpp CgiHandler.cpp \
 			Cgi.cpp Post_Dele/Post_exceptions.cpp Post_Dele/post.cpp Post_Dele/del.cpp
 OBJS_DIR = obj

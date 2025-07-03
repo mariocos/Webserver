@@ -25,8 +25,6 @@ void	findType(RequestParse *request, Response *response, Client *client)
 	fileTypes[".pdf"] = "application/pdf";
 
 	std::string	extension = findFileExtension(request->get_path());
-	//for some reason with this type when requesting a directory in the browser
-	//it presents a menu like for downloading a file when requesting for a unknown type of file
 	std::string	type = "application/octet-stream";
 
 	if (fileTypes.count(extension))
@@ -42,11 +40,6 @@ void	createHeader(RequestParse *request, Response *response, Client *client)
 	response->setStatusCode(200);
 	response->addToResponse(request->get_httpversion() + " 200 OK\r\n");
 	response->addToResponse("Content-Type: " + response->getType() + "\r\n");
-
-	if (client->getRouteTriggered()->getMaxBodySize() != -1 && \
-		client->getClientFile()->getFileStats()->st_size > client->getRouteTriggered()->getMaxBodySize())
-		throw Error413Exception(client->getSocketFd(), response, client);
-
 	response->addToResponseLenght(client->getClientFile()->getFileStats()->st_size);
 	if (request->get_connection() == "keep-alive")
 		response->addToResponse("Connection: keep-alive\r\n");

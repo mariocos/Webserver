@@ -14,7 +14,7 @@ runtime_error(RED "Error adding a new client" RESET)
 }
 
 SendException::SendException(Client *client, Response *response) :
-runtime_error(RED "Error while sending" RESET)
+runtime_error("[" + getTimeStamp() + "]" + RED + " [ERROR] Error while sending to " + client->getClientIp() + ":" + transformToString(client->getClientPort()) + RESET)
 {
 	response->clearResponse();
 	client->setClientWritingFlag(true);
@@ -23,7 +23,7 @@ runtime_error(RED "Error while sending" RESET)
 }
 
 ReadException::ReadException(Client *client, Response *response) :
-runtime_error(RED "Error while reading" RESET)
+runtime_error("[" + getTimeStamp() + "]" + RED + " [ERROR] Error while reading from " + client->getClientIp() + ":" + transformToString(client->getClientPort()) + RESET)
 {
 	response->clearResponse();
 	client->setClientReadingFlag(true);
@@ -32,7 +32,7 @@ runtime_error(RED "Error while reading" RESET)
 }
 
 RedirectException::RedirectException(Server &server, std::vector<Client*>::iterator it) :
-runtime_error(YELLOW "Redirecting Request To Default Server Block" RESET)
+runtime_error("[" + getTimeStamp() + "]" + YELLOW + " [INFO] Redirecting Request from " + (*it)->getClientIp() + ":" + transformToString((*it)->getClientPort()) + " to Default Server Block" + RESET)
 {
 	std::vector<ServerBlock*>	serverBlocks = server.getServerBlocks();
 	std::vector<ServerBlock*>::iterator	serverIt = serverBlocks.begin();
@@ -135,119 +135,6 @@ int		returnVariableType(std::string &value)
 		return (3);
 }
 
-void	printLog(std::string action, ServerBlock *serverBlock, Client *client, Response *response, int mode)
-{
-	switch (mode)
-	{
-		case 0:
-			std::cout<<"["<<getTimeStamp()<<"]"<<GREEN<<" ["<<action<<"] "<<RESET;
-			std::cout<<GREEN<<serverBlock->getBlockName()<<" started on port "<<serverBlock->getBlockPort()<<RESET<<std::endl;
-			break;
-		case 1:
-			std::cout<<"["<<getTimeStamp()<<"]"<<GREEN<<" ["<<action<<"] "<<RESET;
-			//set which file was used to load the ServerBlock
-			std::cout<<GREEN<<"Loaded configuration from default.config"<<RESET<<std::endl;
-			break;
-		case 2:
-			std::cout<<"["<<getTimeStamp()<<"]"<<RED<<" ["<<action<<"] "<<RESET;
-			std::cout<<RED<<serverBlock->getBlockName()<<" shutting down."<<RESET<<std::endl;
-			break;
-		case 3:
-			std::cout<<"["<<getTimeStamp()<<"]"<<GREEN<<" ["<<action<<"] "<<RESET;
-			std::cout<<GREEN<<"New connection from " + client->getClientIp() + ":" + transformToString(client->getClientPort())<<RESET<<std::endl;
-			break;
-		case 4:
-			std::cout<<"["<<getTimeStamp()<<"]"<<RED<<" ["<<action<<"] "<<RESET;
-			std::cout<<RED<<"Disconnected "<<client->getClientIp() + ":" + transformToString(client->getClientPort())<<RESET<<std::endl;
-			break;
-		case 5:
-			std::cout<<"["<<getTimeStamp()<<"]"<<YELLOW<<" ["<<action<<"] "<<RESET;
-			std::cout<<YELLOW<<client->getClientIp() + ":" + transformToString(client->getClientPort()) + " - " + client->getClientRequest()->get_method();
-			std::cout<<" "<<response->getPath()<<" "<<response->getStatusCode()<<RESET<<std::endl;
-			break;
-		case 6:
-			std::cout<<"["<<getTimeStamp()<<"]"<<YELLOW<<" ["<<action<<"] "<<RESET;
-			std::cout<<YELLOW<<"Served static file: "<<response->getPath()<<" (size: "<<client->getClientFile()->getFileStats()->st_size<<"KB)"<<RESET<<std::endl;
-			break;
-		case 7:
-			std::cout<<"["<<getTimeStamp()<<"]"<<YELLOW<<" ["<<action<<"] "<<RESET;
-			std::cout<<YELLOW<<"Executing script: "<<client->getClientRequest()->get_path()<<RESET<<std::endl;
-			break;
-		case 8:
-			std::cout<<"["<<getTimeStamp()<<"]"<<YELLOW<<" ["<<action<<"] "<<RESET;
-			std::cout<<YELLOW<<"Completed "<<client->getClientRequest()->get_path()<<" with status "<<response->getStatusCode()<<RESET<<std::endl;
-			break;
-		case 9:
-			std::cout<<"["<<getTimeStamp()<<"]"<<YELLOW<<" ["<<action<<"] "<<RESET;
-			std::cout<<YELLOW<<client->getClientRequest()->get_method() + " " + client->getClientRequest()->get_path() + " "<<response->getStatusCode();
-			std::cout<<" from "<<client->getClientIp() + ":" + transformToString(client->getClientPort()) + " - " + client->getClientRequest()->get_content_length() + " bytes received"<<RESET<<std::endl;
-			break;
-		case 10:
-			std::cout<<"["<<getTimeStamp()<<"]"<<YELLOW<<" ["<<action<<"] "<<RESET;
-			std::cout<<YELLOW<<client->getClientRequest()->get_method() + " " + client->getClientRequest()->get_path() + " "<<response->getStatusCode();
-			std::cout<<" from "<<client->getClientIp() + ":" + transformToString(client->getClientPort())<<RESET<<std::endl;
-			break;
-		case 11:
-			std::cout<<"["<<getTimeStamp()<<"]"<<YELLOW<<" ["<<action<<"] "<<RESET;
-			std::cout<<YELLOW<<"Sent "<<response->getBytesSent()<<"KB of "<<client->getClientFile()->getFileStats()->st_size<<"KB"<<RESET<<std::endl;
-			break;
-		case 12:
-			std::cout<<"["<<getTimeStamp()<<"]"<<RED<<" ["<<action<<"] "<<RESET;
-			std::cout<<RED<<"TimedOut "<<client->getClientIp() + ":" + transformToString(client->getClientPort())<<RESET<<std::endl;
-			break;
-		case 13:
-			std::cout<<"["<<getTimeStamp()<<"]"<<YELLOW<<" ["<<action<<"] "<<RESET;
-			std::cout<<YELLOW<<client->getClientIp() + ":" + transformToString(client->getClientPort()) + " - " + client->getClientRequest()->get_method();
-			std::cout<<" " + client->getClientRequest()->get_path() + " " + transformToString(response->getStatusCode())<<RESET<<std::endl;
-			break;
-		case 14:
-			std::cout<<"["<<getTimeStamp()<<"]"<<YELLOW<<" ["<<action<<"] "<<RESET;
-			std::cout<<YELLOW<<"Generated directory listing for: "<<client->getRouteTriggered()->getSavedPath()<<RESET<<std::endl;
-			break;
-		case 301:
-			std::cout<<"["<<getTimeStamp()<<"]"<<YELLOW<<" ["<<action<<"] "<<RESET;
-			std::cout<<YELLOW<<"Redirected permanently "<<client->getClientIp() + ":" + transformToString(client->getClientPort());
-			std::cout<<" to: "<<client->getRouteTriggered()->getRedirectPath()<<RESET<<std::endl;
-			break;
-		case 307:
-			std::cout<<"["<<getTimeStamp()<<"]"<<YELLOW<<" ["<<action<<"] "<<RESET;
-			std::cout<<YELLOW<<"Redirected temporarily "<<client->getClientIp() + ":" + transformToString(client->getClientPort());
-			std::cout<<" to: "<<client->getRouteTriggered()->getRedirectPath()<<RESET<<std::endl;
-			break;
-		case 400:
-			std::cout<<"["<<getTimeStamp()<<"]"<<RED<<" ["<<action<<"] "<<RESET;
-			std::cout<<RED<<"Bad Request "<<response->getStatusCode()<<RESET<<std::endl;
-			break;
-		case 403:
-			std::cout<<"["<<getTimeStamp()<<"]"<<RED<<" ["<<action<<"] "<<RESET;
-			std::cout<<RED<<"Forbidden "<<response->getStatusCode()<<RESET<<std::endl;
-			break;
-		case 404:
-			std::cout<<"["<<getTimeStamp()<<"]"<<RED<<" ["<<action<<"] "<<RESET;
-			std::cout<<RED<<"File Not Found "<<response->getStatusCode()<<" "<<response->getPath()<<RESET<<std::endl;
-			break;
-		case 405:
-			std::cout<<"["<<getTimeStamp()<<"]"<<RED<<" ["<<action<<"] "<<RESET;
-			std::cout<<RED<<"Method Not Allowed "<<response->getStatusCode()<<" - "<<client->getClientRequest()->get_method()<<RESET<<std::endl;
-			break;
-		case 409:
-			std::cout<<"["<<getTimeStamp()<<"]"<<RED<<" ["<<action<<"] "<<RESET;
-			std::cout<<RED<<"Conflict "<<response->getStatusCode()<<" - "<<client->getClientRequest()->get_path()<<RESET<<std::endl;
-			break;
-		case 413:
-			std::cout<<"["<<getTimeStamp()<<"]"<<RED<<" ["<<action<<"] "<<RESET;
-			std::cout<<RED<<"Payload Too Large "<<response->getStatusCode()<<" "<<response->getPath()<<RESET<<std::endl;
-			break;
-		case 503:
-			std::cout<<"["<<getTimeStamp()<<"]"<<RED<<" ["<<action<<"] "<<RESET;
-			std::cout<<RED<<client->getClientIp() + ":" + transformToString(client->getClientPort());
-			std::cout<<" - 503 Webserver Busy"<<RESET<<std::endl;
-			break;
-		default:
-			break;
-	}
-}
-
 void	stopRunning(int signal)
 {
 	(void)signal;
@@ -327,42 +214,10 @@ void	handlePortOrDomainMismatch(Server &server, std::vector<Client*> &clientList
 		throw RedirectException(server, it);
 	(*it)->setClientOpenFd(-1);
 	(*it)->removeSocketFromEpoll((*it)->getSocketFd());
+	(*it)->getServerBlockTriggered()->decreaseConnections();
 	delete (*it);
 	clientList.erase(it);
 }
-
-/* void	handlePendingConnections(std::vector<Client*> &clientList, Server &server)
-{
-	std::vector<Client*>::iterator	it;
-	it = getPendingHole(clientList);
-	if (it == clientList.end())
-		throw NoPendingConnectionsException();
-	while (it != clientList.end())
-	{
-		//checking if the Host and Port match with the ones described in the request
-		if (!isConnectionGood(server, it))
-			handlePortOrDomainMismatch(server, clientList, it);
-		//in case the request was too big to be read in one instance
-		else if (!(*it)->getClientReadingFlag() && !(*it)->getServerBlockTriggered()->isCgi())
-			(*it)->readRequest((*it)->getSocketFd());
-		else if ((*it)->getServerBlockTriggered()->isCgi() && (*it)->hasToSendToCgi())
-		{
-			//handling the CGI before and after the child process is created
-			if (((*it)->getClientCgi() && !(*it)->getClientCgi()->isActive()) || !(*it)->getClientCgi())
-				cgiHandler(server, (*it));
-			if ((*it)->getClientWritingFlag() && (*it)->getClientReadingFlag())
-				clearClient(it, clientList);
-		}
-		else
-		{
-			//handling all the other pending connections
-			(*it)->handle_connect((*it)->getSocketFd());
-			if ((*it)->getClientWritingFlag())
-				clearClient(it, clientList);
-		}
-		it = getNextPendingHole(clientList, it);
-	}
-} */
 
 void	searchForTimeOut(std::vector<Client*> &clientList)
 {
@@ -377,6 +232,7 @@ void	searchForTimeOut(std::vector<Client*> &clientList)
 			printLog("INFO", NULL, (*it), (*it)->getClientResponse(), 12);
 			(*it)->removeSocketFromEpoll((*it)->getSocketFd());
 			close((*it)->getSocketFd());
+			(*it)->getServerBlockTriggered()->decreaseConnections();
 			delete (*it);
 			clientList.erase(it);
 			it = clientList.begin();
@@ -426,8 +282,6 @@ int	main(int ac, char **av)
 			{
 				server.handle_connections(clientList, errorFds);
 				searchForTimeOut(clientList);
-				//* For now this function isnt needed but keep it because idk
-				//handlePendingConnections(clientList, server);
 			}
 			catch(const std::exception& e)
 			{

@@ -22,6 +22,7 @@ private:
 	std::vector<Routes*>	_routes;
 	std::string	_name;
 	int			_maxConnections;
+	int			_connections;
 	int			_port;
 	bool		_methods[3];
 	bool		_default;
@@ -34,6 +35,7 @@ public:
 	~ServerBlock();
 	std::string	getBlockName();
 	int			getBlockMaxConnections();
+	int			getBlockActualConnections();
 	int			getBlockPort();
 	bool		canDoMethod(int method);
 	bool		isDefault();
@@ -43,6 +45,8 @@ public:
 	Routes		*getRoute(int index);
 	void		setBlockName(std::string name);
 	void		setBlockMaxConnections(int value);
+	void		increaseConnections();
+	void		decreaseConnections();
 	void		setBlockPort(int port);
 	void		setBlockMethod(int method, bool flag);
 	void		setBlockAsCgi();
