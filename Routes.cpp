@@ -5,6 +5,8 @@ Routes::Routes() : _maxBodySize(-1), _defaultRoute(false), _isCgi(false), _direc
 	for (int i = 0; i < 3; i++)
 		this->_methods[i] = false;
 	this->_savedPath = "";
+	this->_cgiFileExtension = "";
+	this->_defaultFileForDirectory = "";
 }
 
 Routes::Routes(int maxBodySize, bool flag, std::string root, std::string uri) : _root(root), _uri(uri), _maxBodySize(maxBodySize), _defaultRoute(flag), _isCgi(false), _directoryListing(false), _isPermanentRedirect(false), _isTemporaryRedirect(false)
@@ -12,6 +14,8 @@ Routes::Routes(int maxBodySize, bool flag, std::string root, std::string uri) : 
 	for (int i = 0; i < 3; i++)
 		this->_methods[i] = false;
 	this->_savedPath = "";
+	this->_cgiFileExtension = "";
+	this->_defaultFileForDirectory = "";
 }
 
 Routes::Routes(const Routes &copy)
@@ -54,6 +58,23 @@ std::string	&Routes::getRedirectPath()
 std::string	&Routes::getSavedPath()
 {
 	return (this->_savedPath);
+}
+
+std::string	&Routes::getCgiFileExtension()
+{
+	return (this->_cgiFileExtension);
+}
+
+std::string	&Routes::getDefaultFile()
+{
+	return (this->_defaultFileForDirectory);
+}
+
+std::string	Routes::getDefaultPathForDirectoryRequest()
+{
+	if (this->_root.rfind('/') != this->_root.length())
+		return (this->_root + "/" + this->_defaultFileForDirectory);
+	return (this->_root + this->_defaultFileForDirectory);
 }
 
 int	Routes::getMaxBodySize()
@@ -119,6 +140,16 @@ void	Routes::setRedirectPath(std::string &path)
 void	Routes::setSavedPath(std::string &path)
 {
 	this->_savedPath = path;
+}
+
+void	Routes::setCgiFileExtension(std::string &extension)
+{
+	this->_cgiFileExtension = extension;
+}
+
+void	Routes::setDefaultFileForDirectory(std::string &file_name)
+{
+	this->_defaultFileForDirectory = file_name;
 }
 
 void	Routes::setMaxBodySize(int value)

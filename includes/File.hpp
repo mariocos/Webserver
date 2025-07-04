@@ -36,4 +36,6 @@ public:
 	bool			checkFileInfo(const char *path, int client_socket);
 };
 
+std::string		getFileType(std::string path);
+
 #endif

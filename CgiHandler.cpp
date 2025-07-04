@@ -44,6 +44,9 @@ void	cgiHandler(Server &server, Client *client)
 			return ;
 		if (client->getClientReadingFlag() && !client->getClientWritingFlag() && !client->getClientCgi())
 		{
+			std::string	fileExtension = findFileExtension(client->getClientRequest()->get_path());
+			if (!client->getRouteTriggered()->getCgiFileExtension().empty() && fileExtension != "." + client->getRouteTriggered()->getCgiFileExtension())
+				throw Error404Exception(client->getSocketFd(), client->getClientResponse(), client);
 			prepareCgi(client);
 			printLog("CGI", NULL, client, client->getClientResponse(), 7);
 			client->getClientCgi()->setPid(fork());

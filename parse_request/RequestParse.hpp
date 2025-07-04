@@ -25,6 +25,7 @@ private:
 	std::string	content;
 	std::vector<uint8_t>	_binaryBuffer;
 	char *full_content;
+	ssize_t	full_content_size;
 public:
 	RequestParse();
 	RequestParse(const char *request);
@@ -50,6 +51,8 @@ public:
 	void	setBuffer(std::string *buffer);
 	void	setNewHost(std::string str);
 	void	setFullContent(char *req);
+	void	addToFullContent(char *info, int len);
+	ssize_t	getFullContentSize();
 	void	readBinary(int client_socket, Client *client);
 	void	clearBuffer();
 	std::vector<uint8_t>	&getBufferInfo();

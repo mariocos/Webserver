@@ -56,6 +56,13 @@ Server::Server(std::vector<int> ports, std::vector<std::string> names, int backl
 		if (epoll_ctl(this->_epoll_fd, EPOLL_CTL_ADD, event.data.fd, &event) == -1)
 			throw EpollCtlException();
 
+		// TODO set the error pages defined in the config file
+		newServerBlock->setErrorPage(400, "website/400.html");
+		newServerBlock->setErrorPage(403, "website/403.html");
+		newServerBlock->setErrorPage(404, "website/404.html");
+		newServerBlock->setErrorPage(405, "website/405.html");
+		newServerBlock->setErrorPage(413, "website/413.html");
+
 		// TODO implement this as long as the routes list size
 		// for (size_t n = 0; i < list.size(); n++)
 		// {
@@ -74,6 +81,8 @@ Server::Server(std::vector<int> ports, std::vector<std::string> names, int backl
 				newRoute->setMethod(GET, true);
 				newRoute->setMethod(POST, true);
 				newRoute->setMethod(DELETE, true);
+				std::string	file = "dummy.html";
+				newRoute->setDefaultFileForDirectory(file);
 			}
 			else if (n == 1)
 			{
@@ -81,6 +90,8 @@ Server::Server(std::vector<int> ports, std::vector<std::string> names, int backl
 				newRoute->setMethod(GET, true);
 				newRoute->setMethod(POST, true);
 				newRoute->setMethod(DELETE, true);
+				std::string	extension = "py";
+				newRoute->setCgiFileExtension(extension);
 			}
 			else if (n == 2)
 			{
@@ -290,22 +301,59 @@ void	Server::manageConnection(std::vector<Client*> &clientList, epoll_event &eve
 	else if ((event.events == EPOLLRDHUP) && \
 		(*it)->getClientReadingFlag() && (*it)->getClientWritingFlag() && (*it)->getClientOpenFd() == -1)
 		clearClient(it, clientList);
-	else if (!(*it)->getClientReadingFlag() && (event.events == EPOLLIN))
+	else if (!(*it)->getClientReadingFlag())
 	{
 		try
 		{
-			(*it)->readRequest((*it)->getSocketFd());
-			if ((*it)->getClientReadingFlag())
+			if (event.events == EPOLLIN && !(*it)->getClientPending())
 			{
-				(*it)->resetTimer();
-				(*it)->setClientWritingFlag(false);
-				(*it)->setSocketToWriting(this->_epoll_fd);
+				(*it)->readRequest((*it)->getSocketFd());
+				if ((*it)->getClientReadingFlag())
+				{
+					(*it)->resetTimer();
+					(*it)->setClientWritingFlag(false);
+					(*it)->setClientPending(true);
+					(*it)->setSocketToWriting(this->_epoll_fd);
+				}
+				else if (!(*it)->getClientReadingFlag() && (*it)->getClientRequest()->get_expect() == "100-continue")
+				{
+					(*it)->resetTimer();
+					(*it)->setClientPending(true);
+					(*it)->setSocketToWriting(this->_epoll_fd);
+				}
+				(*it)->setRouteTriggered((*this->getRouteTriggered((*it)->getURIRequested(), (*it)->getSocketTriggered())));
 			}
-			(*it)->setRouteTriggered((*this->getRouteTriggered((*it)->getURIRequested(), (*it)->getSocketTriggered())));
+			else if (event.events == EPOLLOUT)
+			{
+				send((*it)->getSocketFd(), "HTTP/1.1 100 Continue\r\n\r\n", 25, MSG_NOSIGNAL);
+				(*it)->setSocketToReading(this->_epoll_fd);
+			}
+			else if ((*it)->getClientPending())
+			{
+				(*it)->getClientRequest()->readBinary((*it)->getSocketFd(), (*it));
+				if ((*it)->getClientRequest()->getFullContentSize() == 0)
+					(*it)->getClientRequest()->setFullContent(reinterpret_cast<char*>((*it)->getClientRequest()->getBufferInfo().data()));
+				else
+					(*it)->getClientRequest()->addToFullContent(reinterpret_cast<char*>((*it)->getClientRequest()->getBufferInfo().data()), (*it)->getClientRequest()->getBufferInfo().size());
+				if ((*it)->getClientRequest()->getFullContentSize() == atoi((*it)->getClientRequest()->get_content_length().c_str()))
+				{
+					(*it)->setClientWritingFlag(false);
+					(*it)->setClientReadingFlag(true);
+					(*it)->setSocketToWriting(this->_epoll_fd);
+				}
+			}
+			
 		}
 		catch(const std::exception& e)
 		{
-			if (std::string(e.what()) != "EmptyBuffer")
+			if (std::string(e.what()) == "Expectation" || std::string(e.what()) == "HTTPVersion")
+			{
+				if ((*it)->getClientRequest()->get_connection() == "keep-alive")
+					(*it)->resetClient(*this);
+				else
+					clearClient(it, clientList);
+			}
+			else if (std::string(e.what()) != "EmptyBuffer")
 				std::cerr << e.what() << '\n';
 		}
 	}

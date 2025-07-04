@@ -114,9 +114,7 @@ void	Client::setClientIp(std::string ip)
 
 void	Client::resetTimer()
 {
-	struct timeval	tv;
-	gettimeofday(&tv, NULL);
-	this->_time = (uint64_t)tv.tv_sec;
+	this->_time = std::time(NULL);
 }
 
 void	Client::setSocketTriggered(int fd)
@@ -144,19 +142,9 @@ bool	Client::getClientWritingFlag()
 	return (this->_finishedWriting);
 }
 
-bool	Client::hasToSendToCgi()
-{
-	std::string	cgiFolder = get_keyword(this->_request->get_path(), "/cgi-bin/");
-	if (cgiFolder.empty())
-		return (false);
-	return (true);
-}
-
 bool	Client::hasTimedOut()
 {
-	struct timeval	tv;
-	gettimeofday(&tv, NULL);
-	uint64_t	actualTime = (uint64_t)tv.tv_sec;
+	uint64_t	actualTime = std::time(NULL);
 	if (actualTime - this->_time >= TIMEOUT)
 		return (true);
 	return (false);
@@ -249,24 +237,12 @@ void	Client::readRequest(int client_socket)
 {
 	this->getClientRequest()->readBinary(client_socket, this);
 	this->getClientRequest()->buildRequest(reinterpret_cast<char*>(this->getClientRequest()->getBufferInfo().data()));
-	/* if (reinterpret_cast<char*>(this->getClientRequest()->getBufferInfo().empty()))
-	{
-		this->getClientRequest()->readBinary(client_socket, this);
-		this->getClientRequest()->buildRequest(reinterpret_cast<char*>(this->getClientRequest()->getBufferInfo().data()));
-		if (this->getClientRequest()->get_expect() == "100-continue")
-			this->_finishedReading = false;
-	}
-	else if (this->getClientRequest()->get_expect() == "100-continue" && this->getClientRequest()->get_content().empty())
-	{
-		send(this->_socket, "HTTP/1.1 100 Continue\r\n\r\n", 25, MSG_NOSIGNAL);
+	if (this->getClientRequest()->get_httpversion() != "HTTP/1.1")
+		throw Error505Exception(client_socket, this->_response, this);
+	if (this->getClientRequest()->get_expect() == "100-continue")
 		this->_finishedReading = false;
-	}
-	else
-	{
-		this->getClientRequest()->readBinary(client_socket, this);
-		this->getClientRequest()->setFullContent(reinterpret_cast<char*>(this->getClientRequest()->getBufferInfo().data()));
-		this->_finishedReading = true;
-	} */
+	else if (!this->getClientRequest()->get_expect().empty() && this->getClientRequest()->get_expect() != "100-continue")
+		throw Error417Exception(client_socket, this->_response, this);
 }
 
 void	Client::resetClient(Server &server)

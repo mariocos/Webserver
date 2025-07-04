@@ -82,6 +82,16 @@ bool	ServerBlock::isCgi()
 	return (this->_isCgi);
 }
 
+std::map<int, std::string>	ServerBlock::getErrorMap()
+{
+	return (this->_errorPages);
+}
+
+std::map<int, std::string>::iterator	ServerBlock::getErrorPage(int key)
+{
+	return (this->_errorPages.find(key));
+}
+
 std::vector<Routes*>	&ServerBlock::getRoutesVector()
 {
 	return (this->_routes);
@@ -123,6 +133,11 @@ void	ServerBlock::decreaseConnections()
 {
 	if (this->_connections > 0)
 		this->_connections -= 1;
+}
+
+void	ServerBlock::setErrorPage(int key, std::string path)
+{
+	this->_errorPages[key] = path;
 }
 
 void	ServerBlock::setBlockPort(int port)

@@ -24,7 +24,7 @@ char	*ft_strstr(const char *big, const char *little)
 	return (0);
 }
 
-RequestParse::RequestParse() : _buffer(NULL)
+RequestParse::RequestParse() : _buffer(NULL), full_content(NULL), full_content_size(0)
 {
 	//std::cout << "Default RequestParse constructor called\n";
 }
@@ -184,9 +184,9 @@ void	RequestParse::execute_response(int client_socket, Client *client)
 		throw Load307Exception(client_socket, client->getClientResponse(), client);
 	else if (client->getRouteTriggered()->isListing() && !client->getClientFile()->getFile()->is_open() && client->getRouteTriggered()->canDoMethod(methodAsInt))
 		throw LoadListingException(client_socket, client->getClientResponse(), client);
-	if (method.compare("GET") == 0 && client->getRouteTriggered()->canDoMethod(GET))
+	if (client->getRouteTriggered()->canDoMethod(methodAsInt))
 		GET_response(client_socket, client);
-	else if (method.compare("POST") == 0 && client->getRouteTriggered()->canDoMethod(POST))
+	else if (client->getRouteTriggered()->canDoMethod(methodAsInt))
 	{
 		if (client->getClientResponse()->getBytesSent() > 0)
 			return;
@@ -203,7 +203,7 @@ void	RequestParse::execute_response(int client_socket, Client *client)
 		}
 		Post_master::post(client);
 	}
-	else if (method.compare("DELETE") == 0 && client->getRouteTriggered()->canDoMethod(DELETE))
+	else if (client->getRouteTriggered()->canDoMethod(methodAsInt))
 	{
 		if (client->getClientResponse()->getBytesSent() > 0)
 			return;
@@ -254,4 +254,21 @@ std::string	RequestParse::get_expect()
 void	RequestParse::setFullContent(char *req)
 {
 	full_content = req;
+	full_content_size = _binaryBuffer.size() -1;
+}
+
+void	RequestParse::addToFullContent(char *info, int len)
+{
+	std::cout<<"PASSOU PELO ADDFULLCONTENT\n";
+	std::vector<char>	tmp;
+	tmp.reserve(full_content_size + len);
+	tmp.insert(tmp.end(), full_content, full_content + full_content_size);
+	tmp.insert(tmp.end(), info, info + len);
+	full_content = tmp.data();
+	full_content_size = tmp.size() - 1;
+}
+
+ssize_t	RequestParse::getFullContentSize()
+{
+	return (full_content_size);
 }

@@ -63,7 +63,6 @@ public:
 	bool	getClientConnection();
 	bool	getClientReadingFlag();
 	bool	getClientWritingFlag();
-	bool	hasToSendToCgi();
 	bool	hasTimedOut();
 	int		getClientOpenFd();
 	int		getPortTriggered();

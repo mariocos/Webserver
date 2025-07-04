@@ -12,8 +12,9 @@ void	loadError405(int client_socket, Response *response, Client *client);
 void	loadError408(int client_socket, Response *response, Client *client);
 void	loadError409(int client_socket, Response *response, Client *client);
 void	loadError413(int client_socket, Response *response, Client *client);
+void	loadError417(int client_socket, Response *response, Client *client);
 void	loadError503(int error_socket);
-void	loadError505();
+void	loadError505(int client_socket, Response *response, Client *client);
 
 class	Load301Exception : public std::runtime_error
 {
@@ -63,10 +64,22 @@ class	Error413Exception : public std::runtime_error
 		Error413Exception(int client_socket, Response *response, Client *client);
 };
 
+class	Error417Exception : public std::runtime_error
+{
+	public:
+		Error417Exception(int client_socket, Response *response, Client *client);
+};
+
 class	Error503Exception : public std::runtime_error
 {
 	public:
 		Error503Exception(Client *errorClient, Server &server);
+};
+
+class	Error505Exception : public std::runtime_error
+{
+	public:
+		Error505Exception(int client_socket, Response *response, Client *client);
 };
 
 #endif

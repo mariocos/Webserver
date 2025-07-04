@@ -19,6 +19,7 @@ class Routes;
 class ServerBlock : public WebSocket
 {
 private:
+	std::map<int, std::string>	_errorPages;
 	std::vector<Routes*>	_routes;
 	std::string	_name;
 	int			_maxConnections;
@@ -39,7 +40,9 @@ public:
 	int			getBlockPort();
 	bool		canDoMethod(int method);
 	bool		isDefault();
-	bool		isCgi();
+	bool		isCgi();\
+	std::map<int, std::string>	getErrorMap();
+	std::map<int, std::string>::iterator	getErrorPage(int key);
 	std::vector<Routes*>	&getRoutesVector();
 	std::vector<Routes*>::iterator	getDefaultRoute();
 	Routes		*getRoute(int index);
@@ -47,6 +50,7 @@ public:
 	void		setBlockMaxConnections(int value);
 	void		increaseConnections();
 	void		decreaseConnections();
+	void		setErrorPage(int key, std::string path);
 	void		setBlockPort(int port);
 	void		setBlockMethod(int method, bool flag);
 	void		setBlockAsCgi();

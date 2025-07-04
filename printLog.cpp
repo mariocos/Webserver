@@ -107,10 +107,18 @@ void	printLog(std::string action, ServerBlock *serverBlock, Client *client, Resp
 			std::cout<<"["<<getTimeStamp()<<"]"<<RED<<" ["<<action<<"] "<<RESET;
 			std::cout<<RED<<"Payload Too Large "<<response->getStatusCode()<<" "<<response->getPath()<<RESET<<std::endl;
 			break;
+		case 417:
+			std::cout<<"["<<getTimeStamp()<<"]"<<RED<<" ["<<action<<"] "<<RESET;
+			std::cout<<RED<<"Expectation Failed "<<response->getStatusCode()<<" from " + client->getClientIp() + ":" + transformToString(client->getClientPort())<<RESET<<std::endl;
+			break;
 		case 503:
 			std::cout<<"["<<getTimeStamp()<<"]"<<RED<<" ["<<action<<"] "<<RESET;
 			std::cout<<RED<<client->getClientIp() + ":" + transformToString(client->getClientPort());
 			std::cout<<" - 503 Webserver Busy"<<RESET<<std::endl;
+			break;
+		case 505:
+			std::cout<<"["<<getTimeStamp()<<"]"<<RED<<" ["<<action<<"] "<<RESET;
+			std::cout<<RED<<"HTTP Version Not Supported "<<response->getStatusCode()<<" from " + client->getClientIp() + ":" + transformToString(client->getClientPort())<<RESET<<std::endl;
 			break;
 		default:
 			break;

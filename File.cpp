@@ -119,7 +119,12 @@ bool	File::checkFileInfo(const char *path, int client_socket)
 	}
 	if (S_ISDIR(this->_fileStats.st_mode))
 	{
-		this->_file.open("website/index.html", std::ios::in);
+		std::string	file_path;
+		if (!this->_client->getRouteTriggered()->getDefaultFile().empty())
+			file_path = this->_client->getRouteTriggered()->getDefaultPathForDirectoryRequest();
+		else
+			file_path = "website/index.html";
+		this->_file.open(file_path.c_str(), std::ios::in);
 		if (!this->_file.is_open())
 		{
 			if (errno == EACCES || errno == EPERM)
@@ -127,17 +132,41 @@ bool	File::checkFileInfo(const char *path, int client_socket)
 			else
 				throw Error404Exception(client_socket, this->_client->getClientResponse(), this->_client);
 		}
-		if (stat("website/index.html", &this->_fileStats))
+		if (stat(file_path.c_str(), &this->_fileStats))
 		{
 			if (errno == EACCES || errno == EPERM)
 				throw Error403Exception(client_socket, this->_client->getClientResponse(), this->_client);
 			else
 				throw Error404Exception(client_socket, this->_client->getClientResponse(), this->_client);
 		}
-		this->_client->getClientResponse()->setType("text/html");
-		this->_client->getClientResponse()->setPath("website/index.html");
-		this->_client->getClientRequest()->set_path("website/index.html");
+		this->_client->getClientResponse()->setType(getFileType(file_path));
+		this->_client->getClientResponse()->setPath(file_path);
+		this->_client->getClientRequest()->set_path(file_path);
 		return (false);
 	}
 	return (true);
+}
+
+std::string	getFileType(std::string path)
+{
+	std::map<std::string, std::string> fileTypes;
+	fileTypes[".html"] = "text/html";
+	fileTypes[".css"] = "text/css";
+	fileTypes[".js"] = "application/javascript";
+	fileTypes[".png"] = "image/png";
+	fileTypes[".jpg"] = "image/jpeg";
+	fileTypes[".jpeg"] = "image/jpeg";
+	fileTypes[".ico"] = "image/x-icon";
+	fileTypes[".json"] = "application/json";
+	fileTypes[".mp3"] = "audio/mpeg";
+	fileTypes[".mp4"] = "video/mp4";
+	fileTypes[".txt"] = "text/plain";
+	fileTypes[".pdf"] = "application/pdf";
+
+	std::string	extension = findFileExtension(path);
+	std::string	type = "application/octet-stream";
+
+	if (fileTypes.count(extension))
+		type = fileTypes.at(extension);
+	return (type);
 }

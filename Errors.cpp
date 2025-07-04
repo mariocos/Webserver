@@ -93,6 +93,14 @@ runtime_error("[" + getTimeStamp() + "]" + RED + " [ERROR] Payload Too Large 413
 	}
 }
 
+Error417Exception::Error417Exception(int client_socket, Response *response, Client *client) :
+runtime_error("Expectation") 
+{
+	response->setStatusCode(417);
+	printLog("ERROR", NULL, client, response, 417);
+	loadError417(client_socket, response, client);
+}
+
 Error503Exception::Error503Exception(Client *errorClient, Server &server) :
 runtime_error("[" + getTimeStamp() + "]" + RED + " [ERROR] " + errorClient->getClientIp() + ":" + transformToString(errorClient->getClientPort()) + " - 503 Webserver Busy" + RESET)
 {
@@ -100,4 +108,12 @@ runtime_error("[" + getTimeStamp() + "]" + RED + " [ERROR] " + errorClient->getC
 	loadError503(errorClient->getSocketFd());
 	server.removeFromEpoll(errorClient->getSocketFd());
 	delete	errorClient;
+}
+
+Error505Exception::Error505Exception(int client_socket, Response *response, Client *client) :
+runtime_error("HTTPVersion")
+{
+	response->setStatusCode(505);
+	printLog("ERROR", NULL, client, response, 505);
+	loadError505(client_socket, response, client);
 }
