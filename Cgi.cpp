@@ -129,13 +129,28 @@ void	Cgi::parentWork(Server &server, Client *client)
 	event.events = EPOLLIN | EPOLLRDHUP;
 	event.data.fd = this->_cgiStdOut[0];
 	epoll_ctl(server.getEpollFd(), EPOLL_CTL_ADD, event.data.fd, &event);
+	event.events = EPOLLOUT | EPOLLRDHUP;
+	event.data.fd = this->_cgiStdIn[1];
+	epoll_ctl(server.getEpollFd(), EPOLL_CTL_ADD, event.data.fd, &event);
 	close(this->_cgiStdIn[0]);
 	close(this->_cgiStdOut[1]);
 	this->_cgiStdIn[0] = -1;
 	this->_cgiStdOut[1] = -1;
-	client->getClientFile()->setReading(true);
-	client->getClientFile()->setWriting(false);
-	if (client->getClientRequest()->get_method() == "POST")
+	if (client->getClientRequest()->get_method() != "POST")
+	{
+		client->getClientFile()->setReading(true);
+		client->getClientFile()->setWriting(false);
+		epoll_ctl(server.getEpollFd(), EPOLL_CTL_DEL, this->_cgiStdIn[1], NULL);
+		close(this->_cgiStdIn[1]);
+		this->_cgiStdIn[1] = -1;
+		this->changeCgiState();
+		client->getClientResponse()->setStatusCode(200);
+	}
+}
+
+void	Cgi::writeBody(Server &server, Client *client)
+{
+	if (client->getClientRequest()->get_method() == "POST" && this->_cgiStdIn[1] != -1)
 	{
 		std::string	body = client->getClientRequest()->get_content();
 		ssize_t	bytesSent = 0;
@@ -147,11 +162,14 @@ void	Cgi::parentWork(Server &server, Client *client)
 				break;
 			bytesSent += n;
 		}
+		client->getClientFile()->setReading(true);
+		client->getClientFile()->setWriting(false);
+		epoll_ctl(server.getEpollFd(), EPOLL_CTL_DEL, this->_cgiStdIn[1], NULL);
+		close(this->_cgiStdIn[1]);
+		this->_cgiStdIn[1] = -1;
+		this->changeCgiState();
+		client->getClientResponse()->setStatusCode(200);
 	}
-	close(this->_cgiStdIn[1]);
-	this->_cgiStdIn[1] = -1;
-	this->changeCgiState();
-	client->getClientResponse()->setStatusCode(200);
 }
 
 void	Cgi::readCgiResponse(Server &server, Client *client)

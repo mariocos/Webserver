@@ -35,7 +35,7 @@ void	prepareCgi(Client *client)
 		throw BadPipeCreationException();
 }
 
-void	cgiHandler(Server &server, Client *client)
+void	cgiHandler(Server &server, Client *client, int fdTriggered)
 {
 	try
 	{
@@ -46,15 +46,17 @@ void	cgiHandler(Server &server, Client *client)
 		{
 			std::string	fileExtension = findFileExtension(client->getClientRequest()->get_path());
 			if (!client->getRouteTriggered()->getCgiFileExtension().empty() && fileExtension != "." + client->getRouteTriggered()->getCgiFileExtension())
-				throw Error404Exception(client->getSocketFd(), client->getClientResponse(), client);
+			throw Error404Exception(client->getSocketFd(), client->getClientResponse(), client);
 			prepareCgi(client);
 			printLog("CGI", NULL, client, client->getClientResponse(), 7);
 			client->getClientCgi()->setPid(fork());
 			if (client->getClientCgi()->getPid() == 0)
-				client->getClientCgi()->executeCgi(client);
+			client->getClientCgi()->executeCgi(client);
 			else
-				client->getClientCgi()->parentWork(server, client);
+			client->getClientCgi()->parentWork(server, client);
 		}
+		else if (client->getClientCgi() && client->getClientCgi()->getStdIn()[1] != -1 && fdTriggered == client->getClientCgi()->getStdIn()[1])
+			client->getClientCgi()->writeBody(server, client);
 		else if (client->getClientFile()->isReading())
 			client->getClientCgi()->readCgiResponse(server, client);
 		else if (client->getClientFile()->isWriting())
@@ -76,7 +78,7 @@ std::vector<Client*>::iterator	isThisPipe(int fd, std::vector<Client*> &clientLi
 	std::vector<Client*>::iterator	end = clientList.end();
 	while (it != end)
 	{
-		if ((*it)->getClientCgi() && (*it)->getClientCgi()->getStdOut()[0] == fd)
+		if ((*it)->getClientCgi() && ((*it)->getClientCgi()->getStdOut()[0] == fd || (*it)->getClientCgi()->getStdIn()[1] == fd))
 			return (it);
 		it++;
 	}

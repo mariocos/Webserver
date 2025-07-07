@@ -295,7 +295,7 @@ void	Server::manageConnection(std::vector<Client*> &clientList, epoll_event &eve
 	{
 		try
 		{
-			cgiHandler(*this, (*it));
+			cgiHandler(*this, (*it), event.data.fd);
 			return;
 		}
 		catch(const std::exception& e)
@@ -385,7 +385,7 @@ void	Server::manageClient(std::vector<Client*> &clientList, std::vector<Client*>
 			//handling the CGI before and after the child process is created
 			if ((*it)->getClientCgi() && (*it)->getClientCgi()->isActive())
 				return ;
-			cgiHandler(*this, (*it));
+			cgiHandler(*this, (*it), event.data.fd);
 			if ((*it)->getClientWritingFlag() && (*it)->getClientReadingFlag())
 			{
 				(*it)->resetClient(*this);

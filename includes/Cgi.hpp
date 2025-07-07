@@ -27,12 +27,13 @@ public:
 	void	changeCgiState();
 	void	executeCgi(Client *client);
 	void	parentWork(Server &server, Client *client);
+	void	writeBody(Server &server, Client *client);
 	void	readCgiResponse(Server &server, Client *client);
 	void	writeCgiResponse(Client *client);
 };
 
 void	prepareCgi(Client *client);
-void	cgiHandler(Server &server, Client *client);
+void	cgiHandler(Server &server, Client *client, int fdTriggered);
 std::vector<Client*>::iterator	isThisPipe(int fd, std::vector<Client*> &clientList);
 
 #endif
