@@ -17,6 +17,7 @@ class Routes
 		std::string	_savedPath;
 		std::string	_cgiFileExtension;
 		std::string	_defaultFileForDirectory;
+		std::string	_uploadPath;
 		int			_maxBodySize;
         bool		_methods[3];
 		bool		_defaultRoute;
@@ -37,6 +38,7 @@ class Routes
 		std::string	&getCgiFileExtension();
 		std::string	&getDefaultFile();
 		std::string	getDefaultPathForDirectoryRequest();
+		std::string	&getUploadPath();
 		int			getMaxBodySize();
 		bool		canDoMethod(int method);
 		bool		isDefault();
@@ -50,6 +52,7 @@ class Routes
 		void		setSavedPath(std::string &path);
 		void		setCgiFileExtension(std::string &extension);
 		void		setDefaultFileForDirectory(std::string &file_name);
+		void		setUploadPath(std::string &path);
 		void		setMaxBodySize(int value);
 		void		setMethod(int method, bool flag);
 		void		setAsCgi();

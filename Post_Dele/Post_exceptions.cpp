@@ -100,7 +100,6 @@ void Post_master::createDirectoryIfNeeded(const std::string& path)
 }
 
 //temos de ver se aceitamos postarem com path ou so files na diretoria post
-//TODO: check if file already exists
 void Post_master::post(Client* client) // add socket
 {
     if (!client) {
@@ -125,20 +124,22 @@ void Post_master::post(Client* client) // add socket
     
 	//adding prefix
 
-	std::string result = "./POSTED";
+	std::string	uploadPath = client->getRouteTriggered()->getUploadPath();
+	if (uploadPath.empty())
+		uploadPath = "./POSTED";
 	if (targetPath[0] != '/') {
-		result += "/";
+		uploadPath += "/";
 	}
-	result += targetPath;//change name for readability
+	uploadPath += targetPath;//change name for readability
 
     // // TODO: when should this be done?
-	std::string	directories = result.substr(2);
-	createDirectoryIfNeeded(directories);
+	std::string	uploadDir = uploadPath;
+	createDirectoryIfNeeded(uploadDir);
 
-	if (!access(result.c_str(), F_OK))
+	if (!access(uploadPath.c_str(), F_OK))
 		throw Error409Exception(client->getSocketFd(), client->getClientResponse(), client);
 
-    int out_fd = open(result.c_str(), O_WRONLY | O_CREAT);
+    int out_fd = open(uploadPath.c_str(), O_WRONLY | O_CREAT);
 	if (out_fd < 0)
         throw Error404Exception(client->getSocketFd(), client->getClientResponse(), client);
     client->setClientOpenFd(out_fd);

@@ -54,7 +54,11 @@ Server::Server(std::vector<int> ports, std::vector<std::string> names, int backl
 		event.events = EPOLLIN;
 		event.data.fd = newServerBlock->getSocketFd();
 		if (epoll_ctl(this->_epoll_fd, EPOLL_CTL_ADD, event.data.fd, &event) == -1)
+		{
+			delete newServerBlock;
+			close(this->_epoll_fd);
 			throw EpollCtlException();
+		}
 
 		// TODO set the error pages defined in the config file
 		newServerBlock->setErrorPage(400, "website/400.html");
@@ -82,7 +86,9 @@ Server::Server(std::vector<int> ports, std::vector<std::string> names, int backl
 				newRoute->setMethod(POST, true);
 				newRoute->setMethod(DELETE, true);
 				std::string	file = "dummy.html";
+				std::string	uploadPath = "./upload";
 				newRoute->setDefaultFileForDirectory(file);
+				newRoute->setUploadPath(uploadPath);
 			}
 			else if (n == 1)
 			{
@@ -91,7 +97,9 @@ Server::Server(std::vector<int> ports, std::vector<std::string> names, int backl
 				newRoute->setMethod(POST, true);
 				newRoute->setMethod(DELETE, true);
 				std::string	extension = "py";
+				std::string	uploadPath = "./upload";
 				newRoute->setCgiFileExtension(extension);
+				newRoute->setUploadPath(uploadPath);
 			}
 			else if (n == 2)
 			{
@@ -118,6 +126,11 @@ Server::Server(std::vector<int> ports, std::vector<std::string> names, int backl
 			if (ports[i] == 2424 && n != 0)
 				newRoute->setAsCgi();
 			tmp.push_back(newRoute);
+			if (newRoute->canDoMethod(POST) && !newRoute->isCgi() && newRoute->getUploadPath().empty())
+			{
+				delete newServerBlock;
+				throw NoUploadPathException(*this, tmp);
+			}
 		}
 		newServerBlock->setBlockRoutes(tmp);
 		printLog("INFO", newServerBlock, NULL, NULL, 0);
@@ -335,7 +348,7 @@ void	Server::manageConnection(std::vector<Client*> &clientList, epoll_event &eve
 					(*it)->getClientRequest()->setFullContent(reinterpret_cast<char*>((*it)->getClientRequest()->getBufferInfo().data()));
 				else
 					(*it)->getClientRequest()->addToFullContent(reinterpret_cast<char*>((*it)->getClientRequest()->getBufferInfo().data()), (*it)->getClientRequest()->getBufferInfo().size());
-				if ((*it)->getClientRequest()->getFullContentSize() == atoi((*it)->getClientRequest()->get_content_length().c_str()))
+				if ((*it)->getClientRequest()->getFullContentSize() == std::atoi((*it)->getClientRequest()->get_content_length().c_str()))
 				{
 					(*it)->setClientWritingFlag(false);
 					(*it)->setClientReadingFlag(true);

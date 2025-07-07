@@ -7,6 +7,7 @@ Routes::Routes() : _maxBodySize(-1), _defaultRoute(false), _isCgi(false), _direc
 	this->_savedPath = "";
 	this->_cgiFileExtension = "";
 	this->_defaultFileForDirectory = "";
+	this->_uploadPath = "";
 }
 
 Routes::Routes(int maxBodySize, bool flag, std::string root, std::string uri) : _root(root), _uri(uri), _maxBodySize(maxBodySize), _defaultRoute(flag), _isCgi(false), _directoryListing(false), _isPermanentRedirect(false), _isTemporaryRedirect(false)
@@ -16,6 +17,7 @@ Routes::Routes(int maxBodySize, bool flag, std::string root, std::string uri) : 
 	this->_savedPath = "";
 	this->_cgiFileExtension = "";
 	this->_defaultFileForDirectory = "";
+	this->_uploadPath = "";
 }
 
 Routes::Routes(const Routes &copy)
@@ -75,6 +77,11 @@ std::string	Routes::getDefaultPathForDirectoryRequest()
 	if (this->_root.rfind('/') != this->_root.length())
 		return (this->_root + "/" + this->_defaultFileForDirectory);
 	return (this->_root + this->_defaultFileForDirectory);
+}
+
+std::string	&Routes::getUploadPath()
+{
+	return (this->_uploadPath);
 }
 
 int	Routes::getMaxBodySize()
@@ -150,6 +157,11 @@ void	Routes::setCgiFileExtension(std::string &extension)
 void	Routes::setDefaultFileForDirectory(std::string &file_name)
 {
 	this->_defaultFileForDirectory = file_name;
+}
+
+void	Routes::setUploadPath(std::string &path)
+{
+	this->_uploadPath = path;
 }
 
 void	Routes::setMaxBodySize(int value)

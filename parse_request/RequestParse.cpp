@@ -184,18 +184,18 @@ void	RequestParse::execute_response(int client_socket, Client *client)
 		throw Load307Exception(client_socket, client->getClientResponse(), client);
 	else if (client->getRouteTriggered()->isListing() && !client->getClientFile()->getFile()->is_open() && client->getRouteTriggered()->canDoMethod(methodAsInt))
 		throw LoadListingException(client_socket, client->getClientResponse(), client);
-	if (client->getRouteTriggered()->canDoMethod(methodAsInt))
+	if (method.compare("GET") == 0 && client->getRouteTriggered()->canDoMethod(GET))
 		GET_response(client_socket, client);
-	else if (client->getRouteTriggered()->canDoMethod(methodAsInt))
+	else if (method.compare("POST") == 0 && client->getRouteTriggered()->canDoMethod(POST))
 	{
 		if (client->getClientResponse()->getBytesSent() > 0)
 			return;
 		if (client->getRouteTriggered()->getMaxBodySize() != -1 && \
-			atoi(client->getClientRequest()->get_content_length().c_str()) > client->getRouteTriggered()->getMaxBodySize())
+			std::atoi(client->getClientRequest()->get_content_length().c_str()) > client->getRouteTriggered()->getMaxBodySize())
 			throw Error413Exception(client_socket, client->getClientResponse(), client);
 		if (client->getClientOpenFd() != -1)
 		{
-			write(client->getClientOpenFd(), client->getClientRequest()->get_full_content(), atoi(client->getClientRequest()->get_content_length().c_str()));
+			write(client->getClientOpenFd(), client->getClientRequest()->get_full_content(), std::atoi(client->getClientRequest()->get_content_length().c_str()));
 			close(client->getClientOpenFd());
 			client->setClientOpenFd(-1);
 			createPostResponse(client, client->getClientResponse());
@@ -203,7 +203,7 @@ void	RequestParse::execute_response(int client_socket, Client *client)
 		}
 		Post_master::post(client);
 	}
-	else if (client->getRouteTriggered()->canDoMethod(methodAsInt))
+	else if (method.compare("DELETE") == 0 && client->getRouteTriggered()->canDoMethod(DELETE))
 	{
 		if (client->getClientResponse()->getBytesSent() > 0)
 			return;

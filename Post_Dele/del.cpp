@@ -14,32 +14,34 @@ int delete_resource(Client *client, RequestParse *req)
     }
     
     // Construct full path with POSTED prefix (matching your POST implementation)
-    std::string fullPath = "./POSTED";
+	std::string	uploadPath = client->getRouteTriggered()->getUploadPath();
+	if (uploadPath.empty())
+		uploadPath = "./POSTED";
     if (targetPath[0] != '/') {
-        fullPath += "/";
+		uploadPath += "/";
     }
-    fullPath += targetPath;
+	uploadPath += targetPath;
     
     // Check if file/resource exists
-    if (access(fullPath.c_str(), F_OK) != 0) {
+    if (access(uploadPath.c_str(), F_OK) != 0) {
 		throw Error404Exception(client->getSocketFd(), client->getClientResponse(), client);
     }
     
     // Check if it's a directory
     struct stat pathStat;
-    if (stat(fullPath.c_str(), &pathStat) != 0) {
-        std::cout << "Cannot stat resource: " << fullPath << std::endl;
+    if (stat(uploadPath.c_str(), &pathStat) != 0) {
+        std::cout << "Cannot stat resource: " << uploadPath << std::endl;
         return (-3);
     }
     
     if (S_ISDIR(pathStat.st_mode)) {
         // It's a directory - remove it (only if empty)
-        if (rmdir(fullPath.c_str()) != 0) {
+        if (rmdir(uploadPath.c_str()) != 0) {
 			throw Error409Exception(client->getSocketFd(), client->getClientResponse(), client);
         }
     } else {
         // It's a regular file - delete it
-        if (unlink(fullPath.c_str()) != 0) {
+        if (unlink(uploadPath.c_str()) != 0) {
 			throw Error403Exception(client->getSocketFd(), client->getClientResponse(), client);
         }
     }

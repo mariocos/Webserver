@@ -73,6 +73,19 @@ runtime_error("EmptyBuffer")
 {
 }
 
+NoUploadPathException::NoUploadPathException(Server &server, std::vector<Routes*> tmp) :
+runtime_error(RED "No Upload Path setted for a POST route" RESET)
+{
+	close(server.getEpollFd());
+	std::vector<Routes*>::iterator	it = tmp.begin();
+	while (it != tmp.end())
+	{
+		delete (*it);
+		it++;
+	}
+	cleanerForServerCreation(server, true);
+}
+
 std::string	getTimeStamp()
 {
 	time_t	now = time(NULL);

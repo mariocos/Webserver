@@ -84,7 +84,7 @@ I	transformStringToSomething(std::string &value)
 			else
 				return (false);
 		case 1:
-			return (atoi(value.c_str()));
+			return (std::atoi(value.c_str()));
 		//still to decide what to do
 		case 2:
 			return (value);
@@ -110,6 +110,7 @@ void	printLog(std::string action, ServerBlock *serverBlock, Client *client, Resp
 
 //signal.cpp
 void	cleaner(Server &server, std::vector<Client*> &clientList, bool print);
+void	cleanerForServerCreation(Server &server, bool print);
 
 //create_response.cpp
 std::string	findFileExtension(std::string path);
@@ -184,6 +185,12 @@ class	EmptyBufferException : public std::runtime_error
 {
 	public:
 		EmptyBufferException();
+};
+
+class	NoUploadPathException : public std::runtime_error
+{
+	public:
+		NoUploadPathException(Server &server, std::vector<Routes*> tmp);
 };
 
 #endif
