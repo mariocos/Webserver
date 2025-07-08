@@ -305,6 +305,7 @@ void	Server::manageConnection(epoll_event &event)
 	{
 		try
 		{
+			//in case the fd triggered is from a pipe
 			cgiHandler(*this, (*it), event.data.fd);
 			return;
 		}

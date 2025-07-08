@@ -50,7 +50,7 @@ bool	checkInt(const std::string &str, size_t len)
 	2 -> YamlNode
 	3 -> std::string
  */
-int		returnVariableType(std::string &value)
+int		returnVariableType(const std::string &value)
 {
 	if (value == "true" || value == "false" || value == "on" || value == "off" || value == "yes" || value == "no")
 		return (0);

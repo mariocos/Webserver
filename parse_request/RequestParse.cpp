@@ -183,11 +183,11 @@ void	RequestParse::execute_response(int client_socket, Client *client)
 		if (client->getClientResponse()->getBytesSent() > 0)
 			return;
 		if (client->getRouteTriggered()->getMaxBodySize() != -1 && \
-			std::atoi(client->getClientRequest()->get_content_length().c_str()) > client->getRouteTriggered()->getMaxBodySize())
+			std::atoi(this->content_length.c_str()) > client->getRouteTriggered()->getMaxBodySize())
 			throw Error413Exception(client_socket, client->getClientResponse(), client);
 		if (client->getClientOpenFd() != -1)
 		{
-			write(client->getClientOpenFd(), client->getClientRequest()->get_full_content(), std::atoi(client->getClientRequest()->get_content_length().c_str()));
+			write(client->getClientOpenFd(), this->full_content, std::atoi(this->content_length.c_str()));
 			close(client->getClientOpenFd());
 			client->setClientOpenFd(-1);
 			createPostResponse(client, client->getClientResponse());
@@ -199,7 +199,7 @@ void	RequestParse::execute_response(int client_socket, Client *client)
 	{
 		if (client->getClientResponse()->getBytesSent() > 0)
 			return;
-		delete_resource(client, client->getClientRequest());
+		delete_resource(client, this);
 		createDeleteResponse(client, client->getClientResponse());
 	}
 	else
@@ -251,7 +251,6 @@ void	RequestParse::setFullContent(char *req)
 
 void	RequestParse::addToFullContent(char *info, int len)
 {
-	std::cout<<"PASSOU PELO ADDFULLCONTENT\n";
 	std::vector<char>	tmp;
 	tmp.reserve(full_content_size + len);
 	tmp.insert(tmp.end(), full_content, full_content + full_content_size);

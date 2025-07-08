@@ -60,7 +60,8 @@ runtime_error(RED "Error opening the pipe" RESET) {}
 NonBlockingException::NonBlockingException(int fd) :
 runtime_error(RED "Failed To Set Server Fd To Non Blocking" RESET)
 {
-	close(fd);
+	if (fd != -1)
+		close(fd);
 }
 
 BadClientException::BadClientException() :

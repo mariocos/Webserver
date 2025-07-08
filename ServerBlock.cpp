@@ -8,10 +8,15 @@ ServerBlock::ServerBlock() : WebSocket(), _maxConnections(-1), _connections(0), 
 
 ServerBlock::ServerBlock(int socket, int port, int backlog, std::string domainName, bool flag) : WebSocket(socket), _name(domainName), _maxConnections(backlog), _connections(0), _port(port), _default(flag), _isCgi(false)
 {
-	if (setNonBlocking(this->getSocketFd()) == -1)
-		throw NonBlockingException(this->getSocketFd());
+	if (domainName.empty())
+		this->_name = "localhost";
+	if (this->_socket != -1)
+	{
+		if (setNonBlocking(this->_socket) == -1)
+			throw NonBlockingException(this->_socket);
+	}
 	for (int i = 0; i < 3; i++)
-		_methods[i] = false;
+		this->_methods[i] = false;
 }
 
 ServerBlock::ServerBlock(const ServerBlock &copy) : WebSocket(copy)

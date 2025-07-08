@@ -85,9 +85,6 @@ I	transformStringToSomething(std::string &value)
 				return (false);
 		case 1:
 			return (std::atoi(value.c_str()));
-		//still to decide what to do
-		case 2:
-			return (value);
 		default:
 			return (value);
 	}
