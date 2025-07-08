@@ -44,9 +44,12 @@ void	cgiHandler(Server &server, Client *client, int fdTriggered)
 			return ;
 		if (client->getClientReadingFlag() && !client->getClientWritingFlag() && !client->getClientCgi())
 		{
+			int	methodAsInt = getMethodRequestedAsInt(client->getClientRequest()->get_method());
+			if (!client->getRouteTriggered()->canDoMethod(methodAsInt))
+				throw Error405Exception(client->getSocketFd(), client->getClientResponse(), client);
 			std::string	fileExtension = findFileExtension(client->getClientRequest()->get_path());
 			if (!client->getRouteTriggered()->getCgiFileExtension().empty() && fileExtension != "." + client->getRouteTriggered()->getCgiFileExtension())
-			throw Error404Exception(client->getSocketFd(), client->getClientResponse(), client);
+				throw Error404Exception(client->getSocketFd(), client->getClientResponse(), client);
 			prepareCgi(client);
 			printLog("CGI", NULL, client, client->getClientResponse(), 7);
 			client->getClientCgi()->setPid(fork());
@@ -72,10 +75,10 @@ void	cgiHandler(Server &server, Client *client, int fdTriggered)
 	}
 }
 
-std::vector<Client*>::iterator	isThisPipe(int fd, std::vector<Client*> &clientList)
+std::vector<Client*>::iterator	isThisPipe(int fd, Server &server)
 {
-	std::vector<Client*>::iterator	it = clientList.begin();
-	std::vector<Client*>::iterator	end = clientList.end();
+	std::vector<Client*>::iterator	it = server.getClientListVector().begin();
+	std::vector<Client*>::iterator	end = server.getClientListVector().end();
 	while (it != end)
 	{
 		if ((*it)->getClientCgi() && ((*it)->getClientCgi()->getStdOut()[0] == fd || (*it)->getClientCgi()->getStdIn()[1] == fd))

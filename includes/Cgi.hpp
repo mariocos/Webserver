@@ -34,6 +34,6 @@ public:
 
 void	prepareCgi(Client *client);
 void	cgiHandler(Server &server, Client *client, int fdTriggered);
-std::vector<Client*>::iterator	isThisPipe(int fd, std::vector<Client*> &clientList);
+std::vector<Client*>::iterator	isThisPipe(int fd, Server &server);
 
 #endif

@@ -94,22 +94,28 @@ I	transformStringToSomething(std::string &value)
 }
 
 //main.cpp
-std::string	getTimeStamp();
-std::string	convertIpToString(struct in_addr s_addr);
-bool	checkInt(const std::string &str, size_t len);
-void	stopRunning(int signal);
-void	ft_bzero(void *s, size_t n);
-void	error_connection_handler(std::vector<int> &errorFds, Server &server);
-bool	isConnectionGood(Server &server, std::vector<Client*>::iterator it);
-bool	doesPortsMatch(Server &server, std::vector<Client*>::iterator it);
-void	handlePortOrDomainMismatch(Server &server, std::vector<Client*> &clientList, std::vector<Client*>::iterator it);
-void	searchForTimeOut(std::vector<Client*> &clientList);
+void	error_connection_handler(Server &server);
+void	stopRunning(int signal);;
 
 //printLog.cpp
 void	printLog(std::string action, ServerBlock *serverBlock, Client *client, Response *response, int mode);
 
+//utils.cpp
+std::string	getTimeStamp();
+std::string	convertIpToString(struct in_addr s_addr);
+bool		checkInt(const std::string &str, size_t len);
+int			returnVariableType(std::string &value);
+void		ft_bzero(void *s, size_t n);
+int			getMethodRequestedAsInt(std::string method);
+
+//checkConnection.cpp
+bool	isConnectionGood(Server &server, std::vector<Client*>::iterator it);
+bool	doesPortsMatch(Server &server, std::vector<Client*>::iterator it);
+void	handlePortOrDomainMismatch(Server &server, std::vector<Client*>::iterator it);
+void	searchForTimeOut(Server &server);
+
 //signal.cpp
-void	cleaner(Server &server, std::vector<Client*> &clientList, bool print);
+void	cleaner(Server &server, bool print);
 void	cleanerForServerCreation(Server &server, bool print);
 
 //create_response.cpp
@@ -123,9 +129,7 @@ void	createDeleteResponse(Client *client, Response *response);
 void	sendMsgToSocket(int client_socket, int lenght, Client *client, Response *response);
 
 //HoleExplorer.cpp
-std::vector<Client*>::iterator	getRightHole(std::vector<Client*> &clientList, int event_fd);
-std::vector<Client*>::iterator	getPendingHole(std::vector<Client*> &clientList);
-std::vector<Client*>::iterator	getNextPendingHole(std::vector<Client*> &clientList, std::vector<Client*>::iterator it);
+std::vector<Client*>::iterator	getRightHole(Server &server, int event_fd);
 
 class	NoPendingConnectionsException : public std::runtime_error
 {
@@ -136,7 +140,7 @@ class	NoPendingConnectionsException : public std::runtime_error
 class	NewConnectionCreationException : public std::runtime_error
 {
 	public:
-		NewConnectionCreationException(Server &server, std::vector<Client*> &clientList);
+		NewConnectionCreationException(Server &server);
 };
 
 class	SendException : public std::runtime_error

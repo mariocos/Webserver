@@ -169,15 +169,7 @@ std::vector<uint8_t>	&RequestParse::getBufferInfo()
 
 void	RequestParse::execute_response(int client_socket, Client *client)
 {
-	int	methodAsInt;
-	if (this->method == "GET")
-		methodAsInt = GET;
-	else if (this->method == "POST")
-		methodAsInt = POST;
-	else if (this->method == "DELETE")
-		methodAsInt = DELETE;
-	else
-		methodAsInt = -1;
+	int	methodAsInt = getMethodRequestedAsInt(this->method);
 	if (client->getRouteTriggered()->isPermanentRedirect() && client->getRouteTriggered()->canDoMethod(methodAsInt))
 		throw Load301Exception(client_socket, client->getClientResponse(), client);
 	else if (client->getRouteTriggered()->isTemporaryRedirect() && client->getRouteTriggered()->canDoMethod(methodAsInt))

@@ -245,6 +245,21 @@ void	Client::readRequest(int client_socket)
 		throw Error417Exception(client_socket, this->_response, this);
 }
 
+void	Client::readBodyOfRequest(Server &server, RequestParse *request)
+{
+	request->readBinary(this->_socket, this);
+	if (request->getFullContentSize() == 0)
+		request->setFullContent(reinterpret_cast<char*>(request->getBufferInfo().data()));
+	else
+		request->addToFullContent(reinterpret_cast<char*>(request->getBufferInfo().data()), request->getBufferInfo().size());
+	if (request->getFullContentSize() == std::atoi(request->get_content_length().c_str()))
+	{
+		this->_finishedWriting = false;
+		this->_finishedReading = true;
+		this->setSocketToWriting(server.getEpollFd());
+	}
+}
+
 void	Client::resetClient(Server &server)
 {
 	this->setClientWritingFlag(false);
@@ -258,13 +273,13 @@ void	Client::resetClient(Server &server)
 	this->setSocketToReading(server.getEpollFd());
 }
 
-void	new_connection(std::vector<Client*> &clientList, std::vector<int> &errorFds, Server &server, int serverFd)
+void	new_connection(Server &server, int serverFd)
 {
 	struct sockaddr_in clientaddr;
 	socklen_t	addrlen = sizeof(clientaddr);
 	Client	*newClient = new Client(accept(serverFd, (struct sockaddr*)&clientaddr, &addrlen));
 	if (newClient->getSocketFd() == -1)
-		throw NewConnectionCreationException(server, clientList);
+		throw NewConnectionCreationException(server);
 	newClient->setClientIp(convertIpToString(clientaddr.sin_addr));
 	newClient->setClientPort(ntohs(clientaddr.sin_port));
 	std::vector<ServerBlock*>::iterator	it = server.getServerBlockTriggered(serverFd);
@@ -276,7 +291,7 @@ void	new_connection(std::vector<Client*> &clientList, std::vector<int> &errorFds
 	if ((*it)->getBlockMaxConnections() != -1 && (*it)->getBlockActualConnections() == (*it)->getBlockMaxConnections())
 	{
 		printLog("ERROR", NULL, newClient, NULL, 503);
-		errorFds.push_back(newClient->getSocketFd());
+		server.addErrorFdToErrorVector(newClient->getSocketFd());
 		newClient->setSocketFd(-1);
 		delete	newClient;
 		return ;
@@ -284,12 +299,12 @@ void	new_connection(std::vector<Client*> &clientList, std::vector<int> &errorFds
 	else
 	{
 		(*it)->increaseConnections();
-		clientList.push_back(newClient);
+		server.addClientToClientVector(newClient);
 	}
 	printLog("INFO", NULL, newClient, NULL, 3);
 }
 
-void	clearClient(std::vector<Client*>::iterator	it, std::vector<Client*> &clientList)
+void	clearClient(std::vector<Client*>::iterator	it, Server &server)
 {
 	printLog("INFO", NULL, (*it), NULL, 4);
 	(*it)->setClientOpenFd(-1);
@@ -297,5 +312,5 @@ void	clearClient(std::vector<Client*>::iterator	it, std::vector<Client*> &client
 	close((*it)->getSocketFd());
 	(*it)->getServerBlockTriggered()->decreaseConnections();
 	delete (*it);
-	clientList.erase(it);
+	server.removeClientFromClientVector(it);
 }

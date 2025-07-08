@@ -79,10 +79,11 @@ public:
 	ServerBlock		*getServerBlockTriggered();
 	Routes			*getRouteTriggered();
 	void	readRequest(int client_socket);
+	void	readBodyOfRequest(Server &server, RequestParse *request);
 	void	resetClient(Server &server);
 };
 
-void	new_connection(std::vector<Client*> &clientList, std::vector<int> &errorFds, Server &server, int serverFd);
-void	clearClient(std::vector<Client*>::iterator	it, std::vector<Client*> &clientList);
+void	new_connection(Server &server, int serverFd);
+void	clearClient(std::vector<Client*>::iterator	it, Server &server);
 
 #endif

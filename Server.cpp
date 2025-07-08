@@ -31,14 +31,14 @@ Server::Server(std::vector<int> ports, std::vector<std::string> names, int backl
 	{
 		std::vector<Routes*>	tmp;
 		if (names[i] == "localhost")
-			newServerBlock = new ServerBlock(socket(AF_INET, SOCK_STREAM, 0), ports[i], -1, names[i], true);
+			newServerBlock = new ServerBlock(socket(AF_INET, SOCK_STREAM, 0), ports[i], 100, names[i], true);
 		else
 			newServerBlock = new ServerBlock(socket(AF_INET, SOCK_STREAM, 0), ports[i], -1, names[i], false);
 		if (newServerBlock->getSocketFd() == -1)
 		{
 			delete newServerBlock;
 			close(this->_epoll_fd);
-			throw SocketCreationException();
+			throw SocketCreationException(*this);
 		}
 		servaddr.sin_family = AF_INET;
 		servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
@@ -49,7 +49,7 @@ Server::Server(std::vector<int> ports, std::vector<std::string> names, int backl
 		{
 			delete newServerBlock;
 			close(this->_epoll_fd);
-			throw SocketBindException();
+			throw SocketBindException(*this);
 		}
 		event.events = EPOLLIN;
 		event.data.fd = newServerBlock->getSocketFd();
@@ -57,7 +57,7 @@ Server::Server(std::vector<int> ports, std::vector<std::string> names, int backl
 		{
 			delete newServerBlock;
 			close(this->_epoll_fd);
-			throw EpollCtlException();
+			throw EpollCtlException(*this);
 		}
 
 		// TODO set the error pages defined in the config file
@@ -95,7 +95,7 @@ Server::Server(std::vector<int> ports, std::vector<std::string> names, int backl
 				newRoute = new Routes(-1, false, "website/cgi-bin", "/find-this");
 				newRoute->setMethod(GET, true);
 				newRoute->setMethod(POST, true);
-				newRoute->setMethod(DELETE, true);
+				newRoute->setMethod(DELETE, false);
 				std::string	extension = "py";
 				std::string	uploadPath = "./upload";
 				newRoute->setCgiFileExtension(extension);
@@ -248,12 +248,22 @@ ServerBlock	Server::getServerBlock(int index)
 	return (*this->_serverBlocks[index]);
 }
 
+std::vector<Client*>	&Server::getClientListVector()
+{
+	return (this->_clientList);
+}
+
+std::vector<int>	&Server::getErrorFdsVector()
+{
+	return (this->_errorFds);
+}
+
 epoll_event	*Server::getEpollEventArray()
 {
 	return (this->_events);
 }
 
-epoll_event	Server::getEpollIndex(int index)
+epoll_event	&Server::getEpollIndex(int index)
 {
 	return (this->_events[index]);
 }
@@ -263,18 +273,18 @@ void	Server::removeFromEpoll(int fd)
 	epoll_ctl(this->_epoll_fd, EPOLL_CTL_DEL, fd, NULL);
 }
 
-void	Server::handle_connections(std::vector<Client*> &clientList, std::vector<int> &errorFds)
+void	Server::handle_connections()
 {
 	//handling all the triggers made in epoll_wait
 	for (int i = 0; i < this->_epoll_count; i++)
 	{
-		error_connection_handler(errorFds, *this);
+		error_connection_handler(*this);
 		struct epoll_event	&event = this->_events[i];
 		if (this->getServerSocketTriggered(event.data.fd) != -1)
 		{
 			try
 			{
-				new_connection(clientList, errorFds, *this, this->getServerSocketTriggered(event.data.fd));
+				new_connection(*this, this->getServerSocketTriggered(event.data.fd));
 			}
 			catch(const std::exception& e)
 			{
@@ -282,16 +292,16 @@ void	Server::handle_connections(std::vector<Client*> &clientList, std::vector<in
 			}
 		}
 		else
-			this->manageConnection(clientList, event);
+			this->manageConnection(event);
 	}
 }
 
-void	Server::manageConnection(std::vector<Client*> &clientList, epoll_event &event)
+void	Server::manageConnection(epoll_event &event)
 {
 	std::vector<Client*>::iterator	it;
 
-	it = isThisPipe(event.data.fd, clientList);
-	if (it != clientList.end())
+	it = isThisPipe(event.data.fd, *this);
+	if (it != this->_clientList.end())
 	{
 		try
 		{
@@ -304,16 +314,16 @@ void	Server::manageConnection(std::vector<Client*> &clientList, epoll_event &eve
 				throw BadChildException();
 			if (std::string(e.what()) != "BadClient")
 				std::cerr << e.what() << '\n';
-			clearClient(it, clientList);
+			clearClient(it, *this);
 		}
 	}
 	//getting from the clientList which client was triggered/disconnected
-	it = getRightHole(clientList, event.data.fd);
-	if (it == clientList.end())
+	it = getRightHole(*this, event.data.fd);
+	if (it == this->_clientList.end())
 		return;
 	else if ((event.events == EPOLLRDHUP) && \
 		(*it)->getClientReadingFlag() && (*it)->getClientWritingFlag() && (*it)->getClientOpenFd() == -1)
-		clearClient(it, clientList);
+		clearClient(it, *this);
 	else if (!(*it)->getClientReadingFlag())
 	{
 		try
@@ -322,39 +332,20 @@ void	Server::manageConnection(std::vector<Client*> &clientList, epoll_event &eve
 			{
 				(*it)->readRequest((*it)->getSocketFd());
 				if ((*it)->getClientReadingFlag())
-				{
-					(*it)->resetTimer();
 					(*it)->setClientWritingFlag(false);
-					(*it)->setClientPending(true);
-					(*it)->setSocketToWriting(this->_epoll_fd);
-				}
-				else if (!(*it)->getClientReadingFlag() && (*it)->getClientRequest()->get_expect() == "100-continue")
-				{
-					(*it)->resetTimer();
-					(*it)->setClientPending(true);
-					(*it)->setSocketToWriting(this->_epoll_fd);
-				}
+				(*it)->resetTimer();
+				(*it)->setClientPending(true);
+				(*it)->setSocketToWriting(this->_epoll_fd);
 				(*it)->setRouteTriggered((*this->getRouteTriggered((*it)->getURIRequested(), (*it)->getSocketTriggered())));
 			}
 			else if (event.events == EPOLLOUT)
 			{
+				//in case the body is still to be sent
 				send((*it)->getSocketFd(), "HTTP/1.1 100 Continue\r\n\r\n", 25, MSG_NOSIGNAL);
 				(*it)->setSocketToReading(this->_epoll_fd);
 			}
 			else if ((*it)->getClientPending())
-			{
-				(*it)->getClientRequest()->readBinary((*it)->getSocketFd(), (*it));
-				if ((*it)->getClientRequest()->getFullContentSize() == 0)
-					(*it)->getClientRequest()->setFullContent(reinterpret_cast<char*>((*it)->getClientRequest()->getBufferInfo().data()));
-				else
-					(*it)->getClientRequest()->addToFullContent(reinterpret_cast<char*>((*it)->getClientRequest()->getBufferInfo().data()), (*it)->getClientRequest()->getBufferInfo().size());
-				if ((*it)->getClientRequest()->getFullContentSize() == std::atoi((*it)->getClientRequest()->get_content_length().c_str()))
-				{
-					(*it)->setClientWritingFlag(false);
-					(*it)->setClientReadingFlag(true);
-					(*it)->setSocketToWriting(this->_epoll_fd);
-				}
-			}
+				(*it)->readBodyOfRequest(*this, (*it)->getClientRequest());
 			
 		}
 		catch(const std::exception& e)
@@ -364,20 +355,20 @@ void	Server::manageConnection(std::vector<Client*> &clientList, epoll_event &eve
 				if ((*it)->getClientRequest()->get_connection() == "keep-alive")
 					(*it)->resetClient(*this);
 				else
-					clearClient(it, clientList);
+					clearClient(it, *this);
 			}
 			else if (std::string(e.what()) != "EmptyBuffer")
 				std::cerr << e.what() << '\n';
 		}
 	}
 	else
-		this->manageClient(clientList, it, event);
+		this->manageClient(it, event);
 }
 
-void	Server::manageClient(std::vector<Client*> &clientList, std::vector<Client*>::iterator it, epoll_event	&event)
+void	Server::manageClient(std::vector<Client*>::iterator it, epoll_event	&event)
 {
 	if (!isConnectionGood(*this, it))
-		handlePortOrDomainMismatch(*this, clientList, it);
+		handlePortOrDomainMismatch(*this, it);
 	else if ((*it)->getRouteTriggered()->isCgi())
 	{
 		try
@@ -399,7 +390,7 @@ void	Server::manageClient(std::vector<Client*> &clientList, std::vector<Client*>
 				throw BadChildException();
 			if (std::string(e.what()) != "BadClient")
 				std::cerr << e.what() << '\n';
-			clearClient(it, clientList);
+			clearClient(it, *this);
 		}
 	}
 	else
@@ -420,12 +411,12 @@ void	Server::manageClient(std::vector<Client*> &clientList, std::vector<Client*>
 				if ((*it)->getClientRequest()->get_connection() == "keep-alive")
 					(*it)->resetClient(*this);
 				else
-					clearClient(it, clientList);
+					clearClient(it, *this);
 			}
 			else if (std::string(e.what()) != "Loading Listing")
 			{
 				std::cerr << e.what() << '\n';
-				clearClient(it, clientList);
+				clearClient(it, *this);
 			}
 			else if (!(*it)->getClientFile()->getFile()->is_open())
 				(*it)->resetClient(*this);
@@ -433,17 +424,46 @@ void	Server::manageClient(std::vector<Client*> &clientList, std::vector<Client*>
 	}
 }
 
-Server::SocketCreationException::SocketCreationException() :
-runtime_error(RED"Error creating the socket"RESET) {}
+void	Server::addClientToClientVector(Client *client)
+{
+	this->_clientList.push_back(client);
+}
 
-Server::SocketBindException::SocketBindException() :
-runtime_error(RED"Error binding the socket"RESET) {}
+void	Server::removeClientFromClientVector(std::vector<Client*>::iterator client)
+{
+	this->_clientList.erase(client);
+}
+
+void	Server::addErrorFdToErrorVector(int fd)
+{
+	this->_errorFds.push_back(fd);
+}
+
+void	Server::removeErrorFdFromErrorVector(std::vector<int>::iterator errorFd)
+{
+	this->_errorFds.erase(errorFd);
+}
+
+Server::SocketCreationException::SocketCreationException(Server &server) :
+runtime_error(RED"Error creating the socket"RESET)
+{
+	cleaner(server, true);
+}
+
+Server::SocketBindException::SocketBindException(Server &server) :
+runtime_error(RED"Error binding the socket"RESET)
+{
+	cleaner(server, true);
+}
 
 Server::EpollCreationException::EpollCreationException() :
 runtime_error(RED"Error creating the epoll_fd"RESET) {}
 
-Server::EpollCtlException::EpollCtlException() :
-runtime_error(RED"Error managing the epoll"RESET) {}
+Server::EpollCtlException::EpollCtlException(Server &server) :
+runtime_error(RED"Error managing the epoll"RESET)
+{
+	cleaner(server, true);
+}
 
 Server::NoFileToReadException::NoFileToReadException() :
 runtime_error(RED"No File Pending"RESET) {}

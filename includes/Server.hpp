@@ -15,6 +15,8 @@ class Server
 {
 private:
 	std::vector<ServerBlock*>	_serverBlocks;
+	std::vector<Client*>	_clientList;
+	std::vector<int>		_errorFds;
 	int	_epoll_fd;
 	int	_epoll_count;
 	int	_maxEvents;
@@ -34,21 +36,27 @@ public:
 	std::vector<ServerBlock*>::iterator	getDefaultServerBlock();
 	std::vector<ServerBlock*>	getServerBlocks();
 	ServerBlock	getServerBlock(int index);
+	std::vector<Client*>	&getClientListVector();
+	std::vector<int>		&getErrorFdsVector();
 	epoll_event	*getEpollEventArray();
-	epoll_event	getEpollIndex(int index);
-	void	handle_connections(std::vector<Client*> &clientList, std::vector<int> &errorFds);
-	void	manageConnection(std::vector<Client*> &clientList, epoll_event	&event);
-	void	manageClient(std::vector<Client*> &clientList, std::vector<Client*>::iterator it, epoll_event	&event);
+	epoll_event	&getEpollIndex(int index);
+	void	handle_connections();
+	void	manageConnection(epoll_event	&event);
+	void	manageClient(std::vector<Client*>::iterator it, epoll_event	&event);
 	void	removeFromEpoll(int fd);
+	void	addClientToClientVector(Client *client);
+	void	removeClientFromClientVector(std::vector<Client*>::iterator client);
+	void	addErrorFdToErrorVector(int fd);
+	void	removeErrorFdFromErrorVector(std::vector<int>::iterator errorFd);
 	class	SocketCreationException : public std::runtime_error
 	{
 		public:
-			SocketCreationException();
+			SocketCreationException(Server &server);
 	};
 	class	SocketBindException : public std::runtime_error
 	{
 		public:
-			SocketBindException();
+			SocketBindException(Server &server);
 	};
 	class	EpollCreationException : public std::runtime_error
 	{
@@ -58,7 +66,7 @@ public:
 	class	EpollCtlException : public std::runtime_error
 	{
 		public:
-			EpollCtlException();
+			EpollCtlException(Server &server);
 	};
 	class	NoFileToReadException : public std::runtime_error
 	{
