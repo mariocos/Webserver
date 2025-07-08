@@ -26,6 +26,11 @@ int delete_resource(Client *client, RequestParse *req)
     if (access(uploadPath.c_str(), F_OK) != 0) {
 		throw Error404Exception(client->getSocketFd(), client->getClientResponse(), client);
     }
+
+	// Check if path it's Route or Upload root
+	if (uploadPath == client->getRouteTriggered()->getUploadPath() + "/" || uploadPath == client->getRouteTriggered()->getRoot() + "/") {
+		throw Error403Exception(client->getSocketFd(), client->getClientResponse(), client);
+	}
     
     // Check if it's a directory
     struct stat pathStat;
