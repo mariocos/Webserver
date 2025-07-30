@@ -3,7 +3,14 @@ servers:
     server_names: localhost
     routes:
       - uri: /
-        methods: [GET, POST]
+        methods: [GET]
+        modules:
+          - type: static
+            settings:
+              root: /home/pbjr
+              directory_listing: true
+      - uri: /
+        methods: [POST]
         modules:
           - type: static
             settings:
