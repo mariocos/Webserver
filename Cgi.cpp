@@ -177,7 +177,7 @@ void	Cgi::readCgiResponse(Server &server, Client *client)
 	this->setCgiResponse(1048576, client->getClientResponse());
 	if (this->_cgiResponse.size() == 0)
 		client->getClientResponse()->setStatusCode(403);
-	printLog("CGI", NULL, client, client->getClientResponse(), 8);
+	printLog("CGI", NULL, client, client->getClientResponse(), 8, "");
 	server.removeFromEpoll(this->_cgiStdOut[0]);
 	close(this->_cgiStdOut[0]);
 	this->_cgiStdOut[0] = -1;

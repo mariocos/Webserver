@@ -290,7 +290,7 @@ void	new_connection(Server &server, int serverFd)
 	newClient->addSocketToEpoll(server.getEpollFd());
 	if ((*it)->getBlockMaxConnections() != -1 && (*it)->getBlockActualConnections() == (*it)->getBlockMaxConnections())
 	{
-		printLog("ERROR", NULL, newClient, NULL, 503);
+		printLog("ERROR", NULL, newClient, NULL, 503, "");
 		server.addErrorFdToErrorVector(newClient->getSocketFd());
 		newClient->setSocketFd(-1);
 		delete	newClient;
@@ -301,12 +301,12 @@ void	new_connection(Server &server, int serverFd)
 		(*it)->increaseConnections();
 		server.addClientToClientVector(newClient);
 	}
-	printLog("INFO", NULL, newClient, NULL, 3);
+	printLog("INFO", NULL, newClient, NULL, 3, "");
 }
 
 void	clearClient(std::vector<Client*>::iterator	it, Server &server)
 {
-	printLog("INFO", NULL, (*it), NULL, 4);
+	printLog("INFO", NULL, (*it), NULL, 4, "");
 	(*it)->setClientOpenFd(-1);
 	(*it)->removeSocketFromEpoll((*it)->getSocketFd());
 	close((*it)->getSocketFd());

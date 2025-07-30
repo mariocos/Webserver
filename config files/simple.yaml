@@ -7,5 +7,5 @@ servers:
         modules:
           - type: static
             settings:
-              root: /home/deblin
+              root: /home/pbjr
               directory_listing: true

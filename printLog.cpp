@@ -1,6 +1,6 @@
 #include "includes/webserv.hpp"
 
-void	printLog(std::string action, ServerBlock *serverBlock, Client *client, Response *response, int mode)
+void	printLog(std::string action, ServerBlock *serverBlock, Client *client, Response *response, int mode, std::string filename)
 {
 	switch (mode)
 	{
@@ -10,8 +10,7 @@ void	printLog(std::string action, ServerBlock *serverBlock, Client *client, Resp
 			break;
 		case 1:
 			std::cout<<"["<<getTimeStamp()<<"]"<<GREEN<<" ["<<action<<"] "<<RESET;
-			//set which file was used to load the ServerBlock
-			std::cout<<GREEN<<"Loaded configuration from default.config"<<RESET<<std::endl;
+			std::cout<<GREEN<<"Loaded configuration from " + filename<<RESET<<std::endl;
 			break;
 		case 2:
 			std::cout<<"["<<getTimeStamp()<<"]"<<RED<<" ["<<action<<"] "<<RESET;

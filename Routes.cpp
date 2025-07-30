@@ -304,7 +304,7 @@ runtime_error("Loading Listing")
 		createHeader(client->getClientRequest(), client->getClientResponse(), client);
 		return ;
 	}
-	printLog("ACCESS", NULL, client, client->getClientResponse(), 13);
+	printLog("ACCESS", NULL, client, client->getClientResponse(), 13, "");
 	response->clearResponse();
 	if (response->getStatusCode() == 200)
 		response->addToResponse("HTTP/1.1 " + transformToString(response->getStatusCode()) + " OK\r\n");
@@ -329,7 +329,7 @@ runtime_error("Loading Listing")
 	client->setClientPending(false);
 	client->getClientFile()->setReading(false);
 	client->getClientFile()->setWriting(false);
-	printLog("INFO", NULL, client, client->getClientResponse(), 14);
+	printLog("INFO", NULL, client, client->getClientResponse(), 14, "");
 	if (client->getRouteTriggered()->isCgi())
 	{
 		client->setClientWritingFlag(true);

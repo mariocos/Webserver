@@ -10,7 +10,7 @@ void	cleaner(Server &server, bool print)
 		if ((*clientIt)->getClientOpenFd() != -1)
 			close((*clientIt)->getClientOpenFd());
 		if (print)
-			printLog("INFO", NULL, *clientIt, NULL, 4);
+			printLog("INFO", NULL, *clientIt, NULL, 4, "");
 		delete (*clientIt);
 		server.removeClientFromClientVector(clientIt);
 		clientIt = server.getClientListVector().begin();
@@ -34,7 +34,7 @@ void	cleaner(Server &server, bool print)
 			routeIt++;
 		}
 		if (print)
-			printLog("INFO", *serverIt, NULL, NULL, 2);
+			printLog("INFO", *serverIt, NULL, NULL, 2, "");
 		delete (*serverIt);
 		serverIt++;
 	}
@@ -53,7 +53,7 @@ void	cleanerForServerCreation(Server &server, bool print)
 			routeIt++;
 		}
 		if (print)
-			printLog("INFO", *serverIt, NULL, NULL, 2);
+			printLog("INFO", *serverIt, NULL, NULL, 2, "");
 		delete (*serverIt);
 		serverIt++;
 	}

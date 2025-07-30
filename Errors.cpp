@@ -4,7 +4,7 @@ Load301Exception::Load301Exception(int client_socket, Response *response, Client
 runtime_error("Redirect") 
 {
 	response->setStatusCode(301);
-	printLog("INFO", NULL, client, NULL, 301);
+	printLog("INFO", NULL, client, NULL, 301, "");
 	load301(client_socket, response, client);
 	if (client->getRouteTriggered()->isCgi())
 	{
@@ -17,7 +17,7 @@ Load307Exception::Load307Exception(int client_socket, Response *response, Client
 runtime_error("Redirect") 
 {
 	response->setStatusCode(307);
-	printLog("INFO", NULL, client, NULL, 307);
+	printLog("INFO", NULL, client, NULL, 307, "");
 	load307(client_socket, response, client);
 	if (client->getRouteTriggered()->isCgi())
 	{
@@ -97,7 +97,7 @@ Error417Exception::Error417Exception(int client_socket, Response *response, Clie
 runtime_error("Expectation") 
 {
 	response->setStatusCode(417);
-	printLog("ERROR", NULL, client, response, 417);
+	printLog("ERROR", NULL, client, response, 417, "");
 	loadError417(client_socket, response, client);
 }
 
@@ -114,6 +114,6 @@ Error505Exception::Error505Exception(int client_socket, Response *response, Clie
 runtime_error("HTTPVersion")
 {
 	response->setStatusCode(505);
-	printLog("ERROR", NULL, client, response, 505);
+	printLog("ERROR", NULL, client, response, 505, "");
 	loadError505(client_socket, response, client);
 }

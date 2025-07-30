@@ -224,7 +224,7 @@ void	loadError408(int client_socket, Response *response, Client *client)
 	ssize_t	bytesSent = send(client_socket, reinterpret_cast<const char*>(data.data()), data.size(), MSG_NOSIGNAL);
 	if (bytesSent == -1)
 	{
-		printLog("ERROR", NULL, client, NULL, 15);
+		printLog("ERROR", NULL, client, NULL, 15, "");
 		return ;
 	}
 	response->addToBytesSent(bytesSent);

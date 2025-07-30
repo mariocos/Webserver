@@ -51,7 +51,7 @@ void	cgiHandler(Server &server, Client *client, int fdTriggered)
 			if (!client->getRouteTriggered()->getCgiFileExtension().empty() && fileExtension != "." + client->getRouteTriggered()->getCgiFileExtension())
 				throw Error404Exception(client->getSocketFd(), client->getClientResponse(), client);
 			prepareCgi(client);
-			printLog("CGI", NULL, client, client->getClientResponse(), 7);
+			printLog("CGI", NULL, client, client->getClientResponse(), 7, "");
 			client->getClientCgi()->setPid(fork());
 			if (client->getClientCgi()->getPid() == 0)
 			client->getClientCgi()->executeCgi(client);

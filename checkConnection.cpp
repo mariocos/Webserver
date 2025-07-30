@@ -50,7 +50,7 @@ void	searchForTimeOut(Server &server)
 		if ((*it)->hasTimedOut())
 		{
 			loadError408((*it)->getSocketFd(), (*it)->getClientResponse(), (*it));
-			printLog("INFO", NULL, (*it), (*it)->getClientResponse(), 12);
+			printLog("INFO", NULL, (*it), (*it)->getClientResponse(), 12, "");
 			(*it)->removeSocketFromEpoll((*it)->getSocketFd());
 			close((*it)->getSocketFd());
 			(*it)->getServerBlockTriggered()->decreaseConnections();

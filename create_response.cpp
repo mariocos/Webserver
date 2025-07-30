@@ -53,7 +53,7 @@ void	createHeader(RequestParse *request, Response *response, Client *client)
 	client->getClientFile()->setReading(true);
 	client->getClientFile()->setWriting(false);
 	response->addToBytesToSend(client->getClientFile()->getFileStats()->st_size);
-	printLog("ACCESS", NULL, client, client->getClientResponse(), 5);
+	printLog("ACCESS", NULL, client, client->getClientResponse(), 5, "");
 }
 
 int setNonBlocking(int fd)
@@ -69,7 +69,7 @@ void	loadPage(int client_socket, Response *response, Client *client)
 		sendMsgToSocket(client_socket, client->getClientFile()->getBytesRead(), client, response);
 	if (response->getBytesSent() < response->getBytesToSend())
 	{
-		printLog("DEBUG", NULL, client, response, 11);
+		printLog("DEBUG", NULL, client, response, 11, "");
 		response->clearResponse();
 		client->getClientFile()->setReading(true);
 		client->getClientFile()->setWriting(false);
@@ -78,7 +78,7 @@ void	loadPage(int client_socket, Response *response, Client *client)
 		return ;
 	}
 	if (response->getBytesSent() == response->getBytesToSend() && !client->getClientWritingFlag())
-		printLog("INFO", NULL, client, response, 6);
+		printLog("INFO", NULL, client, response, 6, "");
 	response->clearResponse();
 	client->getClientFile()->setReading(false);
 	client->getClientFile()->setWriting(false);
@@ -102,7 +102,7 @@ void	createPostResponse(Client *client, Response *response)
 	client->setClientPending(false);
 	client->getClientFile()->setReading(false);
 	client->getClientFile()->setWriting(false);
-	printLog("INFO", NULL, client, response, 9);
+	printLog("INFO", NULL, client, response, 9, "");
 }
 
 void	createDeleteResponse(Client *client, Response *response)
@@ -123,7 +123,7 @@ void	createDeleteResponse(Client *client, Response *response)
 	client->setClientPending(false);
 	client->getClientFile()->setReading(false);
 	client->getClientFile()->setWriting(false);
-	printLog("INFO", NULL, client, response, 10);
+	printLog("INFO", NULL, client, response, 10, "");
 }
 
 void	sendMsgToSocket(int client_socket, int lenght, Client *client, Response *response)

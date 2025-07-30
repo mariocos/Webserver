@@ -126,9 +126,6 @@ int	main(int ac, char **av)
 		std::cout<<RED<<"Wrong number of arguments"<<RESET<<std::endl;
 		return (1);
 	}
-	std::string	config("default.config");
-	if (ac == 2)
-		config = av[1];
 	try
 	{
 //		std::vector<int>	ports;
@@ -145,7 +142,17 @@ int	main(int ac, char **av)
         YamlParser parser;
         YamlNode* root = NULL;
 //           std::vector<ServerBlock*>	Servers = NULL;
-        root = parser.parse(av[1]);
+		std::string filePath;
+		if (av[1])
+			filePath = av[1];
+		else
+			filePath = "default.yaml";
+		std::string fileName;
+		if (filePath.find('/') != std::string::npos)
+			fileName = filePath.substr(filePath.rfind('/') + 1);
+		else
+			fileName = filePath;
+        root = parser.parse(filePath);
         Server    server(root);
         if (root) {
 //            root->print();
@@ -153,6 +160,10 @@ int	main(int ac, char **av)
         } else {
             std::cerr << "Failed to parse YAML file." << std::endl;
         }
+		if (fileName.empty())
+			printLog("INFO", NULL, NULL, NULL, 1, "default.yaml");
+		else
+			printLog("INFO", NULL, NULL, NULL, 1, fileName);
 		run = true;
 		signal(SIGINT, stopRunning);
 		while (run)

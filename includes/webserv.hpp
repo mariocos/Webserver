@@ -96,7 +96,7 @@ void	error_connection_handler(Server &server);
 void	stopRunning(int signal);;
 
 //printLog.cpp
-void	printLog(std::string action, ServerBlock *serverBlock, Client *client, Response *response, int mode);
+void	printLog(std::string action, ServerBlock *serverBlock, Client *client, Response *response, int mode, std::string filename);
 
 //utils.cpp
 std::string	getTimeStamp();
