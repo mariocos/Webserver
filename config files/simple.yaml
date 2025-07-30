@@ -1,0 +1,11 @@
+servers:
+  - listen: 8080
+    server_names: localhost
+    routes:
+      - uri: /
+        methods: [GET, POST]
+        modules:
+          - type: static
+            settings:
+              root: /home/deblin
+              directory_listing: true
