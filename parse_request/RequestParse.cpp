@@ -212,7 +212,6 @@ void	RequestParse::GET_response(int client_socket, Client *client)
 	if (!client->getClientFile()->isReading() && !client->getClientFile()->isWriting())
 	{
 		findType(this, client->getClientResponse(), client);
-		std::cout<<"Passou pelo GET_Resposnse\n";
 		client->getClientFile()->openFile(client->getClientResponse()->getPath().c_str(), client_socket);
 		createHeader(this, client->getClientResponse(), client);
 	}

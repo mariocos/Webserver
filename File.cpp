@@ -85,7 +85,6 @@ void	File::readFromFd(unsigned int buffer_size)
 
 void	File::openFile(const char *path, int client_socket)
 {
-	std::cout << "Path: "<< path << std::endl;
 	if (!this->checkFileInfo(path, client_socket))
 		return ;
 	this->_file.open(path, std::ios::in | std::ios::binary);

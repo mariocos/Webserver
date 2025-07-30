@@ -12,6 +12,8 @@ Routes::Routes() : _maxBodySize(-1), _defaultRoute(false), _isCgi(false), _direc
 
 Routes::Routes(int maxBodySize, bool flag, std::string root, std::string uri) : _root(root), _uri(uri), _maxBodySize(maxBodySize), _defaultRoute(flag), _isCgi(false), _directoryListing(false), _isPermanentRedirect(false), _isTemporaryRedirect(false)
 {
+	if (root.rfind("/") == root.length() - 1)
+		this->_root = root.substr(0, root.length() - 1);
 	for (int i = 0; i < 3; i++)
 		this->_methods[i] = false;
 	this->_savedPath = "";
@@ -234,7 +236,6 @@ std::string	generateListingHTML(std::string &dirPath, Client *client)
 	DIR	*dir = opendir(dirPath.c_str());
 	if (!dir)
 	{
-		std::cout<<"Passou pelo generateListingHTML\n";
 		client->getClientFile()->openFile(dirPath.c_str(), client->getSocketFd());
 		html<<"<p>Could not open directory.</p>\n";
 		client->getClientResponse()->setStatusCode(404);
@@ -279,6 +280,8 @@ std::string	constructListingPath(Client *client)
 	{
 		if (uri.find('/', 1) != std::string::npos)
 			path = client->getRouteTriggered()->getRoot() + requestPath.substr(uri.length() - 1);
+		else if (uri == "/")
+			path = client->getRouteTriggered()->getRoot() + requestPath;
 		else
 			path = client->getRouteTriggered()->getRoot() + requestPath.substr(uri.length());
 	}

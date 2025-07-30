@@ -182,8 +182,6 @@ std::string	Client::getDomainTriggered()
 
 std::string	Client::getNewPath()
 {
-	std::cout << "URI: " << this->_routeTriggered->getURI() << std::endl;
-	std::cout << "Root: " << this->_routeTriggered->getRoot() << std::endl;
 	std::string path;
 	if (this->_routeTriggered->getURI() != "/")
 	{
@@ -192,7 +190,6 @@ std::string	Client::getNewPath()
 	}
 	else
 		path = this->_routeTriggered->getRoot() + this->_request->get_path();
-	std::cout << "New Path: " << path << std::endl;
 	return (path);
 }
 

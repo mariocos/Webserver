@@ -53,5 +53,7 @@
 		"streambuf": "cpp",
 		"typeinfo": "cpp",
 		"*.tpp": "cpp"
+		"variant": "cpp",
+		"codecvt": "cpp"
 	}
 }

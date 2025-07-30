@@ -1,5 +1,6 @@
 CXX = c++
 CXXFLAGS = -std=c++98 -Wall -Wextra -Werror -g -Wno-c++11-compat
+CXXFLAGS = -std=c++98 -Wall -Wextra -Werror -g -Wno-c++11-compat
 NAME = webserv
 
 SOURCES =	main.cpp utils.cpp checkConnection.cpp\

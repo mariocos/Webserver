@@ -15,7 +15,6 @@ void	prepareCgi(Client *client)
 		env.push_back("CONTENT_LENGHT=" + transformToString(client->getClientRequest()->get_content().size()));
 	else
 	{
-		std::cout<<"Passou pelo CGI\n";
 		client->getClientFile()->openFile(path.c_str(), client->getSocketFd());
 		env.push_back("CONTENT_LENGHT=" + transformToString(client->getClientFile()->getFileStats()->st_size));
 		client->getClientFile()->getFile()->close();
