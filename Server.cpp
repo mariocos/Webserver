@@ -81,10 +81,11 @@ Server::Server(std::vector<int> ports, std::vector<std::string> names, int backl
 		{
 			if (n == 0)
 			{
-				newRoute = new Routes(-1, true, "website", "/");
+				newRoute = new Routes(-1, true, "/home/pbjr", "/");
 				newRoute->setMethod(GET, true);
 				newRoute->setMethod(POST, true);
 				newRoute->setMethod(DELETE, true);
+				newRoute->setAsListing();
 				std::string	file = "dummy.html";
 				std::string	uploadPath = "./upload";
 				newRoute->setDefaultFileForDirectory(file);
@@ -103,7 +104,7 @@ Server::Server(std::vector<int> ports, std::vector<std::string> names, int backl
 			}
 			else if (n == 2)
 			{
-				newRoute = new Routes(-1, false, "/home/pauberna/Desktop/projetos_42", "/projects/");
+				newRoute = new Routes(-1, false, "/home/pbjr/Desktop", "/projects");
 				newRoute->setAsListing();
 				newRoute->setMethod(GET, true);
 			}
