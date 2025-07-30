@@ -1,141 +1,121 @@
-#include "webserv.hpp"
+#include "includes/webserv.hpp"
 
-int serverskt = 0;
+bool	run;
 
-void	ctrl_c(int signal, siginfo_t *info, void *context)
+NoPendingConnectionsException::NoPendingConnectionsException() :
+runtime_error("")
 {
-	(void) info;
-	(void) context;
-	if (signal == SIGINT)
-	{
-		close(serverskt);
-		exit(1);
-	}
 }
 
-void	ignore(struct sigaction *sa, int signal)
+NewConnectionCreationException::NewConnectionCreationException(Server &server) :
+runtime_error(RED "Error adding a new client" RESET)
 {
-	struct sigaction	original;
-	int					original_flags;
+	cleaner(server, true);
+}
 
-	original_flags = sa->sa_flags;
-	sa->sa_handler = SIG_IGN;
-	sa->sa_flags |= SA_SIGINFO;
-	if (sigemptyset(&sa->sa_mask) != 0)
+SendException::SendException(Client *client, Response *response) :
+runtime_error("[" + getTimeStamp() + "]" + RED + " [ERROR] Error while sending to " + client->getClientIp() + ":" + transformToString(client->getClientPort()) + RESET)
+{
+	response->clearResponse();
+	client->setClientWritingFlag(true);
+	client->setClientPending(false);
+	client->getClientFile()->setReading(false);
+}
+
+ReadException::ReadException(Client *client, Response *response) :
+runtime_error("[" + getTimeStamp() + "]" + RED + " [ERROR] Error while reading from " + client->getClientIp() + ":" + transformToString(client->getClientPort()) + RESET)
+{
+	response->clearResponse();
+	client->setClientReadingFlag(true);
+	client->setClientPending(false);
+	client->getClientFile()->setWriting(false);
+}
+
+RedirectException::RedirectException(Server &server, std::vector<Client*>::iterator it) :
+runtime_error("[" + getTimeStamp() + "]" + YELLOW + " [INFO] Redirecting Request from " + (*it)->getClientIp() + ":" + transformToString((*it)->getClientPort()) + " to Default Server Block" + RESET)
+{
+	std::vector<ServerBlock*>	serverBlocks = server.getServerBlocks();
+	std::vector<ServerBlock*>::iterator	serverIt = serverBlocks.begin();
+	while (serverIt != serverBlocks.end())
+	{
+		if ((*serverIt)->isDefault())
+			break;
+		serverIt++;
+	}
+	(*it)->setDomainTriggered((*serverIt)->getBlockName());
+	(*it)->getClientRequest()->setNewHost((*serverIt)->getBlockName());
+	(*it)->setPortTriggered((*serverIt)->getBlockPort());
+	(*it)->setServerBlockTriggered(*serverIt);
+	(*it)->setRouteTriggered((*(*serverIt)->getDefaultRoute()));
+}
+
+BadChildException::BadChildException() :
+runtime_error("Bad child")
+{
+}
+
+BadPipeCreationException::BadPipeCreationException() :
+runtime_error(RED "Error opening the pipe" RESET) {}
+
+NonBlockingException::NonBlockingException(int fd) :
+runtime_error(RED "Failed To Set Server Fd To Non Blocking" RESET)
+{
+	if (fd != -1)
+		close(fd);
+}
+
+BadClientException::BadClientException() :
+runtime_error("BadClient")
+{
+}
+
+EmptyBufferException::EmptyBufferException() :
+runtime_error("EmptyBuffer")
+{
+}
+
+NoUploadPathException::NoUploadPathException(Server &server, std::vector<Routes*> tmp) :
+runtime_error(RED "No Upload Path setted for a POST route" RESET)
+{
+	close(server.getEpollFd());
+	std::vector<Routes*>::iterator	it = tmp.begin();
+	while (it != tmp.end())
+	{
+		delete (*it);
+		it++;
+	}
+	cleanerForServerCreation(server, true);
+}
+
+void	error_connection_handler(Server &server)
+{
+	std::vector<int>::iterator	it = server.getErrorFdsVector().begin();
+	std::vector<int>::iterator	end = server.getErrorFdsVector().end();
+	if (it == end)
 		return ;
-	sigaction(signal, sa, &original);
-	sa->sa_flags = original_flags;
-}
-
-void	signal_decider(int type)
-{
-	static struct sigaction	sa;
-
-	if (type == 0)
+	for (int i = 0; i < server.getEpollCount(); i++)
 	{
-		sa.sa_sigaction = ctrl_c;
-		sa.sa_flags = SA_SIGINFO;
-		if (sigemptyset(&sa.sa_mask) != 0)
-			return ;
-		sigaction(SIGINT, &sa, NULL);
-		ignore(&sa, SIGQUIT);
-	}
-}
-
-void	check(int algo)
-{
-	if (algo == -1)
-	{
-		perror("");
-		std::cerr<<RED<<"Error msg"<<RESET<<std::endl;
-		exit(1);
-	}
-}
-
-int	setup(short port, int backlog)
-{
-	int server_socket;
-	int	option = 1;
-	struct sockaddr_in servaddr;
-
-	check((server_socket = socket(AF_INET, SOCK_STREAM, 0)));
-	servaddr.sin_family = AF_INET;
-	servaddr.sin_addr.s_addr = INADDR_ANY;
-	servaddr.sin_port = htons(port);
-	setsockopt(server_socket, SOL_SOCKET, SO_REUSEADDR, &option, 4);
-	check(bind(server_socket, (const sockaddr *)&servaddr, sizeof(servaddr)));
-	check(listen(server_socket, backlog));
-	return (server_socket);
-}
-
-int	new_connection(int server_socket)
-{
-	int	client_socket;
-	struct sockaddr_in clientaddr;
-	socklen_t	addrlen = sizeof(clientaddr);
-	check((client_socket = accept(server_socket, (sockaddr*)&clientaddr, &addrlen)));
-	return (client_socket);
-}
-
-void	make_response(int client_socket, char *buffer)
-{
-	std::string	response, r_buffer, method, requested_file, http_version, path, type = "text/plain";
-	std::ifstream	input;
-	std::istringstream	request(buffer);
-
-	request >> method >> requested_file >> http_version;
-	if (requested_file == "/")
-		requested_file = "/index.html";
-	if (requested_file.length() > 5 && requested_file.find(".html") == requested_file.length() - 5)
-		type = "text/html";
-	else if (requested_file.length() > 4 && requested_file.find(".css") == requested_file.length() - 4)
-		type = "text/css";
-	else
-		type = "text/html";
-	response.append("HTTP/1.1 200 OK\n");
-	response.append("Content-Type: " + type + "\n\n");
-	path = "website" + requested_file;
-	input.open(path.c_str());
-	if (input.is_open())
-	{
-		while (getline(input, r_buffer))
+		it = server.getErrorFdsVector().begin();
+		epoll_event &event = server.getEpollIndex(i);
+		while (it != server.getErrorFdsVector().end())
 		{
-			response.append(r_buffer);
-			response.append("\n");
-		}
+			if (*it == event.data.fd && ((event.events & EPOLLIN) || (event.events & EPOLLOUT)))
+			{
+				loadError503((*it));
+				server.removeFromEpoll((*it));
+				server.removeErrorFdFromErrorVector(it);
+				break;
+			}
+			it++;
+		}	
 	}
-	else
-	{
-		input.open("website/404.html");
-		while (getline(input, r_buffer))
-		{
-			response.append(r_buffer);
-			response.append("\n");
-		}
-	}
-	input.close();
-	write(client_socket, response.c_str(), response.length());
-	close(client_socket);
 }
 
-void	*handle_connect(int client_socket)
+void	stopRunning(int signal)
 {
-	int	msgsize = 0;
-	char	buffer[4096];
-	size_t	bytes_read;
-
-	while ((bytes_read = read(client_socket, buffer + msgsize, sizeof(buffer) - msgsize - 1)) > 0)
-	{
-		msgsize += bytes_read;
-		if (msgsize > 4095 || buffer[msgsize - 1] == '\n')
-			break ;
-	}
-	check(bytes_read);
-	buffer[msgsize - 1] = '\0';
-	std::cout<<buffer<<std::endl;
-	make_response(client_socket, buffer);
-	std::cout<<YELLOW<<"Closing connection..."<<RESET<<std::endl;
-	return (NULL);
+	(void)signal;
+	run = false;
+	std::cout<<std::endl;
 }
 
 int	main(int ac, char **av)
@@ -145,18 +125,75 @@ int	main(int ac, char **av)
 		std::cout<<RED<<"Wrong number of arguments"<<RESET<<std::endl;
 		return (1);
 	}
-	std::string	config = "default.config";
+	std::string	config("default.config");
 	if (ac == 2)
 		config = av[1];
-	int	server_socket = setup(4243, 5);
-	serverskt = server_socket;
-	while (1)
+	try
 	{
-		signal_decider(0);
-		std::cout<<"Waiting..."<<std::endl;
-		int	client_socket = new_connection(server_socket);
-		std::cout<<GREEN<<"Connection successuful"<<RESET<<std::endl;
-		handle_connect(client_socket);
+//		std::vector<int>	ports;
+//		ports.push_back(4243);
+//		ports.push_back(8080);
+//		ports.push_back(3000);
+//		ports.push_back(2424);
+//		std::vector<std::string>	names;
+//		names.push_back("localhost");
+//		names.push_back("webserver.com");
+//		names.push_back("127.0.0.1");
+//		names.push_back("script");
+//		Server	server(ports, names, 20);
+        YamlParser parser;
+        YamlNode* root = NULL;
+//           std::vector<ServerBlock*>	Servers = NULL;
+        root = parser.parse(av[1]);
+        Server    server(root);
+        if (root) {
+//            root->print();
+            delete root;
+        } else {
+            std::cerr << "Failed to parse YAML file." << std::endl;
+        }
+		run = true;
+		signal(SIGINT, stopRunning);
+		while (run)
+		{
+			server.setEpollCount(epoll_wait(server.getEpollFd(), server.getEpollEventArray(), server.getMaxEvents(), 100));
+			if (server.getEpollCount() == -1)
+			{
+				cleaner(server, true);
+				return (1);
+			}
+			try
+			{
+				server.handle_connections();
+				searchForTimeOut(server);
+			}
+			catch(const std::exception& e)
+			{
+				//in case of a lost child proccess after a error in execve
+				if (std::string(e.what()) == "Bad child")
+				{
+					cleaner(server, false);
+					throw BadChildException();
+				}
+				std::cerr << e.what() << '\n';
+			}
+		}
+		cleaner(server, true);
+	}
+	catch(const std::exception& e)
+	{
+		if (std::string(e.what()) == "Bad child")
+			return (0);
+		std::cerr << e.what() << '\n';
 	}
 	return (0);
 }
+
+//command to test GET to another serverBlock besides the localhost : "curl -H "Host: webserver.com" http://localhost:8080"
+//command to test POST : "curl -X POST -d "whatever we want to send as content" -H "Host: webserver.com" http://localhost:8080/chicken-jokey"
+//command to test POST with binary : "curl -X POST --data-binary @/bin/ls -H "Host: webserver.com" http://localhost:8080/chicken-jokey"
+//command to test GET to CGI : "curl -H "Host: script" http://localhost:2424/cgi-bin/hello.py\?name\=Jonh\&age\=30"
+//command to test POST to CGI : "curl -X POST -H "Host: script" -d "name=paul&lang=python" http://localhost:2424/cgi-bin/hello.py\?name\=Jonh\&age\=30"
+//command to test 1000 requests with siege : "siege -b -c 50 -r 20 http://localhost:4243/index.html"
+//command to test 1000 requests with siege : "siege -b -c 100 -r 10 http://localhost:4243/index.html"
+//command to test 1000 requests with siege : "siege -b -c 200 -r 5 http://localhost:4243/index.html"

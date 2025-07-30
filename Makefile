@@ -1,8 +1,15 @@
 CXX = c++
-CXXFLAGS = -std=c++98 -Wall -Wextra -Werror -g
+CXXFLAGS = -std=c++98 -Wall -Wextra -Werror -g -Wno-c++11-compat
 NAME = webserv
 
-SOURCES =	main.cpp
+SOURCES =	main.cpp utils.cpp checkConnection.cpp\
+			parse_request/RequestParse.cpp \
+			parse_request/request_gets.cpp \
+			signal.cpp Client.cpp Response.cpp create_response.cpp \
+			HoleExplorer.cpp Server.cpp loadErrorPages.cpp Routes.cpp printLog.cpp \
+			Errors.cpp File.cpp WebSocket.cpp ServerBlock.cpp CgiHandler.cpp \
+			Cgi.cpp Post_Dele/Post_exceptions.cpp Post_Dele/post.cpp Post_Dele/del.cpp \
+			yaml_parser.cpp yaml_list.cpp yaml_map.cpp yaml_utils.cpp
 OBJS_DIR = obj
 OBJECTS = $(addprefix $(OBJS_DIR)/, $(SOURCES:%.cpp=%.o))
 
