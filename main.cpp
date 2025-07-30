@@ -2,28 +2,10 @@
 #include "includes/webserv.hpp"
 
 bool	run;
-bool	run;
 
 NoPendingConnectionsException::NoPendingConnectionsException() :
 runtime_error("")
-NoPendingConnectionsException::NoPendingConnectionsException() :
-runtime_error("")
 {
-}
-
-NewConnectionCreationException::NewConnectionCreationException(Server &server) :
-runtime_error(RED "Error adding a new client" RESET)
-{
-	cleaner(server, true);
-}
-
-SendException::SendException(Client *client, Response *response) :
-runtime_error("[" + getTimeStamp() + "]" + RED + " [ERROR] Error while sending to " + client->getClientIp() + ":" + transformToString(client->getClientPort()) + RESET)
-{
-	response->clearResponse();
-	client->setClientWritingFlag(true);
-	client->setClientPending(false);
-	client->getClientFile()->setReading(false);
 }
 
 NewConnectionCreationException::NewConnectionCreationException(Server &server) :
@@ -66,35 +48,8 @@ runtime_error("[" + getTimeStamp() + "]" + YELLOW + " [INFO] Redirecting Request
 	(*it)->setPortTriggered((*serverIt)->getBlockPort());
 	(*it)->setServerBlockTriggered(*serverIt);
 	(*it)->setRouteTriggered((*(*serverIt)->getDefaultRoute()));
-ReadException::ReadException(Client *client, Response *response) :
-runtime_error("[" + getTimeStamp() + "]" + RED + " [ERROR] Error while reading from " + client->getClientIp() + ":" + transformToString(client->getClientPort()) + RESET)
-{
-	response->clearResponse();
-	client->setClientReadingFlag(true);
-	client->setClientPending(false);
-	client->getClientFile()->setWriting(false);
 }
 
-RedirectException::RedirectException(Server &server, std::vector<Client*>::iterator it) :
-runtime_error("[" + getTimeStamp() + "]" + YELLOW + " [INFO] Redirecting Request from " + (*it)->getClientIp() + ":" + transformToString((*it)->getClientPort()) + " to Default Server Block" + RESET)
-{
-	std::vector<ServerBlock*>	serverBlocks = server.getServerBlocks();
-	std::vector<ServerBlock*>::iterator	serverIt = serverBlocks.begin();
-	while (serverIt != serverBlocks.end())
-	{
-		if ((*serverIt)->isDefault())
-			break;
-		serverIt++;
-	}
-	(*it)->setDomainTriggered((*serverIt)->getBlockName());
-	(*it)->getClientRequest()->setNewHost((*serverIt)->getBlockName());
-	(*it)->setPortTriggered((*serverIt)->getBlockPort());
-	(*it)->setServerBlockTriggered(*serverIt);
-	(*it)->setRouteTriggered((*(*serverIt)->getDefaultRoute()));
-}
-
-BadChildException::BadChildException() :
-runtime_error("Bad child")
 BadChildException::BadChildException() :
 runtime_error("Bad child")
 {
@@ -126,70 +81,7 @@ runtime_error(RED "No Upload Path setted for a POST route" RESET)
 	close(server.getEpollFd());
 	std::vector<Routes*>::iterator	it = tmp.begin();
 	while (it != tmp.end())
-}
-
-BadPipeCreationException::BadPipeCreationException() :
-runtime_error(RED "Error opening the pipe" RESET) {}
-
-NonBlockingException::NonBlockingException(int fd) :
-runtime_error(RED "Failed To Set Server Fd To Non Blocking" RESET)
-{
-	if (fd != -1)
-		close(fd);
-}
-
-BadClientException::BadClientException() :
-runtime_error("BadClient")
-{
-}
-
-EmptyBufferException::EmptyBufferException() :
-runtime_error("EmptyBuffer")
-{
-}
-
-NoUploadPathException::NoUploadPathException(Server &server, std::vector<Routes*> tmp) :
-runtime_error(RED "No Upload Path setted for a POST route" RESET)
-{
-	close(server.getEpollFd());
-	std::vector<Routes*>::iterator	it = tmp.begin();
-	while (it != tmp.end())
 	{
-		delete (*it);
-		it++;
-	}
-	cleanerForServerCreation(server, true);
-}
-
-void	error_connection_handler(Server &server)
-{
-	std::vector<int>::iterator	it = server.getErrorFdsVector().begin();
-	std::vector<int>::iterator	end = server.getErrorFdsVector().end();
-	if (it == end)
-		return ;
-	for (int i = 0; i < server.getEpollCount(); i++)
-	{
-		it = server.getErrorFdsVector().begin();
-		epoll_event &event = server.getEpollIndex(i);
-		while (it != server.getErrorFdsVector().end())
-		{
-			if (*it == event.data.fd && ((event.events & EPOLLIN) || (event.events & EPOLLOUT)))
-			{
-				loadError503((*it));
-				server.removeFromEpoll((*it));
-				server.removeErrorFdFromErrorVector(it);
-				break;
-			}
-			it++;
-		}	
-	}
-}
-
-void	stopRunning(int signal)
-{
-	(void)signal;
-	run = false;
-	std::cout<<std::endl;
 		delete (*it);
 		it++;
 	}
@@ -234,7 +126,6 @@ int	main(int ac, char **av)
 		std::cout<<RED<<"Wrong number of arguments"<<RESET<<std::endl;
 		return (1);
 	}
-	std::string	config("default.config");
 	std::string	config("default.config");
 	if (ac == 2)
 		config = av[1];
