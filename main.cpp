@@ -146,7 +146,7 @@ int	main(int ac, char **av)
 		if (av[1])
 			filePath = av[1];
 		else
-			filePath = "default.yaml";
+			filePath = "config_files/simple.yaml";
 		std::string fileName;
 		if (filePath.find('/') != std::string::npos)
 			fileName = filePath.substr(filePath.rfind('/') + 1);
@@ -200,15 +200,6 @@ int	main(int ac, char **av)
 	}
 	return (0);
 }
-
-//command to test GET to another serverBlock besides the localhost : "curl -H "Host: webserver.com" http://localhost:8080"
-//command to test POST : "curl -X POST -d "whatever we want to send as content" -H "Host: webserver.com" http://localhost:8080/chicken-jokey"
-//command to test POST with binary : "curl -X POST --data-binary @/bin/ls -H "Host: webserver.com" http://localhost:8080/chicken-jokey"
-//command to test GET to CGI : "curl -H "Host: script" http://localhost:2424/cgi-bin/hello.py\?name\=Jonh\&age\=30"
-//command to test POST to CGI : "curl -X POST -H "Host: script" -d "name=paul&lang=python" http://localhost:2424/cgi-bin/hello.py\?name\=Jonh\&age\=30"
-//command to test 1000 requests with siege : "siege -b -c 50 -r 20 http://localhost:4243/index.html"
-//command to test 1000 requests with siege : "siege -b -c 100 -r 10 http://localhost:4243/index.html"
-//command to test 1000 requests with siege : "siege -b -c 200 -r 5 http://localhost:4243/index.html"
 
 //command to test GET to another serverBlock besides the localhost : "curl -H "Host: webserver.com" http://localhost:8080"
 //command to test POST : "curl -X POST -d "whatever we want to send as content" -H "Host: webserver.com" http://localhost:8080/chicken-jokey"

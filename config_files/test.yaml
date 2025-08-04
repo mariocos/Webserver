@@ -26,7 +26,6 @@ servers:
                 - name: python
                   path: /usr/bin/python3
                   extensions: [py]
-              # optional index fallback:
               index: index.py
       - uri: /
         settings:
