@@ -1,0 +1,31 @@
+servers:
+  - listen: 8080
+    server_names: localhost
+    error_pages:
+      404: /website/404.html
+      400: /website/400.html
+      405: /website/405.html
+    max_body_size: 10485760
+    routes:
+      - uri: /
+        methods: [GET]
+        modules:
+          - type: static
+            settings:
+              root: /home/deblin
+              directory_listing: true
+      - uri: /redirect-me
+        methods: [GET]
+        modules:
+          - type: redirect
+            settings:
+              uri: https://youtube.com
+              type: permanent
+              partial: false
+      - uri: /dummy.html
+        methods: [GET, POST, DELETE]
+        modules:
+          - type: static
+            settings:
+              root: ./website
+              directory_listing: false 

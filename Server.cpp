@@ -4,6 +4,11 @@ Server::Server()
 {
 }
 
+//Routes* routeType(YamlMap* routeSettings)
+//{
+//
+//}
+
 Routes* routeFromYaml(YamlMap* routeConfig)
 {
 	int		maxBodySize = -1;
@@ -12,17 +17,6 @@ Routes* routeFromYaml(YamlMap* routeConfig)
 	bool	postMeth = false;
 	bool	deleteMeth = false;
 	bool	dirList = false;
-
-	std::string root;
-	YamlList* modules = (YamlList*)routeConfig->getMap().at("modules");
-	std::vector<YamlNode*>::iterator itModules;
-	for (itModules = modules->getList().begin(); itModules != modules->getList().end(); itModules++) {
-		YamlMap* module = (YamlMap*)(*itModules);
-		YamlMap* settings = (YamlMap*)module->getMap().at("settings");
-		root = ((YamlScalar<std::string>*)(settings->getMap().at("root")))->getValue();
-		dirList = ((YamlScalar<bool>*)(settings->getMap().at("directory_listing")))->getValue(); //Acho que tem de levar um throw por causa do at
-	}
-	std::string uri = ((YamlScalar<std::string>*)(routeConfig->getMap().at("uri")))->getValue();
 
 	YamlList* methods = (YamlList*)routeConfig->getMap().at("methods");
 	std::vector<YamlNode*>::iterator itMethods;
@@ -37,12 +31,68 @@ Routes* routeFromYaml(YamlMap* routeConfig)
 			deleteMeth = true;
 	}
 
+	std::string root = "website";
+	std::string path = "";
+	std::string cgiPath = "";
+	std::string index = "";
+	std::string rDirURI = "";
+	std::string rDirType = "";
+	YamlScalar<std::string>* type;
+	YamlList* modules = (YamlList*)routeConfig->getMap().at("modules");
+	std::vector<YamlNode*>::iterator itModules;
+	for (itModules = modules->getList().begin(); itModules != modules->getList().end(); itModules++) {
+		YamlMap* module = (YamlMap*)(*itModules);
+		type = (YamlScalar<std::string>*)module->getMap().at("type");
+		YamlMap* settings = (YamlMap*)module->getMap().at("settings");
+		if (type->getValue() == "static")
+		{
+//			falta um try aqui
+			root = ((YamlScalar<std::string>*)(settings->getMap().at("root")))->getValue();
+			dirList = ((YamlScalar<bool>*)(settings->getMap().at("directory_listing")))->getValue(); //Acho que tem de levar um throw por causa do at
+//			index = ?;
+//			if (postMeth)
+//				path = ?;
+		}
+		else if (type->getValue() == "CGI")
+		{
+//			root = ((YamlScalar<std::string>*)(settings->getMap().at("root")))->getValue();
+//			extensions = ?;
+//			index = ?;
+//			path = ?
+//			if (postMeth)
+//				path = ?;
+		}
+		else if (type->getValue() == "redirect")
+		{
+//			falta um try aqui
+			rDirURI = ((YamlScalar<std::string>*)(settings->getMap().at("uri")))->getValue();
+			rDirType = ((YamlScalar<std::string>*)(settings->getMap().at("type")))->getValue();
+//			partial = ?;
+//			index = ?;
+//			if (postMeth)
+//				path = ?;
+		}
+//		YamlMap* settings = (YamlMap*)module->getMap().at("settings");
+//		root = ((YamlScalar<std::string>*)(settings->getMap().at("root")))->getValue();
+//		dirList = ((YamlScalar<bool>*)(settings->getMap().at("directory_listing")))->getValue(); //Acho que tem de levar um throw por causa do at
+	}
+	std::string uri = ((YamlScalar<std::string>*)(routeConfig->getMap().at("uri")))->getValue();
+
+
 	Routes* route = new Routes(maxBodySize, defaultRoute, root, uri);
 	if (dirList)
 		route->setAsListing();
 	route->setMethod(GET, getMeth);
 	route->setMethod(POST, postMeth);
 	route->setMethod(DELETE, deleteMeth);
+	if (type->getValue() == "redirect")
+	{
+		route->setRedirectPath(rDirURI);
+		if (rDirType == "permanent")
+			route->setAsPermanentRedirect();
+		else
+			route->setAsTemporaryRedirect();
+	}
 
 	return route;
 }
@@ -69,7 +119,9 @@ ServerBlock* serverBlockFromYaml(YamlMap* serverConf)
 	bool flag = domainName == "localhost";
 
 	std::vector<Routes*> *routes = routesFromYaml(serverConf);
-
+//	set error pages here ServerBlock::setErrorPage ou no startServerBlock mas precisa de mais coisas
+//	set Mac Body Size with Routes::setMaxBodySize, have to go throught all the routes to set the size
+//	possivelmente aqui é onde tenho de verificar quantos serveres tenho na mesma porta
 	int serverSock = socket(AF_INET, SOCK_STREAM, 0);
 
 	ServerBlock* newServerBlock = new ServerBlock(serverSock, port, backlog, domainName, flag);
