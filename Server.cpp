@@ -12,7 +12,7 @@ Server::Server()
 Routes* routeFromYaml(YamlMap* routeConfig)
 {
 	int		maxBodySize = -1;
-	bool	defaultRoute = true;
+	bool	defaultRoute = false;
 	bool 	getMeth = false;
 	bool	postMeth = false;
 	bool	deleteMeth = false;
@@ -30,8 +30,14 @@ Routes* routeFromYaml(YamlMap* routeConfig)
 		else if (newMeth == "DELETE")
 			deleteMeth = true;
 	}
+	std::map<std::string, YamlNode*>::iterator isDefault = routeConfig->getMap().find("default");
+	if (isDefault != routeConfig->getMap().end())
+		defaultRoute = (YamlScalar<bool>*)routeConfig->getMap().at("default");
+	else
+		defaultRoute = false;
+	
 
-	std::string root = "website";
+	std::string root = "";
 	std::string path = "";
 	std::string cgiPath = "";
 	std::string index = "";
@@ -47,17 +53,16 @@ Routes* routeFromYaml(YamlMap* routeConfig)
 		if (type->getValue() == "static")
 		{
 //			falta um try aqui
+//			Acho que tem de levar um throw por causa do at
 			root = ((YamlScalar<std::string>*)(settings->getMap().at("root")))->getValue();
-			dirList = ((YamlScalar<bool>*)(settings->getMap().at("directory_listing")))->getValue(); //Acho que tem de levar um throw por causa do at
-//			index = ?;
+			dirList = ((YamlScalar<bool>*)(settings->getMap().at("directory_listing")))->getValue();
 //			if (postMeth)
 //				path = ?;
 		}
-		else if (type->getValue() == "CGI")
+		else if (type->getValue() == "cgi")
 		{
 //			root = ((YamlScalar<std::string>*)(settings->getMap().at("root")))->getValue();
 //			extensions = ?;
-//			index = ?;
 //			path = ?
 //			if (postMeth)
 //				path = ?;
@@ -67,10 +72,6 @@ Routes* routeFromYaml(YamlMap* routeConfig)
 //			falta um try aqui
 			rDirURI = ((YamlScalar<std::string>*)(settings->getMap().at("uri")))->getValue();
 			rDirType = ((YamlScalar<std::string>*)(settings->getMap().at("type")))->getValue();
-//			partial = ?;
-//			index = ?;
-//			if (postMeth)
-//				path = ?;
 		}
 //		YamlMap* settings = (YamlMap*)module->getMap().at("settings");
 //		root = ((YamlScalar<std::string>*)(settings->getMap().at("root")))->getValue();
@@ -78,7 +79,7 @@ Routes* routeFromYaml(YamlMap* routeConfig)
 	}
 	std::string uri = ((YamlScalar<std::string>*)(routeConfig->getMap().at("uri")))->getValue();
 
-
+//	std::cout << root << "Default: " << defaultRoute << std::endl;
 	Routes* route = new Routes(maxBodySize, defaultRoute, root, uri);
 	if (dirList)
 		route->setAsListing();

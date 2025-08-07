@@ -9,11 +9,12 @@ servers:
     routes:
       - uri: /
         methods: [GET]
+        default: true
         modules:
           - type: static
             settings:
-              root: /home/deblin
-              directory_listing: true
+              root: ./website
+              directory_listing: false
       - uri: /redirect-me
         methods: [GET]
         modules:
@@ -21,11 +22,20 @@ servers:
             settings:
               uri: https://youtube.com
               type: permanent
-              partial: false
       - uri: /dummy.html
         methods: [GET, POST, DELETE]
         modules:
           - type: static
             settings:
-              root: ./website
-              directory_listing: false 
+              root: /home/adimas-d
+              directory_listing: true
+      - uri: /cgi-bin
+        methods: [GET, POST]
+        modules:
+          - type: cgi
+            settings:
+              root: ./cgi-bin
+              interpreters:
+                - name: python
+                  path: /usr/bin/python3
+                  extensions: [py]
