@@ -33,9 +33,8 @@ Routes* routeFromYaml(YamlMap* routeConfig)
 	std::map<std::string, YamlNode*>::iterator isDefault = routeConfig->getMap().find("default");
 	if (isDefault != routeConfig->getMap().end())
 		defaultRoute = (YamlScalar<bool>*)routeConfig->getMap().at("default");
-	else
-		defaultRoute = false;
-	
+//	else
+//		defaultRoute = false;
 
 	std::string root = "";
 	std::string path = "";
@@ -43,6 +42,8 @@ Routes* routeFromYaml(YamlMap* routeConfig)
 	std::string index = "";
 	std::string rDirURI = "";
 	std::string rDirType = "";
+	std::string extensions = "";
+
 	YamlScalar<std::string>* type;
 	YamlList* modules = (YamlList*)routeConfig->getMap().at("modules");
 	std::vector<YamlNode*>::iterator itModules;
@@ -61,9 +62,29 @@ Routes* routeFromYaml(YamlMap* routeConfig)
 		}
 		else if (type->getValue() == "cgi")
 		{
-//			root = ((YamlScalar<std::string>*)(settings->getMap().at("root")))->getValue();
-//			extensions = ?;
-//			path = ?
+			root = ((YamlScalar<std::string>*)(settings->getMap().at("root")))->getValue();
+			YamlList* interpreters = (YamlList*)settings->getMap().at("interpreters");
+			std::vector<YamlNode*>::iterator itInterp;
+			for (itInterp = interpreters->getList().begin(); itInterp != interpreters->getList().end(); itInterp++)
+			{
+				YamlMap* interpConfig = (YamlMap*)(*itInterp);
+				YamlList* ext = (YamlList*)interpConfig->getMap().at("extensions");
+				std::vector<YamlNode*>::iterator itExt;
+				for (itExt = ext->getList().begin(); itExt != ext->getList().end(); itExt++) {
+					YamlNode *exten = (*itExt);
+					std::string newExt = ((YamlScalar<std::string>*)exten)->getValue();
+					if (newExt == "py")
+						extensions = newExt;
+					else 
+						std::cout << "AS EXTENÇÕES DO CGI ESTÃO ERRADAS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
+				}
+				cgiPath = ((YamlScalar<std::string>*)interpConfig->getMap().at("path"))->getValue();
+			}
+
+			
+
+
+//			extensions = ((YamlScalar<std::string>*)interpreters->getMap() .at("extensions"))->getValue();
 //			if (postMeth)
 //				path = ?;
 		}
@@ -94,7 +115,11 @@ Routes* routeFromYaml(YamlMap* routeConfig)
 		else
 			route->setAsTemporaryRedirect();
 	}
-
+	else if (type->getValue() == "cgi")
+	{
+		route->setCgiFileExtension(extensions);
+		route->setUploadPath(cgiPath);
+	}
 	return route;
 }
 
