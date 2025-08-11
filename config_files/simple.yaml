@@ -1,11 +1,11 @@
 servers:
   - listen: 8080
     server_names: localhost
-    error_pages:
-      404: /website/404.html
-      400: /website/400.html
-      405: /website/405.html
     max_body_size: 10485760
+    error_pages:
+      404: ./website/404.html
+      400: ./website/400.html
+      405: ./website/405.html
     routes:
       - uri: /
         methods: [GET, POST, DELETE]
