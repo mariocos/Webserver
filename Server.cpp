@@ -124,9 +124,8 @@ int	maxBodySizeFromYaml(YamlMap* serverConf)
 		return -1;
 }
 
-std::vector<Routes*>* routesFromYaml(YamlMap* serverConf)
+void routesFromYaml(YamlMap* serverConf, std::vector<Routes*> &routes)
 {
-	std::vector<Routes*> *routes = new std::vector<Routes*>;
 	int maxBodySize = maxBodySizeFromYaml(serverConf);
 //	Ver o throw do at
 	YamlList* routesConfig = (YamlList*)serverConf->getMap().at("routes");
@@ -135,10 +134,8 @@ std::vector<Routes*>* routesFromYaml(YamlMap* serverConf)
 		YamlMap* routeConfig = (YamlMap*)(*itRoutes);
 		Routes* route = routeFromYaml(routeConfig, maxBodySize);
 		std::cout<<"IS ROUTE CGI ? "<<route->isCgi()<<std::endl;
-		routes->push_back(route);
+		routes.push_back(route);
 	}
-
-	return routes;
 }
 
 void	yamlErrorPages(ServerBlock *serverBlock, YamlMap* serverConf)
@@ -160,13 +157,14 @@ ServerBlock* serverBlockFromYaml(YamlMap* serverConf)
 	int backlog = -1;
 	std::string domainName = ((YamlScalar<std::string>*)(serverConf->getMap().at("server_names")))->getValue();
 	bool flag = domainName == "localhost";
+	std::vector<Routes*>	tmp;
 
-	std::vector<Routes*> *routes = routesFromYaml(serverConf);
+	routesFromYaml(serverConf, tmp);
 //	possivelmente aqui é onde tenho de verificar quantos serveres tenho na mesma porta
 	int serverSock = socket(AF_INET, SOCK_STREAM, 0);
 
 	ServerBlock* newServerBlock = new ServerBlock(serverSock, port, backlog, domainName, flag);
-	newServerBlock->setBlockRoutes(*routes);
+	newServerBlock->setBlockRoutes(tmp);
 
 	yamlErrorPages(newServerBlock, serverConf);
 //	TODO set the error pages defined in the config file
