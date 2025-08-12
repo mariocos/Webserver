@@ -4,61 +4,153 @@ Server::Server()
 {
 }
 
-Routes* routeFromYaml(YamlMap* routeConfig)
+void routeMethods(Routes *route, YamlMap* routeConfig)
 {
-	int		maxBodySize = -1;
-	bool	defaultRoute = true;
-	bool 	getMeth = false;
-	bool	postMeth = false;
-	bool	deleteMeth = false;
-	bool	dirList = false;
-
-	std::string root;
-	YamlList* modules = (YamlList*)routeConfig->getMap().at("modules");
-	std::vector<YamlNode*>::iterator itModules;
-	for (itModules = modules->getList().begin(); itModules != modules->getList().end(); itModules++) {
-		YamlMap* module = (YamlMap*)(*itModules);
-		YamlMap* settings = (YamlMap*)module->getMap().at("settings");
-		root = ((YamlScalar<std::string>*)(settings->getMap().at("root")))->getValue();
-		dirList = ((YamlScalar<bool>*)(settings->getMap().at("directory_listing")))->getValue(); //Acho que tem de levar um throw por causa do at
-	}
-	std::string uri = ((YamlScalar<std::string>*)(routeConfig->getMap().at("uri")))->getValue();
-
 	YamlList* methods = (YamlList*)routeConfig->getMap().at("methods");
 	std::vector<YamlNode*>::iterator itMethods;
 	for (itMethods = methods->getList().begin(); itMethods != methods->getList().end(); itMethods++) {
 		YamlNode *meth = (*itMethods);
 		std::string newMeth = ((YamlScalar<std::string>*)meth)->getValue();
 		if (newMeth == "GET")
-			getMeth = true;
+			route->setMethod(GET, true);
 		else if (newMeth == "POST")
-			postMeth = true;
+			route->setMethod(POST, true);
 		else if (newMeth == "DELETE")
-			deleteMeth = true;
+			route->setMethod(DELETE, true);
+	}
+}
+
+bool	isRouteDefault(YamlMap* routeConfig)
+{
+	bool	defaultRoute = false;
+
+	std::map<std::string, YamlNode*>::iterator isDefault = routeConfig->getMap().find("default");
+	if (isDefault != routeConfig->getMap().end())
+		defaultRoute = (YamlScalar<bool>*)routeConfig->getMap().at("default");
+	return (defaultRoute);
+}
+
+Routes	*setStatic(YamlMap* settings, int maxBodySize, bool defaultRoute, std::string uri)
+{
+	std::string root = ((YamlScalar<std::string>*)(settings->getMap().at("root")))->getValue();
+	Routes* newRoute = new Routes(maxBodySize, defaultRoute, root, uri);
+
+	bool dirList = ((YamlScalar<bool>*)(settings->getMap().at("directory_listing")))->getValue();
+	if (dirList)
+		newRoute->setAsListing();
+
+	return (newRoute);
+}
+
+Routes	*setCGI(YamlMap* settings, int maxBodySize, bool defaultRoute, std::string uri)
+{
+	std::string root = ((YamlScalar<std::string>*)(settings->getMap().at("root")))->getValue();
+	Routes* newRoute = new Routes(maxBodySize, defaultRoute, root, uri);
+
+	YamlList* interpreters = (YamlList*)settings->getMap().at("interpreters");
+	std::vector<YamlNode*>::iterator itInterp;
+	for (itInterp = interpreters->getList().begin(); itInterp != interpreters->getList().end(); itInterp++)
+	{
+		YamlMap* interpConfig = (YamlMap*)(*itInterp);
+		YamlList* ext = (YamlList*)interpConfig->getMap().at("extensions");
+		std::vector<YamlNode*>::iterator itExt;
+		for (itExt = ext->getList().begin(); itExt != ext->getList().end(); itExt++) {
+			YamlNode *exten = (*itExt);
+			std::string newExt = ((YamlScalar<std::string>*)exten)->getValue();
+			if (newExt == "py")
+				newRoute->setCgiFileExtension(newExt);
+			else 
+				std::cout << "AS EXTENÇÕES DO CGI ESTÃO ERRADAS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
+		}
+		std::string path = ((YamlScalar<std::string>*)interpConfig->getMap().at("path"))->getValue();
+		newRoute->setUploadPath(path);
+	}
+	
+	return (newRoute);
+}
+
+Routes	*setRedirect(YamlMap* settings, int maxBodySize, bool defaultRoute, std::string uri)
+{
+	std::string root = "";
+	Routes* newRoute = new Routes(maxBodySize, defaultRoute, root, uri);
+
+	std::string rDirURI = ((YamlScalar<std::string>*)(settings->getMap().at("uri")))->getValue();
+	std::string rDirType = ((YamlScalar<std::string>*)(settings->getMap().at("type")))->getValue();
+	newRoute->setRedirectPath(rDirURI);
+	
+	if (rDirType == "permanent")
+		newRoute->setAsPermanentRedirect();
+	else
+		newRoute->setAsTemporaryRedirect();
+
+	return (newRoute);
+}
+
+Routes* routeFromYaml(YamlMap* routeConfig, int maxBodySize)
+{
+	bool	defaultRoute = isRouteDefault(routeConfig);
+
+	Routes* route;
+	std::string uri = ((YamlScalar<std::string>*)(routeConfig->getMap().at("uri")))->getValue();
+	YamlScalar<std::string>* type;
+	YamlList* modules = (YamlList*)routeConfig->getMap().at("modules");
+	std::vector<YamlNode*>::iterator itModules;
+	for (itModules = modules->getList().begin(); itModules != modules->getList().end(); itModules++) {
+		YamlMap* module = (YamlMap*)(*itModules);
+		type = (YamlScalar<std::string>*)module->getMap().at("type");
+		YamlMap* settings = (YamlMap*)module->getMap().at("settings");
+		if (type->getValue() == "static")
+		{
+			route = setStatic(settings, maxBodySize, defaultRoute, uri);
+//			?falta um try aqui
+//			?Acho que tem de levar um throw por causa do at
+		}
+		else if (type->getValue() == "cgi")
+			route = setCGI(settings, maxBodySize, defaultRoute, uri);
+		else if (type->getValue() == "redirect")
+			route = setRedirect(settings, maxBodySize, defaultRoute, uri);
 	}
 
-	Routes* route = new Routes(maxBodySize, defaultRoute, root, uri);
-	if (dirList)
-		route->setAsListing();
-	route->setMethod(GET, getMeth);
-	route->setMethod(POST, postMeth);
-	route->setMethod(DELETE, deleteMeth);
-
+	routeMethods(route, routeConfig);
 	return route;
+}
+
+int	maxBodySizeFromYaml(YamlMap* serverConf)
+{
+	std::map<std::string, YamlNode*>::iterator itMaxBodySize = serverConf->getMap().find("max_body_size");
+	if (itMaxBodySize != serverConf->getMap().end())
+		return ((YamlScalar<int>*)serverConf->getMap().at("max_body_size"))->getValue();
+	else
+		return -1;
 }
 
 std::vector<Routes*>* routesFromYaml(YamlMap* serverConf)
 {
 	std::vector<Routes*> *routes = new std::vector<Routes*>;
+	int maxBodySize = maxBodySizeFromYaml(serverConf);
+//	Ver o throw do at
 	YamlList* routesConfig = (YamlList*)serverConf->getMap().at("routes");
 	std::vector<YamlNode*>::iterator itRoutes;
 	for (itRoutes = routesConfig->getList().begin(); itRoutes != routesConfig->getList().end(); itRoutes++) {
 		YamlMap* routeConfig = (YamlMap*)(*itRoutes);
-		Routes* route = routeFromYaml(routeConfig);
+		Routes* route = routeFromYaml(routeConfig, maxBodySize);
 		routes->push_back(route);
 	}
 
 	return routes;
+}
+
+void	yamlErrorPages(ServerBlock *serverBlock, YamlMap* serverConf)
+{
+	YamlMap *errorPagesMap = NULL;
+	std::map<std::string, YamlNode*>::iterator itErrorPagesMap = serverConf->getMap().find("error_pages");
+	if (itErrorPagesMap != serverConf->getMap().end())
+	{
+		errorPagesMap = (YamlMap*)itErrorPagesMap->second;
+		std::map<std::string, YamlNode*>::iterator itErrorPages;
+		for (itErrorPages = errorPagesMap->getMap().begin(); itErrorPages != errorPagesMap->getMap().end(); itErrorPages++)
+			serverBlock->setErrorPage(atoi(itErrorPages->first.c_str()), ((YamlScalar<std::string>*)itErrorPages->second)->getValue());
+	}
 }
 
 ServerBlock* serverBlockFromYaml(YamlMap* serverConf)
@@ -69,11 +161,19 @@ ServerBlock* serverBlockFromYaml(YamlMap* serverConf)
 	bool flag = domainName == "localhost";
 
 	std::vector<Routes*> *routes = routesFromYaml(serverConf);
-
+//	possivelmente aqui é onde tenho de verificar quantos serveres tenho na mesma porta
 	int serverSock = socket(AF_INET, SOCK_STREAM, 0);
 
 	ServerBlock* newServerBlock = new ServerBlock(serverSock, port, backlog, domainName, flag);
 	newServerBlock->setBlockRoutes(*routes);
+
+	yamlErrorPages(newServerBlock, serverConf);
+//	TODO set the error pages defined in the config file
+//	newServerBlock->setErrorPage(400, "website/400.html");
+//	newServerBlock->setErrorPage(403, "website/403.html");
+//	newServerBlock->setErrorPage(404, "website/404.html");
+//	newServerBlock->setErrorPage(405, "website/405.html");
+//	newServerBlock->setErrorPage(413, "website/413.html");
 
 	return newServerBlock;
 }
@@ -108,13 +208,6 @@ void Server::startServerBlock(ServerBlock* newServerBlock)
 		close(this->_epoll_fd);
 		throw EpollCtlException(*this);
 	}
-
-	// TODO set the error pages defined in the config file
-	newServerBlock->setErrorPage(400, "website/400.html");
-	newServerBlock->setErrorPage(403, "website/403.html");
-	newServerBlock->setErrorPage(404, "website/404.html");
-	newServerBlock->setErrorPage(405, "website/405.html");
-	newServerBlock->setErrorPage(413, "website/413.html");
 }
 
 Server::Server(YamlNode *parsedConf) : _maxEvents(10)

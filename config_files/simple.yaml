@@ -1,53 +1,41 @@
 servers:
   - listen: 8080
     server_names: localhost
+    max_body_size: 10485760
+    error_pages:
+      404: ./website/404.html
+      400: ./website/400.html
+      405: ./website/405.html
     routes:
       - uri: /
+        methods: [GET, POST, DELETE]
+        default: true
+        modules:
+          - type: static
+            settings:
+              root: ./website
+              directory_listing: false
+      - uri: /redirect-me
         methods: [GET]
         modules:
-          - type: static
+          - type: redirect
             settings:
-              root: /home/pauberna/Desktop
-              directory_listing: true
-      - uri: /post
-        methods: [POST]
-        modules:
-          - type: static
-            settings:
-              root: /home/pauberna/Desktop
-              directory_listing: false
-
-  - listen: 4243
-    server_names: webserv
-    routes:
-      - uri: /
+              uri: https://youtube.com
+              type: permanent
+      - uri: /dummy.html
         methods: [GET, POST, DELETE]
         modules:
           - type: static
             settings:
-              root: ./website
-              directory_listing: false
-              destination: ./upload
-
-  - listen: 3000
-    server_names: 127.0.0.1
-    routes:
-      - uri: /
-        methods: [GET]
-        modules:
-          - type: static
-            settings:
-              root: ./website
-              directory_listing: false
+              root: /home/adimas-d
+              directory_listing: true
       - uri: /cgi-bin
         methods: [GET, POST]
         modules:
           - type: cgi
             settings:
               root: ./cgi-bin
-              directory_listing: false
               interpreters:
                 - name: python
                   path: /usr/bin/python3
                   extensions: [py]
-              index: index.py
