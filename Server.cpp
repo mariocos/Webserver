@@ -134,6 +134,7 @@ std::vector<Routes*>* routesFromYaml(YamlMap* serverConf)
 	for (itRoutes = routesConfig->getList().begin(); itRoutes != routesConfig->getList().end(); itRoutes++) {
 		YamlMap* routeConfig = (YamlMap*)(*itRoutes);
 		Routes* route = routeFromYaml(routeConfig, maxBodySize);
+		std::cout<<"IS ROUTE CGI ? "<<route->isCgi()<<std::endl;
 		routes->push_back(route);
 	}
 

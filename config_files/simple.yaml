@@ -9,7 +9,6 @@ servers:
     routes:
       - uri: /
         methods: [GET, POST, DELETE]
-        default: true
         modules:
           - type: static
             settings:
@@ -24,10 +23,11 @@ servers:
               type: permanent
       - uri: /dummy.html
         methods: [GET, POST, DELETE]
+        default: true
         modules:
           - type: static
             settings:
-              root: /home/adimas-d
+              root: /home/pauberna
               directory_listing: true
       - uri: /cgi-bin
         methods: [GET, POST]

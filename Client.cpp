@@ -183,9 +183,13 @@ std::string	Client::getDomainTriggered()
 std::string	Client::getNewPath()
 {
 	std::string path;
+	std::string newPath;
 	if (this->_routeTriggered->getURI() != "/")
 	{
-		std::string newPath = this->_request->get_path().substr(this->_routeTriggered->getURI().length());
+		if (this->getURIRequested() != this->_routeTriggered->getURI())
+			newPath = this->_request->get_path().substr(this->getURIRequested().length());
+		else
+			newPath = this->_request->get_path().substr(this->_routeTriggered->getURI().length());
 		path = this->_routeTriggered->getRoot() + "/" + newPath;
 	}
 	else
@@ -199,7 +203,12 @@ std::string	Client::getURIRequested()
 	if (this->_request->get_path().find('/', 1) != std::string::npos)
 		uri = this->_request->get_path().substr(0, this->_request->get_path().find('/', 1) + 1);
 	else
-		uri = this->_request->get_path();
+	{
+		if (this->_request->get_path().find('.') != std::string::npos)
+			uri = "/";
+		else
+			uri = this->_request->get_path();
+	}
 	return (uri);
 }
 
