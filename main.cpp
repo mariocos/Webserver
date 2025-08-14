@@ -88,6 +88,12 @@ runtime_error(RED "No Upload Path setted for a POST route" RESET)
 	cleanerForServerCreation(server, true);
 }
 
+ConfigFileStructureException::ConfigFileStructureException(std::string key) :
+runtime_error(RED"Confitugation file missing key information: " + key + RESET) {}
+
+MessagelessException::MessagelessException(std::string msg) :
+runtime_error(msg) {}
+
 void	error_connection_handler(Server &server)
 {
 	std::vector<int>::iterator	it = server.getErrorFdsVector().begin();
@@ -155,7 +161,6 @@ int	main(int ac, char **av)
         root = parser.parse(filePath);
         Server    server(root);
         if (root) {
-//            root->print();
             delete root;
         } else {
             std::cerr << "Failed to parse YAML file." << std::endl;

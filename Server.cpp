@@ -4,9 +4,44 @@ Server::Server()
 {
 }
 
-void routeMethods(Routes *route, YamlMap* routeConfig)
+YamlNode* getFromYamlMap(YamlNode* node, std::string key)
 {
-	YamlList* methods = (YamlList*)routeConfig->getMap().at("methods");
+	YamlNode* result;
+	try
+	{
+		result = ((YamlMap*) node)->getMap().at(key);
+	}
+	catch(const std::exception& e)
+	{
+	throw ConfigFileStructureException(key);
+	}
+	
+	return result;
+}
+
+void updateDestination(Routes *route, YamlList* modules)
+{
+	std::vector<YamlNode*>::iterator itModules;
+	for (itModules = modules->getList().begin(); itModules != modules->getList().end(); itModules++) {
+		YamlMap* module = (YamlMap*)(*itModules);
+		YamlMap* settings = (YamlMap*)getFromYamlMap(module, "settings");
+		std::map<std::string, YamlNode*>::iterator isDestination = settings->getMap().find("destination");
+		if (isDestination != settings->getMap().end())
+		{
+			std::string path = ((YamlScalar<std::string>*)getFromYamlMap(settings, "destination"))->getValue();
+			route->setUploadPath(path);
+		}
+	}
+}
+
+void routeMethods(Routes *route, YamlMap* routeConfig,YamlList* modules)
+{
+	YamlList* methods = (YamlList*)getFromYamlMap(routeConfig, "methods");
+	if (methods->getList().empty())
+	{
+		delete route;
+		throw ConfigFileStructureException("methods");
+	}
 	std::vector<YamlNode*>::iterator itMethods;
 	for (itMethods = methods->getList().begin(); itMethods != methods->getList().end(); itMethods++) {
 		YamlNode *meth = (*itMethods);
@@ -14,7 +49,10 @@ void routeMethods(Routes *route, YamlMap* routeConfig)
 		if (newMeth == "GET")
 			route->setMethod(GET, true);
 		else if (newMeth == "POST")
+		{
 			route->setMethod(POST, true);
+			updateDestination(route, modules);
+		}
 		else if (newMeth == "DELETE")
 			route->setMethod(DELETE, true);
 	}
@@ -26,16 +64,16 @@ bool	isRouteDefault(YamlMap* routeConfig)
 
 	std::map<std::string, YamlNode*>::iterator isDefault = routeConfig->getMap().find("default");
 	if (isDefault != routeConfig->getMap().end())
-		defaultRoute = (YamlScalar<bool>*)routeConfig->getMap().at("default");
+		defaultRoute = (YamlScalar<bool>*)getFromYamlMap(routeConfig, "default");
 	return (defaultRoute);
 }
 
 Routes	*setStatic(YamlMap* settings, int maxBodySize, bool defaultRoute, std::string uri)
 {
-	std::string root = ((YamlScalar<std::string>*)(settings->getMap().at("root")))->getValue();
+	std::string root = ((YamlScalar<std::string>*)(getFromYamlMap(settings, "root")))->getValue();
 	Routes* newRoute = new Routes(maxBodySize, defaultRoute, root, uri);
 
-	bool dirList = ((YamlScalar<bool>*)(settings->getMap().at("directory_listing")))->getValue();
+	bool dirList = ((YamlScalar<bool>*)(getFromYamlMap(settings, "directory_listing")))->getValue();
 	if (dirList)
 		newRoute->setAsListing();
 
@@ -44,15 +82,19 @@ Routes	*setStatic(YamlMap* settings, int maxBodySize, bool defaultRoute, std::st
 
 Routes	*setCGI(YamlMap* settings, int maxBodySize, bool defaultRoute, std::string uri)
 {
-	std::string root = ((YamlScalar<std::string>*)(settings->getMap().at("root")))->getValue();
+	std::string root = ((YamlScalar<std::string>*)(getFromYamlMap(settings, "root")))->getValue();
 	Routes* newRoute = new Routes(maxBodySize, defaultRoute, root, uri);
 
-	YamlList* interpreters = (YamlList*)settings->getMap().at("interpreters");
+	YamlList* interpreters = (YamlList*)getFromYamlMap(settings, "interpreters");
+	if (interpreters->getList().empty())
+		throw ConfigFileStructureException("interpreters");
 	std::vector<YamlNode*>::iterator itInterp;
 	for (itInterp = interpreters->getList().begin(); itInterp != interpreters->getList().end(); itInterp++)
 	{
 		YamlMap* interpConfig = (YamlMap*)(*itInterp);
-		YamlList* ext = (YamlList*)interpConfig->getMap().at("extensions");
+		YamlList* ext = (YamlList*)getFromYamlMap(interpConfig, "extensions");
+		if (interpreters->getList().empty())
+			throw ConfigFileStructureException("extensions");
 		std::vector<YamlNode*>::iterator itExt;
 		for (itExt = ext->getList().begin(); itExt != ext->getList().end(); itExt++) {
 			YamlNode *exten = (*itExt);
@@ -60,10 +102,14 @@ Routes	*setCGI(YamlMap* settings, int maxBodySize, bool defaultRoute, std::strin
 			if (newExt == "py")
 				newRoute->setCgiFileExtension(newExt);
 			else 
-				std::cout << "AS EXTENÇÕES DO CGI ESTÃO ERRADAS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
+			{
+				delete newRoute;
+				throw MessagelessException("CGI extention not allowed");
+			}
 		}
-		std::string path = ((YamlScalar<std::string>*)interpConfig->getMap().at("path"))->getValue();
+		std::string path = ((YamlScalar<std::string>*)getFromYamlMap(interpConfig, "path"))->getValue();
 		newRoute->setUploadPath(path);
+		newRoute->setAsCgi();
 	}
 	
 	return (newRoute);
@@ -74,8 +120,8 @@ Routes	*setRedirect(YamlMap* settings, int maxBodySize, bool defaultRoute, std::
 	std::string root = "";
 	Routes* newRoute = new Routes(maxBodySize, defaultRoute, root, uri);
 
-	std::string rDirURI = ((YamlScalar<std::string>*)(settings->getMap().at("uri")))->getValue();
-	std::string rDirType = ((YamlScalar<std::string>*)(settings->getMap().at("type")))->getValue();
+	std::string rDirURI = ((YamlScalar<std::string>*)(getFromYamlMap(settings, "uri")))->getValue();
+	std::string rDirType = ((YamlScalar<std::string>*)(getFromYamlMap(settings, "type")))->getValue();
 	newRoute->setRedirectPath(rDirURI);
 	
 	if (rDirType == "permanent")
@@ -91,27 +137,28 @@ Routes* routeFromYaml(YamlMap* routeConfig, int maxBodySize)
 	bool	defaultRoute = isRouteDefault(routeConfig);
 
 	Routes* route;
-	std::string uri = ((YamlScalar<std::string>*)(routeConfig->getMap().at("uri")))->getValue();
+	std::string uri = ((YamlScalar<std::string>*)(getFromYamlMap(routeConfig, "uri")))->getValue();
 	YamlScalar<std::string>* type;
-	YamlList* modules = (YamlList*)routeConfig->getMap().at("modules");
+	YamlList* modules = (YamlList*)getFromYamlMap(routeConfig, "modules");
+	if (modules->getList().empty())
+		throw ConfigFileStructureException("modules");
 	std::vector<YamlNode*>::iterator itModules;
 	for (itModules = modules->getList().begin(); itModules != modules->getList().end(); itModules++) {
 		YamlMap* module = (YamlMap*)(*itModules);
-		type = (YamlScalar<std::string>*)module->getMap().at("type");
-		YamlMap* settings = (YamlMap*)module->getMap().at("settings");
-		if (type->getValue() == "static")
-		{
+		type = (YamlScalar<std::string>*)getFromYamlMap(module, "type");
+//if para verificar o que esta escrito
+		YamlMap* settings = (YamlMap*)getFromYamlMap(module, "settings");
+		if (type->getValue().empty())
+			throw ConfigFileStructureException("type");
+		else if (type->getValue() == "static")
 			route = setStatic(settings, maxBodySize, defaultRoute, uri);
-//			?falta um try aqui
-//			?Acho que tem de levar um throw por causa do at
-		}
 		else if (type->getValue() == "cgi")
 			route = setCGI(settings, maxBodySize, defaultRoute, uri);
 		else if (type->getValue() == "redirect")
 			route = setRedirect(settings, maxBodySize, defaultRoute, uri);
 	}
 
-	routeMethods(route, routeConfig);
+	routeMethods(route, routeConfig, modules);
 	return route;
 }
 
@@ -127,8 +174,9 @@ int	maxBodySizeFromYaml(YamlMap* serverConf)
 void routesFromYaml(YamlMap* serverConf, std::vector<Routes*> &routes)
 {
 	int maxBodySize = maxBodySizeFromYaml(serverConf);
-//	Ver o throw do at
-	YamlList* routesConfig = (YamlList*)serverConf->getMap().at("routes");
+	YamlList* routesConfig = (YamlList*)getFromYamlMap(serverConf, "routes");
+	if (routesConfig->getList().empty())
+		throw ConfigFileStructureException("routes");
 	std::vector<YamlNode*>::iterator itRoutes;
 	for (itRoutes = routesConfig->getList().begin(); itRoutes != routesConfig->getList().end(); itRoutes++) {
 		YamlMap* routeConfig = (YamlMap*)(*itRoutes);
@@ -153,11 +201,15 @@ void	yamlErrorPages(ServerBlock *serverBlock, YamlMap* serverConf)
 
 ServerBlock* serverBlockFromYaml(YamlMap* serverConf)
 {
-	int port = ((YamlScalar<int>*)(serverConf->getMap().at("listen")))->getValue();
+	int port = ((YamlScalar<int>*)(getFromYamlMap(serverConf, "listen")))->getValue();
 	int backlog = -1;
-	std::string domainName = ((YamlScalar<std::string>*)(serverConf->getMap().at("server_names")))->getValue();
+	std::string domainName = ((YamlScalar<std::string>*)(getFromYamlMap(serverConf, "server_names")))->getValue();
 	bool flag = domainName == "localhost";
 	std::vector<Routes*>	tmp;
+	if (port == 0)
+		throw ConfigFileStructureException("listen");
+	if (domainName.empty())
+		throw ConfigFileStructureException("server_names");
 
 	routesFromYaml(serverConf, tmp);
 //	possivelmente aqui é onde tenho de verificar quantos serveres tenho na mesma porta
@@ -175,11 +227,6 @@ ServerBlock* serverBlockFromYaml(YamlMap* serverConf)
 //	newServerBlock->setErrorPage(413, "website/413.html");
 
 	return newServerBlock;
-}
-
-YamlNode* getFromYamlMap(YamlNode* node, std::string key)
-{
-	return ((YamlMap*) node)->getMap().at(key);
 }
 
 void Server::startServerBlock(ServerBlock* newServerBlock)
@@ -216,16 +263,24 @@ Server::Server(YamlNode *parsedConf) : _maxEvents(10)
 	this->_epoll_fd = epoll_create(1);
 	if (this->_epoll_fd == -1)
 		throw EpollCreationException();
+	try {
+		YamlList* serverConfList = (YamlList*) getFromYamlMap(parsedConf, "servers");
+		if (serverConfList->getList().empty())
+			throw ConfigFileStructureException("servers");
 
-	YamlList* serverConfList = (YamlList*) getFromYamlMap(parsedConf, "servers");
-
-	std::vector<YamlNode*>::iterator it;
-	for (it = serverConfList->getList().begin(); it != serverConfList->getList().end(); it++) {
-		YamlMap* serverConf = (YamlMap*)(*it);
-		newServerBlock = serverBlockFromYaml(serverConf);
-		startServerBlock(newServerBlock);
-		printLog("INFO", newServerBlock, NULL, NULL, 0, "");
-		this->_serverBlocks.push_back(newServerBlock);
+		std::vector<YamlNode*>::iterator it;
+		for (it = serverConfList->getList().begin(); it != serverConfList->getList().end(); it++) {
+			YamlMap* serverConf = (YamlMap*)(*it);
+			newServerBlock = serverBlockFromYaml(serverConf);
+			startServerBlock(newServerBlock);
+			printLog("INFO", newServerBlock, NULL, NULL, 0, "");
+			this->_serverBlocks.push_back(newServerBlock);
+		}
+	}
+	catch(const std::exception& e)
+	{
+		delete parsedConf;
+		throw MessagelessException(e.what());
 	}
 
 	this->_events = new epoll_event[this->_maxEvents];

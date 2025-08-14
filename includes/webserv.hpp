@@ -195,4 +195,16 @@ class	NoUploadPathException : public std::runtime_error
 		NoUploadPathException(Server &server, std::vector<Routes*> tmp);
 };
 
+class	ConfigFileStructureException : public std::runtime_error
+{
+	public:
+		ConfigFileStructureException(std::string);
+};
+
+class	MessagelessException : public std::runtime_error
+{
+	public:
+		MessagelessException(std::string msg);
+};
+
 #endif

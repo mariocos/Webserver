@@ -14,6 +14,7 @@ servers:
             settings:
               root: ./website
               directory_listing: false
+              destination: ./teste_uploads
       - uri: /redirect-me
         methods: [GET]
         modules:
@@ -21,13 +22,13 @@ servers:
             settings:
               uri: https://youtube.com
               type: permanent
-      - uri: /dummy.html
+      - uri: /lala
         methods: [GET, POST, DELETE]
         default: true
         modules:
           - type: static
             settings:
-              root: /home/pauberna
+              root: /home/adimas-d
               directory_listing: true
       - uri: /cgi-bin
         methods: [GET, POST]
