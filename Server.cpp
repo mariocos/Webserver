@@ -141,7 +141,7 @@ Routes* routeFromYaml(YamlMap* routeConfig, int maxBodySize)
 	YamlScalar<std::string>* type;
 	YamlList* modules = (YamlList*)getFromYamlMap(routeConfig, "modules");
 	if (modules->getList().empty())
-		throw ConfigFileStructureException("modules");
+		throw ConfigFileStructureException("modules is empty");
 	std::vector<YamlNode*>::iterator itModules;
 	for (itModules = modules->getList().begin(); itModules != modules->getList().end(); itModules++) {
 		YamlMap* module = (YamlMap*)(*itModules);
@@ -156,6 +156,8 @@ Routes* routeFromYaml(YamlMap* routeConfig, int maxBodySize)
 			route = setCGI(settings, maxBodySize, defaultRoute, uri);
 		else if (type->getValue() == "redirect")
 			route = setRedirect(settings, maxBodySize, defaultRoute, uri);
+		else
+			throw ConfigFileStructureException("type not set");
 	}
 
 	routeMethods(route, routeConfig, modules);
@@ -177,12 +179,20 @@ void routesFromYaml(YamlMap* serverConf, std::vector<Routes*> &routes)
 	YamlList* routesConfig = (YamlList*)getFromYamlMap(serverConf, "routes");
 	if (routesConfig->getList().empty())
 		throw ConfigFileStructureException("routes");
+	try {
 	std::vector<YamlNode*>::iterator itRoutes;
-	for (itRoutes = routesConfig->getList().begin(); itRoutes != routesConfig->getList().end(); itRoutes++) {
-		YamlMap* routeConfig = (YamlMap*)(*itRoutes);
-		Routes* route = routeFromYaml(routeConfig, maxBodySize);
-		std::cout<<"IS ROUTE CGI ? "<<route->isCgi()<<std::endl;
-		routes.push_back(route);
+		for (itRoutes = routesConfig->getList().begin(); itRoutes != routesConfig->getList().end(); itRoutes++) {
+			YamlMap* routeConfig = (YamlMap*)(*itRoutes);
+			Routes* route = routeFromYaml(routeConfig, maxBodySize);
+			std::cout<<"IS ROUTE CGI ? "<<route->isCgi()<<std::endl;
+			routes.push_back(route);
+		}
+	}
+	catch (const std::exception& e){
+		for (std::vector<Routes*>::iterator it = routes.begin(); it != routes.end(); ++it)
+			delete *it;
+		routes.clear();
+		throw MessagelessException(e.what());
 	}
 }
 
@@ -210,22 +220,26 @@ ServerBlock* serverBlockFromYaml(YamlMap* serverConf)
 	std::string domainName = ((YamlScalar<std::string>*)(getFromYamlMap(serverConf, "server_names")))->getValue();
 	bool flag = domainName == "localhost";
 	std::vector<Routes*>	tmp;
+	ServerBlock* newServerBlock = NULL;
+
 	if (port == 0)
 		throw ConfigFileStructureException("listen");
 	if (domainName.empty())
 		throw ConfigFileStructureException("server_names");
 
-	routesFromYaml(serverConf, tmp);
-//	possivelmente aqui é onde tenho de verificar quantos serveres tenho na mesma porta
-	int serverSock = socket(AF_INET, SOCK_STREAM, 0);
-
-	ServerBlock* newServerBlock = new ServerBlock(serverSock, port, backlog, domainName, flag);
-	newServerBlock->setBlockRoutes(tmp);
-
 	try {
+		int serverSock = socket(AF_INET, SOCK_STREAM, 0);
+		newServerBlock = new ServerBlock(serverSock, port, backlog, domainName, flag);
+		
+		routesFromYaml(serverConf, tmp);
+//		possivelmente aqui é onde tenho de verificar quantos serveres tenho na mesma porta
+		newServerBlock->setBlockRoutes(tmp);
+
 		yamlErrorPages(newServerBlock, serverConf);
 	}
 	catch (const std::exception& e){
+//		tmp.erase(tmp.begin(), tmp.end());
+//		std::vector<Routes*>::iterator it;
 		delete newServerBlock;
 		throw MessagelessException(e.what());
 	}
@@ -273,13 +287,13 @@ Server::Server(YamlNode *parsedConf) : _maxEvents(10)
 	this->_epoll_fd = epoll_create(1);
 	if (this->_epoll_fd == -1)
 		throw EpollCreationException();
-	try {
-		YamlList* serverConfList = (YamlList*)getFromYamlMap(parsedConf, "servers");
-//		if (parsedConf->checkMap())
-//			throw ConfigFileStructureException("'-'");
-		if (parsedConf->checkList() && serverConfList->getList().empty())
-			throw ConfigFileStructureException("servers");
 
+	YamlList* serverConfList = (YamlList*)getFromYamlMap(parsedConf, "servers");
+//	if (parsedConf->checkMap())
+//		throw ConfigFileStructureException("'-'");
+	if (parsedConf->checkList() && serverConfList->getList().empty())
+		throw ConfigFileStructureException("servers");
+	try {
 		std::vector<YamlNode*>::iterator it;
 		for (it = serverConfList->getList().begin(); it != serverConfList->getList().end(); it++) {
 			YamlMap* serverConf = (YamlMap*)(*it);
@@ -291,6 +305,9 @@ Server::Server(YamlNode *parsedConf) : _maxEvents(10)
 	}
 	catch(const std::exception& e)
 	{
+//		for (std::vector<ServerBlock*>::iterator it = _serverBlocks.begin(); it != _serverBlocks.end(); ++it)
+//			delete *it;
+//		_serverBlocks.clear();
 		delete parsedConf;
 		throw MessagelessException(e.what());
 	}
@@ -439,6 +456,9 @@ Server::~Server()
 	if (this->_events)
 		delete[] this->_events;
 	close(this->_epoll_fd);
+	for (std::vector<ServerBlock*>::iterator it = _serverBlocks.begin(); it != _serverBlocks.end(); ++it)
+		delete *it;
+	_serverBlocks.clear();
 }
 
 void	Server::setEpollCount(int count)

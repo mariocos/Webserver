@@ -15,21 +15,37 @@ servers:
               root: ./website
               directory_listing: false
               destination: ./teste_uploads
-      - uri: /redirect-me
-        methods: [GET]
-        modules:
-          - type: redirect
-            settings:
-              uri: https://youtube.com
-              type: permanent
       - uri: /lala
         methods: [GET, POST, DELETE]
         default: true
         modules:
           - type: static
             settings:
-              root: /home/deblin
+              root: /home/adimas-d
               directory_listing: true
+  - listen: 8081
+    server_names: localhost
+    max_body_size: 10485760
+    error_pages:
+      404: ./website/404.html
+      400: ./website/400.html
+      405: ./website/405.html
+    routes:
+      - uri: /oi
+        methods: [GET, POST, DELETE]
+        modules:
+          - type: static
+            settings:
+              root: /home/adimas-d/index.html
+              directory_listing: false
+              destination: ./teste_uploads
+      - uri: /redirect-me
+        methods: [GET]
+        modules:
+          - type: redirect
+            settings:
+              uri: https://www.amazon.com
+              type: permanent
       - uri: /cgi-bin
         methods: [GET, POST]
         modules:
