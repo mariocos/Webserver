@@ -3,7 +3,7 @@ servers:
     server_names: localhost
     max_body_size: 10485760
     error_pages:
-      404: ./website/404.html
+      404: /home/deblin/index.html
       400: ./website/400.html
       405: ./website/405.html
     routes:
@@ -28,7 +28,7 @@ servers:
         modules:
           - type: static
             settings:
-              root: /home/adimas-d
+              root: /home/deblin
               directory_listing: true
       - uri: /cgi-bin
         methods: [GET, POST]

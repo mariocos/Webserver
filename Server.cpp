@@ -13,7 +13,7 @@ YamlNode* getFromYamlMap(YamlNode* node, std::string key)
 	}
 	catch(const std::exception& e)
 	{
-	throw ConfigFileStructureException(key);
+		throw ConfigFileStructureException(key);
 	}
 	
 	return result;
@@ -190,6 +190,10 @@ void	yamlErrorPages(ServerBlock *serverBlock, YamlMap* serverConf)
 {
 	YamlMap *errorPagesMap = NULL;
 	std::map<std::string, YamlNode*>::iterator itErrorPagesMap = serverConf->getMap().find("error_pages");
+	if (!getFromYamlMap(serverConf, "error_pages")->checkMap() && !getFromYamlMap(serverConf, "error_pages")->checkList())
+		return;
+	if (getFromYamlMap(serverConf, "error_pages")->checkList())
+		throw ConfigFileStructureException("error_pages");
 	if (itErrorPagesMap != serverConf->getMap().end())
 	{
 		errorPagesMap = (YamlMap*)itErrorPagesMap->second;
@@ -218,7 +222,13 @@ ServerBlock* serverBlockFromYaml(YamlMap* serverConf)
 	ServerBlock* newServerBlock = new ServerBlock(serverSock, port, backlog, domainName, flag);
 	newServerBlock->setBlockRoutes(tmp);
 
-	yamlErrorPages(newServerBlock, serverConf);
+	try {
+		yamlErrorPages(newServerBlock, serverConf);
+	}
+	catch (const std::exception& e){
+		delete newServerBlock;
+		throw MessagelessException(e.what());
+	}
 //	TODO set the error pages defined in the config file
 //	newServerBlock->setErrorPage(400, "website/400.html");
 //	newServerBlock->setErrorPage(403, "website/403.html");
@@ -264,8 +274,10 @@ Server::Server(YamlNode *parsedConf) : _maxEvents(10)
 	if (this->_epoll_fd == -1)
 		throw EpollCreationException();
 	try {
-		YamlList* serverConfList = (YamlList*) getFromYamlMap(parsedConf, "servers");
-		if (serverConfList->getList().empty())
+		YamlList* serverConfList = (YamlList*)getFromYamlMap(parsedConf, "servers");
+//		if (parsedConf->checkMap())
+//			throw ConfigFileStructureException("'-'");
+		if (parsedConf->checkList() && serverConfList->getList().empty())
 			throw ConfigFileStructureException("servers");
 
 		std::vector<YamlNode*>::iterator it;

@@ -40,11 +40,13 @@ class YamlScalar : public YamlNode {
 
 template<typename T>
 YamlScalar<T>::YamlScalar() {
+	this->setScalar();
 //	std::cout << _value << std::endl;
 }
 
 template<typename T>
 YamlScalar<T>::YamlScalar(const T value) {
+	this->setScalar();
 	_value = value;
 //	std::cout << _value << std::endl;
 }

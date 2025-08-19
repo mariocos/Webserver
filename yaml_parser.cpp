@@ -126,176 +126,217 @@ std::vector<LineToken>	YamlParser::tokenizer(const std::string &filePath) {
 YamlNode	*YamlParser::parseMapBlock(std::vector<LineToken> &lines, size_t &index, int curIndent) {
 	YamlMap	*map = new YamlMap();
 
-	while (index < lines.size()) {
-		LineToken	&token = lines[index];
+	try
+	{
+		while (index < lines.size()) {
+			LineToken	&token = lines[index];
 
-		if (token.indent < curIndent)
-			return map;
-		if (token.indent > curIndent) {
-			std::cerr << "Error: Unexpected indentation in map block at line " << index << std::endl;
-			return map;
-		}
-		if (token.isListItem) {
-            std::cerr << "Error: Unexpected list item in map block at line " << index << std::endl;
-            index++;
-            continue; //?? not sure is needed;
-		}
-
-		if (token.value.empty()) {
-			std::string currentKey = token.key;
-			index++;
-
-			if(index < lines.size() && lines[index].isListItem && lines[index].indent == curIndent + 4) {
-				YamlNode	*nestedList = parseListBlock(lines, index, curIndent + 4);
-				map->insert(currentKey, nestedList);
+			if (token.indent < curIndent)
+				return map;
+			if (token.indent > curIndent) {
+//				std::cerr << "Error: Unexpected indentation in map block at line " + index << std::endl;
+				std::string i = size_t_to_string(index);
+				throw YamlError("Error: Unexpected indentation in map block at line " + i);
+//				return map;
 			}
-			else if (index < lines.size() && !lines[index].isListItem && lines[index].indent == curIndent + 2) {
-				YamlNode	*nestedMap = parseMapBlock(lines, index, curIndent + 4);
-				map->insert(currentKey, nestedMap);
+			if (token.isListItem) {
+//  	   	      std::cerr << "Error: Unexpected list item in map block at line " + index << std::endl;
+    		    index++;
+				std::string i = size_t_to_string(index);
+				throw YamlError("Error: Unexpected list item in map block at line " + i);
+    		    continue; //?? not sure is needed;
 			}
-			else 
-				map->insert(currentKey, new YamlScalar<std::string>(""));
-		}
-		else {
-			if (isInLineArray(token.value)) {
-				YamlList	*inLineList = parseInLineArray(token.value);
-				map->insert(token.key, inLineList);
+
+			if (token.value.empty()) {
+				std::string currentKey = token.key;
+				index++;
+
+				if(index < lines.size() && lines[index].isListItem && lines[index].indent == curIndent + 4) {
+					YamlNode	*nestedList = parseListBlock(lines, index, curIndent + 4);
+					map->insert(currentKey, nestedList);
+				}
+				else if (index < lines.size() && !lines[index].isListItem && lines[index].indent == curIndent + 2) {
+					YamlNode	*nestedMap = parseMapBlock(lines, index, curIndent + 4);
+					map->insert(currentKey, nestedMap);
+				}
+				else 
+					map->insert(currentKey, new YamlScalar<std::string>(""));
 			}
 			else {
-				int check = yamlReturnVariableType(token.value);
-				switch (check) {
-					case 0:
-						map->insert(token.key, new YamlScalar<bool>(transformStringToBool(token.value)));
-						break;
-					case 1:
-						map->insert(token.key, new YamlScalar<int>(transformStringToInt(token.value)));
-						break;
-					default:
-						map->insert(token.key, new YamlScalar<std::string>(token.value));
+				if (isInLineArray(token.value)) {
+					YamlList	*inLineList = parseInLineArray(token.value);
+					map->insert(token.key, inLineList);
 				}
+				else {
+					int check = yamlReturnVariableType(token.value);
+					switch (check) {
+						case 0:
+							map->insert(token.key, new YamlScalar<bool>(transformStringToBool(token.value)));
+							break;
+						case 1:
+							map->insert(token.key, new YamlScalar<int>(transformStringToInt(token.value)));
+							break;
+						default:
+							map->insert(token.key, new YamlScalar<std::string>(token.value));
+					}
+				}
+//					map->insert(token.key, new YamlScalar(transformStringToSomething(token.value)));
+				index++;
 			}
-//				map->insert(token.key, new YamlScalar(transformStringToSomething(token.value)));
-			index++;
 		}
+		return map;
 	}
-	return map;
+	catch (const std::exception& e)
+	{
+		delete map;
+		throw YamlError(e.what());
+	}
 }
 
 YamlNode	*YamlParser::parseListBlock(std::vector<LineToken> &lines, size_t &index, int curIndent) {
 	YamlList	*list = new YamlList();
+	YamlMap		*listItemMap;
 
-	while (index < lines.size()) {
-		LineToken &token = lines[index];
+	try
+	{
+		while (index < lines.size()) {
+			LineToken &token = lines[index];
+			listItemMap = NULL;
 
-		if (!token.indent || token.indent < curIndent)
-			return list;
-		if (token.indent > curIndent) {
-			std::cerr << "Error: Unexpected indentation in list block at line " << index << std::endl;
-			return list;
-		}
-		if (!token.key.empty()) {
-			YamlMap	*listItemMap = new YamlMap();
+			if (!token.indent || token.indent < curIndent)
+				return list;
+			
+			if (token.indent > curIndent) {
+				std::string i = size_t_to_string(index);
+				throw YamlError("Error: Unexpected indentation in list block at line " + i);
+//				return list;
+			}
 
-			if (isInLineArray(token.value)) {
-				YamlList	*inLineList = parseInLineArray(token.value);
-				listItemMap->insert(token.key, inLineList);
+			if (!token.key.empty()) {
+				listItemMap = new YamlMap();
+
+				if (isInLineArray(token.value)) {
+					YamlList	*inLineList = parseInLineArray(token.value);
+					listItemMap->insert(token.key, inLineList);
+				}
+				else {
+					int check = yamlReturnVariableType(token.value);
+					switch (check) {
+						case 0:
+							listItemMap->insert(token.key, new YamlScalar<bool>(transformStringToBool(token.value)));
+							break;
+						case 1:
+							listItemMap->insert(token.key, new YamlScalar<int>(transformStringToInt(token.value)));
+							break;
+						default:
+							listItemMap->insert(token.key, new YamlScalar<std::string>(token.value));
+					}
+//					listItemMap->insert(token.key, new YamlScalar(transformStringToSomething(token.value)));
+				}
+				index++;
+				while (index < lines.size() && lines[index].indent == curIndent) {
+					if (!lines[index].isListItem) {
+						LineToken	&childToken = lines[index];
+
+						if (childToken.value.empty()) {
+							std::string	childKey = childToken.key;
+							index++;
+
+							if (index < lines.size()) {
+								if (lines[index].isListItem && lines[index].indent == curIndent + 4) {
+									YamlNode	*nestedList = parseListBlock(lines, index, curIndent + 4);
+									listItemMap->insert(childKey, nestedList);
+								}
+								else if (!lines[index].isListItem && lines[index].indent == curIndent + 2) {
+									YamlNode	*nestedMap = parseMapBlock(lines, index, curIndent + 2);
+									listItemMap->insert(childKey, nestedMap);
+								}
+								else
+									listItemMap->insert(childKey, new YamlScalar<std::string>(""));
+							}
+							else 
+								listItemMap->insert(childKey, new YamlScalar<std::string>(""));
+						}
+						else {
+							if (isInLineArray(childToken.value)) {
+								YamlList	*inLineList = parseInLineArray(childToken.value);
+								listItemMap->insert(childToken.key, inLineList);
+							}
+							else {
+								int check = yamlReturnVariableType(childToken.value);
+								switch (check) {
+									case 0:
+										listItemMap->insert(childToken.key, new YamlScalar<bool>(transformStringToBool(childToken.value)));
+										break;
+									case 1:
+										listItemMap->insert(childToken.key, new YamlScalar<int>(transformStringToInt(childToken.value)));
+										break;
+									default:
+										listItemMap->insert(childToken.key, new YamlScalar<std::string>(childToken.value));
+								}
+							}
+//								listItemMap->insert(childToken.key, new YamlScalar(transformStringToSomething(childToken.value)));
+							index++;
+						}
+					}
+					else
+						break;
+				}
+				list->add(listItemMap);
 			}
 			else {
 				int check = yamlReturnVariableType(token.value);
 				switch (check) {
 					case 0:
-						listItemMap->insert(token.key, new YamlScalar<bool>(transformStringToBool(token.value)));
+						list->add(new YamlScalar<bool>(transformStringToBool(token.value)));
 						break;
 					case 1:
-						listItemMap->insert(token.key, new YamlScalar<int>(transformStringToInt(token.value)));
+						list->add(new YamlScalar<int>(transformStringToInt(token.value)));
 						break;
 					default:
-						listItemMap->insert(token.key, new YamlScalar<std::string>(token.value));
+						list->add(new YamlScalar<std::string>(token.value));
 				}
-//				listItemMap->insert(token.key, new YamlScalar(transformStringToSomething(token.value)));
+//				list->add(new YamlScalar(transformStringToSomething(token.value)));
+				index++;
 			}
-			index++;
-			while (index < lines.size() && lines[index].indent == curIndent) {
-				if (!lines[index].isListItem) {
-					LineToken	&childToken = lines[index];
-
-					if (childToken.value.empty()) {
-						std::string	childKey = childToken.key;
-						index++;
-						
-						if (index < lines.size()) {
-							if (lines[index].isListItem && lines[index].indent == curIndent + 4) {
-								YamlNode	*nestedList = parseListBlock(lines, index, curIndent + 4);
-								listItemMap->insert(childKey, nestedList);
-							}
-							else if (!lines[index].isListItem && lines[index].indent == curIndent + 2) {
-								YamlNode	*nestedMap = parseMapBlock(lines, index, curIndent + 2);
-								listItemMap->insert(childKey, nestedMap);
-							}
-							else
-								listItemMap->insert(childKey, new YamlScalar<std::string>(""));
-						}
-						else 
-							listItemMap->insert(childKey, new YamlScalar<std::string>(""));
-					}
-					else {
-						if (isInLineArray(childToken.value)) {
-							YamlList	*inLineList = parseInLineArray(childToken.value);
-							listItemMap->insert(childToken.key, inLineList);
-						}
-						else {
-							int check = yamlReturnVariableType(childToken.value);
-							switch (check) {
-								case 0:
-									listItemMap->insert(childToken.key, new YamlScalar<bool>(transformStringToBool(childToken.value)));
-									break;
-								case 1:
-									listItemMap->insert(childToken.key, new YamlScalar<int>(transformStringToInt(childToken.value)));
-									break;
-								default:
-									listItemMap->insert(childToken.key, new YamlScalar<std::string>(childToken.value));
-							}
-						}
-//							listItemMap->insert(childToken.key, new YamlScalar(transformStringToSomething(childToken.value)));
-						index++;
-					}
-				}
-				else
-					break;
-			}
-			list->add(listItemMap);
 		}
-		else {
-			int check = yamlReturnVariableType(token.value);
-			switch (check) {
-				case 0:
-					list->add(new YamlScalar<bool>(transformStringToBool(token.value)));
-					break;
-				case 1:
-					list->add(new YamlScalar<int>(transformStringToInt(token.value)));
-					break;
-				default:
-					list->add(new YamlScalar<std::string>(token.value));
-			}
-//			list->add(new YamlScalar(transformStringToSomething(token.value)));
-			index++;
-		}
-	}
 	return list;
+	}
+	catch (const std::exception& e)
+	{
+		delete list;
+		if (listItemMap != NULL)
+			delete listItemMap;
+		throw YamlError(e.what());
+	}
 }
 
 YamlNode	*YamlParser::parse(const std::string &file_path) {
 	std::vector<LineToken> tokens = tokenizer(file_path);
 	size_t	index = 0;
+	YamlNode *parsed = NULL;
 
-	if (tokens.empty())
+	try{
+		if (tokens.empty())
+			return NULL;
+
+		if (tokens[0].isListItem && tokens[0].indent == 0)
+		{
+			parsed = parseListBlock(tokens, index, 0);
+			return parsed;
+		}
+		else if (!tokens[0].isListItem && tokens[0].indent == 0)
+		{
+			parsed = parseMapBlock(tokens, index, 0);
+			return parsed;
+		}
+		else
+			std::cout << "ERROR: Indentarion." << std::endl;
 		return NULL;
-
-	if (tokens[0].isListItem && tokens[0].indent == 0)
-		return parseListBlock(tokens, index, 0);
-	else if (!tokens[0].isListItem && tokens[0].indent == 0)
-		return parseMapBlock(tokens, index, 0);
-	else
-		std::cout << "ERROR: Indentarion." << std::endl;
-	return NULL;
+	}
+	catch (const std::exception& e)
+	{
+		delete parsed;
+		throw YamlError(e.what());
+	}
 }

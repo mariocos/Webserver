@@ -1,7 +1,7 @@
 #include "yaml_map.hpp"
 
 YamlMap::YamlMap() : _index(0) {
-//	this->setMap();
+	this->setMap();
 //	std::cout << "MAP" << std::endl;
 }
 
@@ -36,11 +36,11 @@ unsigned int	YamlMap::getIndex() const {
 }
 
 bool	YamlMap::isMap() {
-	return (true);
+	return (this->checkMap());
 }
 
 bool	YamlMap::isList() {
-	return (false);
+	return (this->checkList());
 }
 
 void	YamlMap::print() const {
@@ -52,7 +52,7 @@ void	YamlMap::print() const {
         if (it->second) {
             // Scalars inline, others on new line
 //            YamlScalar* scalar = dynamic_cast<YamlScalar*>(it->second);
-            if (it->second->isMap() || it->second->isList()) {
+            if (it->second->checkMap() || it->second->checkList()) {
                 std::cout << std::endl;
             }
 			it->second->print();

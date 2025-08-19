@@ -1,13 +1,13 @@
 #include "yaml_list.hpp"
 
 YamlList::YamlList() {
-//	this->setList();
+	this->setList();
 //	std::cout << "LIST" << std::endl;
 }
 
 YamlList::~YamlList() {
 	std::vector<YamlNode*>::iterator	it;
-	for (it = _list.begin(); it != _list.end(); it++) {
+	for (it = _list.begin(); it != _list.end(); ++it) {
 		delete *it;
 		*it = NULL;
 	}
@@ -30,11 +30,11 @@ size_t		YamlList::size() const {
 }
 
 bool	YamlList::isMap() {
-	return (false);
+	return (this->checkMap());
 }
 
 bool	YamlList::isList() {
-	return (true);
+	return (this->checkList());
 }
 
 std::vector<YamlNode*>	&YamlList::getList() {

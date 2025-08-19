@@ -1,5 +1,8 @@
 #include "yaml_utils.hpp"
 
+YamlError::YamlError(std::string msg) :
+runtime_error("\033[1m\033[31m" + msg + "\033[0m") {}
+
 bool	checkIntYaml(const std::string &str, size_t len)
 {
 	size_t	n = 0;
@@ -27,8 +30,8 @@ bool    checkYamlNode(const std::string &value)
         if ((*value.end()) == ']')
             return true;
         else {
-            std::cerr << "Inline list not correctly ended." << std::endl;
-			return false;
+            throw YamlError("Inline list not correctly ended.");
+			
 		}
     }
     else if (pos == value.length())
@@ -65,6 +68,12 @@ bool	transformStringToBool(const std::string &value)
 int	transformStringToInt(const std::string &value)
 {
 	return (std::atoi(value.c_str()));
+}
+
+std::string size_t_to_string(size_t value) {
+    std::ostringstream oss;
+    oss << value;
+    return oss.str();
 }
 
 //void	yamlMapP(YamlMap *node) {
