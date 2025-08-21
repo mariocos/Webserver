@@ -218,7 +218,8 @@ ServerBlock* serverBlockFromYaml(YamlMap* serverConf)
 	int port = ((YamlScalar<int>*)(getFromYamlMap(serverConf, "listen")))->getValue();
 	int backlog = -1;
 	std::string domainName = ((YamlScalar<std::string>*)(getFromYamlMap(serverConf, "server_names")))->getValue();
-	bool flag = domainName == "localhost";
+	bool Default = isRouteDefault(serverConf);
+	std::cout << "Is default: " << Default << std::endl;
 	std::vector<Routes*>	tmp;
 	ServerBlock* newServerBlock = NULL;
 
@@ -229,7 +230,7 @@ ServerBlock* serverBlockFromYaml(YamlMap* serverConf)
 
 	try {
 		int serverSock = socket(AF_INET, SOCK_STREAM, 0);
-		newServerBlock = new ServerBlock(serverSock, port, backlog, domainName, flag);
+		newServerBlock = new ServerBlock(serverSock, port, backlog, domainName, Default);
 		
 		routesFromYaml(serverConf, tmp);
 //		possivelmente aqui é onde tenho de verificar quantos serveres tenho na mesma porta
@@ -238,8 +239,6 @@ ServerBlock* serverBlockFromYaml(YamlMap* serverConf)
 		yamlErrorPages(newServerBlock, serverConf);
 	}
 	catch (const std::exception& e){
-//		tmp.erase(tmp.begin(), tmp.end());
-//		std::vector<Routes*>::iterator it;
 		delete newServerBlock;
 		throw MessagelessException(e.what());
 	}
@@ -280,6 +279,35 @@ void Server::startServerBlock(ServerBlock* newServerBlock)
 	}
 }
 
+void checkDefaultServerBlock(std::vector<ServerBlock*> &_serverBlocks)
+{
+	size_t	defaultServerBlockNbr = 0;
+	size_t	defaultRouteNbr = 0;
+
+	for (std::vector<ServerBlock*>::iterator it = _serverBlocks.begin(); it != _serverBlocks.end(); it++)
+	{
+		std::vector<Routes*> routes = (*it)->getRoutesVector();
+		for (std::vector<Routes*>::iterator it = routes.begin(); it != routes.end(); it++)
+		{
+			if ((*it)->isDefault())
+				defaultRouteNbr++;
+		}
+		std::cout << "defaultRouteNbr " << defaultRouteNbr << std::endl;
+		if (defaultRouteNbr > 1)
+			throw ConfigFileStructureException("too many default routes in one blocks, only one allowed per server block");
+		if (defaultRouteNbr == 0)
+			(*it)->getRoutesVector().front()->setAsDefaultRoute();
+		defaultRouteNbr = 0;
+		if ((*it)->isDefault())
+			defaultServerBlockNbr++;
+	}
+	std::cout << "defaultServerBlockNbr " << defaultServerBlockNbr << std::endl;
+	if (defaultServerBlockNbr > 1)
+		throw ConfigFileStructureException("too many default server blocks, only one allowed");
+	if (defaultServerBlockNbr == 0)
+		_serverBlocks.front()->setAsDefault();
+}
+
 Server::Server(YamlNode *parsedConf) : _maxEvents(10)
 {
 	ServerBlock			*newServerBlock;
@@ -302,12 +330,10 @@ Server::Server(YamlNode *parsedConf) : _maxEvents(10)
 			printLog("INFO", newServerBlock, NULL, NULL, 0, "");
 			this->_serverBlocks.push_back(newServerBlock);
 		}
+		checkDefaultServerBlock(this->_serverBlocks);
 	}
 	catch(const std::exception& e)
 	{
-//		for (std::vector<ServerBlock*>::iterator it = _serverBlocks.begin(); it != _serverBlocks.end(); ++it)
-//			delete *it;
-//		_serverBlocks.clear();
 		delete parsedConf;
 		throw MessagelessException(e.what());
 	}

@@ -178,3 +178,8 @@ void	ServerBlock::setBlockRoutes(std::vector<Routes*> &routes)
 {
 	this->_routes = routes;
 }
+
+void	ServerBlock::setAsDefault()
+{
+	this->_default = true;
+}

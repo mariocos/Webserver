@@ -55,6 +55,7 @@ public:
 	void		setBlockMethod(int method, bool flag);
 	void		setBlockAsCgi();
 	void		setBlockRoutes(std::vector<Routes*> &routes);
+	void		setAsDefault();
 };
 
 #endif

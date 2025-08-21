@@ -59,6 +59,7 @@ class Routes
 		void		setAsListing();
 		void		setAsPermanentRedirect();
 		void		setAsTemporaryRedirect();
+		void		setAsDefaultRoute();
 };
 
 std::string	generateListingHTML(std::string &dirPath, Client *client);

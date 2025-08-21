@@ -209,6 +209,11 @@ void	Routes::setAsTemporaryRedirect()
 	this->_isPermanentRedirect = false;
 }
 
+void		Routes::setAsDefaultRoute()
+{
+	this->_defaultRoute = true;
+}
+
 std::string	generateListingHTML(std::string &dirPath, Client *client)
 {
 	std::stringstream	html;
