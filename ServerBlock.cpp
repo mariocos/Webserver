@@ -43,6 +43,7 @@ ServerBlock::~ServerBlock()
 	for (std::vector<Routes*>::iterator it = _routes.begin(); it != _routes.end(); ++it)
 		delete *it;
 	_routes.clear();
+	_errorPages.clear();
 }
 
 std::string	ServerBlock::getBlockName()

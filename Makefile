@@ -12,6 +12,7 @@ SOURCES =	main.cpp utils.cpp checkConnection.cpp\
 			yaml_parser.cpp yaml_list.cpp yaml_map.cpp yaml_utils.cpp
 OBJS_DIR = obj
 OBJECTS = $(addprefix $(OBJS_DIR)/, $(SOURCES:%.cpp=%.o))
+DIRS = $(sort $(dir $(OBJECTS)))
 
 Color_Off='\033[0m'       # Text Reset
 IGreen='\033[0;92m'       # Green
@@ -28,8 +29,13 @@ $(NAME): $(OBJECTS)
 		$(CXX) $(CXXFLAGS) $(OBJECTS) -o $@
 		$(MSG1)
 
+$(OBJECTS): | $(DIRS)
+
+$(DIRS):
+	mkdir -p $@
+
 $(OBJS_DIR)/%.o: %.cpp
-	mkdir -p $(dir $@)
+#	mkdir -p $(dir $@)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 clean:

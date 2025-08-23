@@ -10,7 +10,6 @@ servers:
     routes:
       - uri: /
         methods: [GET, POST, DELETE]
-        default: true
         modules:
           - type: static
             settings:

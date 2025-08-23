@@ -184,7 +184,7 @@ void routesFromYaml(YamlMap* serverConf, std::vector<Routes*> &routes)
 		for (itRoutes = routesConfig->getList().begin(); itRoutes != routesConfig->getList().end(); itRoutes++) {
 			YamlMap* routeConfig = (YamlMap*)(*itRoutes);
 			Routes* route = routeFromYaml(routeConfig, maxBodySize);
-			std::cout<<"IS ROUTE CGI ? "<<route->isCgi()<<std::endl;
+//			std::cout<<"IS ROUTE CGI ? "<<route->isCgi()<<std::endl;
 			routes.push_back(route);
 		}
 	}
@@ -219,7 +219,7 @@ ServerBlock* serverBlockFromYaml(YamlMap* serverConf)
 	int backlog = -1;
 	std::string domainName = ((YamlScalar<std::string>*)(getFromYamlMap(serverConf, "server_names")))->getValue();
 	bool Default = isRouteDefault(serverConf);
-	std::cout << "Is default: " << Default << std::endl;
+//	std::cout << "Is default: " << Default << std::endl;
 	std::vector<Routes*>	tmp;
 	ServerBlock* newServerBlock = NULL;
 
@@ -292,7 +292,6 @@ void checkDefaultServerBlock(std::vector<ServerBlock*> &_serverBlocks)
 			if ((*it)->isDefault())
 				defaultRouteNbr++;
 		}
-		std::cout << "defaultRouteNbr " << defaultRouteNbr << std::endl;
 		if (defaultRouteNbr > 1)
 			throw ConfigFileStructureException("too many default routes in one blocks, only one allowed per server block");
 		if (defaultRouteNbr == 0)
@@ -301,7 +300,6 @@ void checkDefaultServerBlock(std::vector<ServerBlock*> &_serverBlocks)
 		if ((*it)->isDefault())
 			defaultServerBlockNbr++;
 	}
-	std::cout << "defaultServerBlockNbr " << defaultServerBlockNbr << std::endl;
 	if (defaultServerBlockNbr > 1)
 		throw ConfigFileStructureException("too many default server blocks, only one allowed");
 	if (defaultServerBlockNbr == 0)
@@ -327,17 +325,19 @@ Server::Server(YamlNode *parsedConf) : _maxEvents(10)
 			YamlMap* serverConf = (YamlMap*)(*it);
 			newServerBlock = serverBlockFromYaml(serverConf);
 			startServerBlock(newServerBlock);
-			printLog("INFO", newServerBlock, NULL, NULL, 0, "");
 			this->_serverBlocks.push_back(newServerBlock);
+			checkDefaultServerBlock(this->_serverBlocks);
+			printLog("INFO", newServerBlock, NULL, NULL, 0, "");
 		}
-		checkDefaultServerBlock(this->_serverBlocks);
 	}
 	catch(const std::exception& e)
 	{
 		delete parsedConf;
+//		delete newServerBlock;
+		for (std::vector<ServerBlock*>::iterator it = _serverBlocks.begin(); it != _serverBlocks.end(); ++it)
+			delete *it;
 		throw MessagelessException(e.what());
 	}
-
 	this->_events = new epoll_event[this->_maxEvents];
 }
 
@@ -352,17 +352,6 @@ Server::Server(std::vector<int> ports, std::vector<std::string> names, int backl
 	this->_epoll_fd = epoll_create(1);
 	if (this->_epoll_fd == -1)
 		throw EpollCreationException();
-	/*
-	Pseudo Code
-	while (a < port.size())
-	{
-		newServerBlock = new ServerBlock();
-		std::vector<Routes>	tmpRoutes;
-		while (i < list.size)
-			tmpRoutes.assing_back(Routes());
-		newServerBlock->setBlockRoutes(tmpRoutes);
-	}
-	 */
 
 	for (size_t i = 0; i < ports.size(); i++)
 	{
