@@ -244,9 +244,7 @@ void	loadError409(int client_socket, Response *response, Client *client)
 		response->addToResponse("Connection: keep-alive\r\n");
 	else
 		response->addToResponse("Connection: close\r\n");
-	response->addToResponse("Content-Type: text/plain\r\n");
-	response->addToResponse("Content-Length: 0\r\n\r\n");
-	sendMsgToSocket(client_socket, response->getResponse().size(), client, response);
+	response->addToResponse("Content-Type: text/plain\r\n\r\n");
 	if (client->getServerBlockTriggered()->getErrorPage(409) != client->getServerBlockTriggered()->getErrorMap().end())
 	{
 		input.open(client->getServerBlockTriggered()->getErrorPage(409)->second.c_str(), std::ios::in | std::ios::binary);
@@ -261,6 +259,16 @@ void	loadError409(int client_socket, Response *response, Client *client)
 			input.close();
 			send(client_socket, responseCopy.c_str(), responseCopy.size(), MSG_NOSIGNAL);
 		}
+		else
+		{
+			response->addToResponse("409 Conflict - Conflict with the file requested\n");
+			sendMsgToSocket(client_socket, response->getResponse().size(), client, response);
+		}
+	}
+	else
+	{
+		response->addToResponse("409 Conflict - Conflict with the file requested\n");
+		sendMsgToSocket(client_socket, response->getResponse().size(), client, response);
 	}
 	response->clearResponse();
 	client->setClientWritingFlag(true);

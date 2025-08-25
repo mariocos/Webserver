@@ -94,8 +94,8 @@ void	createPostResponse(Client *client, Response *response)
 		response->addToResponse("Connection: keep-alive\r\n");
 	else
 		response->addToResponse("Connection: close\r\n");
-	response->addToResponse("Content-Length: 20\r\n\r\n");
-	response->addToResponse("Created successfully");
+	response->addToResponse("Content-Length: 21\r\n\r\n");
+	response->addToResponse("Created successfully\n");
 	sendMsgToSocket(client->getSocketFd(), response->getResponse().size(), client, response);
 	response->clearResponse();
 	client->setClientWritingFlag(true);
@@ -115,8 +115,8 @@ void	createDeleteResponse(Client *client, Response *response)
 		response->addToResponse("Connection: keep-alive\r\n");
 	else
 		response->addToResponse("Connection: close\r\n");
-	response->addToResponse("Content-Length: 20\r\n\r\n");
-	response->addToResponse("Deleted successfully");
+	response->addToResponse("Content-Length: 21\r\n\r\n");
+	response->addToResponse("Deleted successfully\n");
 	sendMsgToSocket(client->getSocketFd(), response->getResponse().size(), client, response);
 	response->clearResponse();
 	client->setClientWritingFlag(true);

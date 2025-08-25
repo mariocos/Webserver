@@ -39,15 +39,11 @@ void	RequestParse::buildRequest(const char *request)
 	full_content = ft_strstr(request, "\r\n\r\n") + 4;
 	if (!full_content)
 	{
-		std::cout << "\nfuck me in the but\n\n";//change to exceptions
+		//change to exceptions
 	}
 	error_code = 0;
-	//std::cout << "calling request parse cstring constructor\n";
 	if (!request)
-	{
-		std::cout << "im getting a null cstring\n";
 		return ;//not sure what to do but im pretty sure this gets caught earlier
-	}
 	std::string	req(request);
 	/* first line */
 	std::string line1 = req.substr(0, req.find('\n'));
@@ -61,13 +57,8 @@ void	RequestParse::buildRequest(const char *request)
 		queryString = get_keyword(path_to_request, "?");
 		path_to_request = path_to_request.substr(0, path_to_request.find("?"));
 	}
-	//std::cout << "path to request is: [" << path_to_request << "]\n";
 	if (ft_strstr(path_to_request.c_str(), ".."))
-	{
-		std::cout<< "what is naughty about this [" << path_to_request.find("..") << "]\n";
-		std::cout << "naughty request\n";
 		error_code = 3;
-	}
 	line1.erase(0, len + 1);
 	this->HTTP_version = line1.substr(0, line1.find('\r'));
 	req.erase(0, req.find('\n') + 1);
