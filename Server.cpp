@@ -55,6 +55,8 @@ void routeMethods(Routes *route, YamlMap* routeConfig,YamlList* modules)
 		}
 		else if (newMeth == "DELETE")
 			route->setMethod(DELETE, true);
+		else
+			throw ConfigFileStructureException("Used method not allowed");
 	}
 }
 
@@ -64,7 +66,12 @@ bool	isRouteDefault(YamlMap* routeConfig)
 
 	std::map<std::string, YamlNode*>::iterator isDefault = routeConfig->getMap().find("default");
 	if (isDefault != routeConfig->getMap().end())
-		defaultRoute = (YamlScalar<bool>*)getFromYamlMap(routeConfig, "default");
+	{
+		if (((YamlScalar<bool>*)getFromYamlMap(routeConfig, "default"))->getType() == "bool")
+			defaultRoute = (YamlScalar<bool>*)getFromYamlMap(routeConfig, "default");
+		else
+			throw ConfigFileStructureException("Invalid variable type in default");
+	}	
 	return (defaultRoute);
 }
 
@@ -72,11 +79,19 @@ Routes	*setStatic(YamlMap* settings, int maxBodySize, bool defaultRoute, std::st
 {
 	std::string root = ((YamlScalar<std::string>*)(getFromYamlMap(settings, "root")))->getValue();
 	Routes* newRoute = new Routes(maxBodySize, defaultRoute, root, uri);
+	bool dirList;
 
-	bool dirList = ((YamlScalar<bool>*)(getFromYamlMap(settings, "directory_listing")))->getValue();
-	if (dirList)
-		newRoute->setAsListing();
-
+	if (((YamlScalar<bool>*)(getFromYamlMap(settings, "directory_listing")))->getType() == "bool")
+	{
+		dirList = ((YamlScalar<bool>*)(getFromYamlMap(settings, "directory_listing")))->getValue();
+		if (dirList)
+			newRoute->setAsListing();
+	}
+	else
+	{
+		delete newRoute;
+		throw ConfigFileStructureException("Invalid variable type in directory_listing");
+	}
 	return (newRoute);
 }
 
