@@ -22,7 +22,7 @@ servers:
         modules:
           - type: static
             settings:
-              root: /home/adimas-d
+              root: /home/pbjr
               directory_listing: true
   - listen: 8081
     server_names: 127.0.0.1

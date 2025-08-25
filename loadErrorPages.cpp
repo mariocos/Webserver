@@ -55,7 +55,7 @@ void	loadError400(int client_socket, Response *response, Client *client)
 		std::string	responseCopy(response->getResponse().begin(), response->getResponse().end());
 		std::string	type = getFileType(path);
 		if (responseCopy.find("Content-Type: text/plain") != std::string::npos)
-			responseCopy.replace(responseCopy.find("Content-Type: text/plain"), 24, type);
+			responseCopy.replace(responseCopy.find("Content-Type: text/plain"), 24, "Content-Type: " + type);
 		while (getline(input, buffer))
 			responseCopy.append(buffer + "\n");
 		input.close();
@@ -94,7 +94,7 @@ void	loadError403(int client_socket, Response *response, Client *client)
 		std::string	responseCopy(response->getResponse().begin(), response->getResponse().end());
 		std::string	type = getFileType(path);
 		if (responseCopy.find("Content-Type: text/plain") != std::string::npos)
-			responseCopy.replace(responseCopy.find("Content-Type: text/plain"), 24, type);
+			responseCopy.replace(responseCopy.find("Content-Type: text/plain"), 24, "Content-Type: " + type);
 		while (getline(input, buffer))
 			responseCopy.append(buffer + "\n");
 		input.close();
@@ -133,7 +133,7 @@ void	loadError404(int client_socket, Response *response, Client *client)
 		std::string	responseCopy(response->getResponse().begin(), response->getResponse().end());
 		std::string	type = getFileType(path);
 		if (responseCopy.find("Content-Type: text/plain") != std::string::npos)
-			responseCopy.replace(responseCopy.find("Content-Type: text/plain"), 24, type);
+			responseCopy.replace(responseCopy.find("Content-Type: text/plain"), 24, "Content-Type: " + type);
 		while (getline(input, buffer))
 			responseCopy.append(buffer + "\n");
 		input.close();
@@ -172,7 +172,7 @@ void	loadError405(int client_socket, Response *response, Client *client)
 		std::string	responseCopy(response->getResponse().begin(), response->getResponse().end());
 		std::string	type = getFileType(path);
 		if (responseCopy.find("Content-Type: text/plain") != std::string::npos)
-			responseCopy.replace(responseCopy.find("Content-Type: text/plain"), 24, type);
+			responseCopy.replace(responseCopy.find("Content-Type: text/plain"), 24, "Content-Type: " + type);
 		while (getline(input, buffer))
 			responseCopy.append(buffer + "\n");
 		input.close();
@@ -209,7 +209,7 @@ void	loadError408(int client_socket, Response *response, Client *client)
 			std::string	responseCopy(response->getResponse().begin(), response->getResponse().end());
 			std::string	type = getFileType(client->getServerBlockTriggered()->getErrorPage(408)->second);
 			if (responseCopy.find("Content-Type: text/plain") != std::string::npos)
-				responseCopy.replace(responseCopy.find("Content-Type: text/plain"), 24, type);
+				responseCopy.replace(responseCopy.find("Content-Type: text/plain"), 24, "Content-Type: " + type);
 			while (getline(input, buffer))
 				responseCopy.append(buffer + "\n");
 			input.close();
@@ -255,7 +255,7 @@ void	loadError409(int client_socket, Response *response, Client *client)
 			std::string	responseCopy(response->getResponse().begin(), response->getResponse().end());
 			std::string	type = getFileType(client->getServerBlockTriggered()->getErrorPage(409)->second);
 			if (responseCopy.find("Content-Type: text/plain") != std::string::npos)
-				responseCopy.replace(responseCopy.find("Content-Type: text/plain"), 24, type);
+				responseCopy.replace(responseCopy.find("Content-Type: text/plain"), 24, "Content-Type: " + type);
 			while (getline(input, buffer))
 				responseCopy.append(buffer + "\n");
 			input.close();
@@ -289,7 +289,7 @@ void	loadError413(int client_socket, Response *response, Client *client)
 		std::string	responseCopy(response->getResponse().begin(), response->getResponse().end());
 		std::string	type = getFileType(path);
 		if (responseCopy.find("Content-Type: text/plain") != std::string::npos)
-			responseCopy.replace(responseCopy.find("Content-Type: text/plain"), 24, type);
+			responseCopy.replace(responseCopy.find("Content-Type: text/plain"), 24, "Content-Type: " + type);
 		while (getline(input, buffer))
 			responseCopy.append(buffer + "\n");
 		input.close();
@@ -327,7 +327,7 @@ void	loadError417(int client_socket, Response *response, Client *client)
 			std::string	responseCopy(response->getResponse().begin(), response->getResponse().end());
 			std::string	type = getFileType(client->getServerBlockTriggered()->getErrorPage(417)->second);
 			if (responseCopy.find("Content-Type: text/plain") != std::string::npos)
-				responseCopy.replace(responseCopy.find("Content-Type: text/plain"), 24, type);
+				responseCopy.replace(responseCopy.find("Content-Type: text/plain"), 24, "Content-Type: " + type);
 			while (getline(input, buffer))
 				responseCopy.append(buffer + "\n");
 			input.close();
@@ -392,7 +392,7 @@ void	loadError505(int client_socket, Response *response, Client *client)
 			std::string	responseCopy(response->getResponse().begin(), response->getResponse().end());
 			std::string	type = getFileType(client->getServerBlockTriggered()->getErrorPage(505)->second);
 			if (responseCopy.find("Content-Type: text/plain") != std::string::npos)
-				responseCopy.replace(responseCopy.find("Content-Type: text/plain"), 24, type);
+				responseCopy.replace(responseCopy.find("Content-Type: text/plain"), 24, "Content-Type: " + type);
 			while (getline(input, buffer))
 				responseCopy.append(buffer + "\n");
 			input.close();

@@ -184,7 +184,8 @@ void routesFromYaml(YamlMap* serverConf, std::vector<Routes*> &routes)
 		for (itRoutes = routesConfig->getList().begin(); itRoutes != routesConfig->getList().end(); itRoutes++) {
 			YamlMap* routeConfig = (YamlMap*)(*itRoutes);
 			Routes* route = routeFromYaml(routeConfig, maxBodySize);
-//			std::cout<<"IS ROUTE CGI ? "<<route->isCgi()<<std::endl;
+			// std::cout<<"IS ROUTE CGI ? "<<route->isCgi()<<std::endl;
+			// std::cout<<"IS ROUTE DEFAULT ? "<<route->isDefault()<<std::endl;
 			routes.push_back(route);
 		}
 	}
@@ -324,6 +325,7 @@ Server::Server(YamlNode *parsedConf) : _maxEvents(10)
 		for (it = serverConfList->getList().begin(); it != serverConfList->getList().end(); it++) {
 			YamlMap* serverConf = (YamlMap*)(*it);
 			newServerBlock = serverBlockFromYaml(serverConf);
+			// std::cout<<"IS SERVER BLOCK DEFAULT ? "<<newServerBlock->isDefault()<<std::endl;
 			startServerBlock(newServerBlock);
 			this->_serverBlocks.push_back(newServerBlock);
 			checkDefaultServerBlock(this->_serverBlocks);

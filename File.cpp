@@ -123,7 +123,7 @@ bool	File::checkFileInfo(const char *path, int client_socket)
 		if (!this->_client->getRouteTriggered()->getDefaultFile().empty())
 			file_path = this->_client->getRouteTriggered()->getDefaultPathForDirectoryRequest();
 		else
-			file_path = "test_website/index.html";
+			file_path = "";
 		this->_file.open(file_path.c_str(), std::ios::in);
 		if (!this->_file.is_open())
 		{
