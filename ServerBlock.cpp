@@ -44,6 +44,7 @@ ServerBlock::~ServerBlock()
 		delete *it;
 	_routes.clear();
 	_errorPages.clear();
+	printLog("INFO", this, NULL, NULL, 2, "");
 }
 
 std::string	ServerBlock::getBlockName()
