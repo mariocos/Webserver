@@ -1,4 +1,4 @@
-#include "includes/webserv.hpp"
+#include "../../../includes/webserv.hpp"
 
 void	load301(int client_socket, Response *response, Client *client, std::string redirectPath)
 {

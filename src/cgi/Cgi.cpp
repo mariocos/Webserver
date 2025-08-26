@@ -1,4 +1,4 @@
-#include "includes/Cgi.hpp"
+#include "../../includes/Cgi.hpp"
 
 Cgi::Cgi() : _pid(-1), _running(false)
 {

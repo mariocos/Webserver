@@ -1,5 +1,4 @@
-#include "includes/webserv.hpp"
-#include "includes/webserv.hpp"
+#include "../includes/webserv.hpp"
 
 bool	run;
 

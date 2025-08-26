@@ -3,7 +3,7 @@
 # include "yaml_node.hpp"
 # include "yaml_list.hpp"
 # include "yaml_map.hpp"
-# include "yaml_scalar.tpp"
+# include "../src/parsing/yaml_scalar.tpp"
 
 bool		checkIntYaml(const std::string &str, size_t len);
 bool		checkYamlNode(const std::string &value);

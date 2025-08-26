@@ -1,4 +1,4 @@
-#include "includes/WebSocket.hpp"
+#include "../../../includes/WebSocket.hpp"
 
 WebSocket::WebSocket() : _socket(-1), _state(INACTIVE)
 {

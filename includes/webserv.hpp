@@ -53,7 +53,7 @@
 # include "ServerBlock.hpp"
 # include "Cgi.hpp"
 # include "Routes.hpp"
-# include "../yaml_parser.hpp"
+# include "yaml_parser.hpp"
 
 extern bool	run;
 
