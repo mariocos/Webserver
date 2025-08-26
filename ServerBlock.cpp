@@ -92,7 +92,7 @@ bool	ServerBlock::isCgi()
 	return (this->_isCgi);
 }
 
-std::map<int, std::string>	ServerBlock::getErrorMap()
+std::map<int, std::string>	&ServerBlock::getErrorMap()
 {
 	return (this->_errorPages);
 }

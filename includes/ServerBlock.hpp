@@ -41,7 +41,7 @@ public:
 	bool		canDoMethod(int method);
 	bool		isDefault();
 	bool		isCgi();\
-	std::map<int, std::string>	getErrorMap();
+	std::map<int, std::string>	&getErrorMap();
 	std::map<int, std::string>::iterator	getErrorPage(int key);
 	std::vector<Routes*>	&getRoutesVector();
 	std::vector<Routes*>::iterator	getDefaultRoute();
