@@ -5,7 +5,7 @@ runtime_error("Redirect")
 {
 	response->setStatusCode(301);
 	printLog("INFO", NULL, client, NULL, 301, "");
-	load301(client_socket, response, client);
+	load301(client_socket, response, client, client->getRouteTriggered()->getRedirectPath());
 	if (client->getRouteTriggered()->isCgi())
 	{
 		client->setClientWritingFlag(true);
@@ -18,7 +18,7 @@ runtime_error("Redirect")
 {
 	response->setStatusCode(307);
 	printLog("INFO", NULL, client, NULL, 307, "");
-	load307(client_socket, response, client);
+	load307(client_socket, response, client, client->getRouteTriggered()->getRedirectPath());
 	if (client->getRouteTriggered()->isCgi())
 	{
 		client->setClientWritingFlag(true);

@@ -3,8 +3,8 @@
 
 # include "webserv.hpp"
 
-void	load301(int client_socket, Response *response, Client *client);
-void	load307(int client_socket, Response *response, Client *client);
+void	load301(int client_socket, Response *response, Client *client, std::string redirectPath);
+void	load307(int client_socket, Response *response, Client *client, std::string redirectPath);
 void	loadError400(int client_socket, Response *response, Client *client);
 void	loadError403(int client_socket, Response *response, Client *client);
 void	loadError404(int client_socket, Response *response, Client *client);

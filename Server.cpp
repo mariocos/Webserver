@@ -715,7 +715,20 @@ void	Server::manageConnection(epoll_event &event)
 void	Server::manageClient(std::vector<Client*>::iterator it, epoll_event	&event)
 {
 	if (!isConnectionGood(*this, it))
-		handlePortOrDomainMismatch(*this, it);
+	{
+		try
+		{
+			handlePortOrDomainMismatch(*this, it);	
+		}
+		catch(const std::exception& e)
+		{
+			std::cerr << e.what() << '\n';
+			if ((*it)->getClientRequest()->get_connection() == "keep-alive")
+				(*it)->resetClient(*this);
+			else
+				clearClient(it, *this);
+		}
+	}
 	else if ((*it)->getRouteTriggered()->isCgi())
 	{
 		try

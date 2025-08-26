@@ -43,11 +43,7 @@ runtime_error("[" + getTimeStamp() + "]" + YELLOW + " [INFO] Redirecting Request
 			break;
 		serverIt++;
 	}
-	(*it)->setDomainTriggered((*serverIt)->getBlockName());
-	(*it)->getClientRequest()->setNewHost((*serverIt)->getBlockName());
-	(*it)->setPortTriggered((*serverIt)->getBlockPort());
-	(*it)->setServerBlockTriggered(*serverIt);
-	(*it)->setRouteTriggered((*(*serverIt)->getDefaultRoute()));
+	load301((*it)->getSocketFd(), (*it)->getClientResponse(), (*it), "http://" + (*serverIt)->getBlockName() + ":" + transformToString((*serverIt)->getBlockPort()) + (*it)->getClientRequest()->get_path());
 }
 
 BadChildException::BadChildException() :

@@ -1,31 +1,35 @@
 #include "includes/webserv.hpp"
 
-void	load301(int client_socket, Response *response, Client *client)
+void	load301(int client_socket, Response *response, Client *client, std::string redirectPath)
 {
 	response->clearResponse();
 	response->addToResponse("HTTP/1.1 301 Moved Permanently\r\n");
-	response->addToResponse("Location: " + client->getRouteTriggered()->getRedirectPath() + "\r\n");
+	response->addToResponse("Location: " + redirectPath + "\r\n");
 	if (client->getClientRequest()->get_connection() == "keep-alive")
 		response->addToResponse("Connection: keep-alive\r\n");
 	else
 		response->addToResponse("Connection: close\r\n");
-	response->addToResponse("Content-Length: 0\r\n\r\n");
+	std::string	body = "301 Moved Permanently - Moved to " + redirectPath + "\n";
+	response->addToResponse("Content-Length: " + transformToString(body.length()) + "\r\n\r\n");
+	response->addToResponse(body);
 	sendMsgToSocket(client_socket, response->getResponse().size(), client, response);
 	response->clearResponse();
 	client->setClientWritingFlag(true);
 	client->setClientPending(false);
 }
 
-void	load307(int client_socket, Response *response, Client *client)
+void	load307(int client_socket, Response *response, Client *client, std::string redirectPath)
 {
 	response->clearResponse();
 	response->addToResponse("HTTP/1.1 307 Temporary Redirect\r\n");
-	response->addToResponse("Location: " + client->getRouteTriggered()->getRedirectPath() + "\r\n");
+	response->addToResponse("Location: " + redirectPath + "\r\n");
 	if (client->getClientRequest()->get_connection() == "keep-alive")
 		response->addToResponse("Connection: keep-alive\r\n");
 	else
 		response->addToResponse("Connection: close\r\n");
-	response->addToResponse("Content-Length: 0\r\n\r\n");
+	std::string	body = "307 Temporary Redirect - Redirected to " + redirectPath + "\n";
+	response->addToResponse("Content-Length: " + transformToString(body.length()) + "\r\n\r\n");
+	response->addToResponse(body);
 	sendMsgToSocket(client_socket, response->getResponse().size(), client, response);
 	response->clearResponse();
 	client->setClientWritingFlag(true);

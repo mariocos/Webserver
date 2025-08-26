@@ -22,7 +22,7 @@ servers:
         modules:
           - type: static
             settings:
-              root: /home/pbjr
+              root: /home/pauberna
               directory_listing: true
   - listen: 8081
     server_names: 127.0.0.1
@@ -39,7 +39,7 @@ servers:
           - type: static
             settings:
               root: ./test_website
-              directory_listing: false
+              directory_listing: true
               destination: ./teste_uploads
       - uri: /redirect-me
         methods: [GET]
