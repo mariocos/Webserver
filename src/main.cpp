@@ -154,12 +154,12 @@ int	main(int ac, char **av)
 		else
 			fileName = filePath;
         root = parser.parse(filePath);
-        Server    server(root);
-        if (root) {
-            delete root;
-        } else {
-            std::cerr << "Failed to parse YAML file." << std::endl;
+        if (!root) {
+            std::cerr << RED"Failed to parse YAML file."RESET << std::endl;
+			return (1);
         }
+		Server server = Server(root);
+		delete root;
 		if (fileName.empty())
 			printLog("INFO", NULL, NULL, NULL, 1, "default.yaml");
 		else
@@ -176,7 +176,7 @@ int	main(int ac, char **av)
 			}
 			try
 			{
-				server.handle_connections();
+			server.handle_connections();
 				searchForTimeOut(server);
 			}
 			catch(const std::exception& e)

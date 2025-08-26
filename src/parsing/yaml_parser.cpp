@@ -80,7 +80,15 @@ std::vector<LineToken>	YamlParser::tokenizer(const std::string &filePath) {
 	std::vector<LineToken>	tokens;
 
 	if (!file.is_open()) {
-		std::cout << "Error: Could not open file " << filePath << std::endl;
+		std::cout << "\033[1m\033[31mError: Could not open file " + filePath + "\033[0m" << std::endl;
+		return tokens;
+	}
+	else if (!file.good()) {
+		std::cout << "\033[1m\033[31mError: File not good.\033[0m" << std::endl;
+		return tokens;
+	}
+	else if (file.peek() == EOF) {
+        std::cout << "\033[1m\033[31mError: File is empty.\033[0m" << std::endl;
 		return tokens;
 	}
 

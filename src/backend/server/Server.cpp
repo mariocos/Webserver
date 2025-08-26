@@ -36,16 +36,14 @@ void updateDestination(Routes *route, YamlList* modules)
 
 void routeMethods(Routes *route, YamlMap* routeConfig,YamlList* modules)
 {
-	YamlList* methods = (YamlList*)getFromYamlMap(routeConfig, "methods");
-	if (methods->getList().empty())
-	{
-		delete route;
+//	routeConfig->getMap().find("methods")->second->checkList();
+		YamlList* methods = (YamlList*)getFromYamlMap(routeConfig, "methods");
+	if (!routeConfig->getMap().find("methods")->second->checkList() || methods->getList().empty())
 		throw ConfigFileStructureException("methods");
-	}
+
 	std::vector<YamlNode*>::iterator itMethods;
 	for (itMethods = methods->getList().begin(); itMethods != methods->getList().end(); itMethods++) {
-		YamlNode *meth = (*itMethods);
-		std::string newMeth = ((YamlScalar<std::string>*)meth)->getValue();
+		std::string newMeth = ((YamlScalar<std::string>*)(*itMethods))->getValue();
 		if (newMeth == "GET")
 			route->setMethod(GET, true);
 		else if (newMeth == "POST")
@@ -67,31 +65,43 @@ bool	isRouteDefault(YamlMap* routeConfig)
 	std::map<std::string, YamlNode*>::iterator isDefault = routeConfig->getMap().find("default");
 	if (isDefault != routeConfig->getMap().end())
 	{
-		if (((YamlScalar<bool>*)getFromYamlMap(routeConfig, "default"))->getType() == "bool")
-			defaultRoute = (YamlScalar<bool>*)getFromYamlMap(routeConfig, "default");
+		if (((YamlScalar<bool>*)(isDefault->second))->getType() == "bool")
+			defaultRoute = ((YamlScalar<bool>*)getFromYamlMap(routeConfig, "default"))->getValue();
 		else
 			throw ConfigFileStructureException("Invalid variable type in default");
 	}	
 	return (defaultRoute);
 }
 
+//void	setDirListing(YamlMap* settings) {
+//
+//}
+
 Routes	*setStatic(YamlMap* settings, int maxBodySize, bool defaultRoute, std::string uri)
 {
 	std::string root = ((YamlScalar<std::string>*)(getFromYamlMap(settings, "root")))->getValue();
 	Routes* newRoute = new Routes(maxBodySize, defaultRoute, root, uri);
-	bool dirList;
 
-	if (((YamlScalar<bool>*)(getFromYamlMap(settings, "directory_listing")))->getType() == "bool")
-	{
-		dirList = ((YamlScalar<bool>*)(getFromYamlMap(settings, "directory_listing")))->getValue();
-		if (dirList)
-			newRoute->setAsListing();
+	try {
+		std::map<std::string, YamlNode*>::iterator isDirList = settings->getMap().find("directory_listing");
+		if (isDirList != settings->getMap().end()) {
+//			bool dirList;
+			if (((YamlScalar<bool>*)(isDirList->second))->getType() == "bool") {
+//				dirList = ((YamlScalar<bool>*)(isDirList->second))->getValue();
+				if (((YamlScalar<bool>*)(isDirList->second))->getValue())
+					newRoute->setAsListing();
+			} 
+			else {
+				delete newRoute;
+				throw ConfigFileStructureException("Invalid variable type in directory_listing");
+			}
+		}
 	}
-	else
-	{
+	catch (const std::exception& e){
 		delete newRoute;
-		throw ConfigFileStructureException("Invalid variable type in directory_listing");
+		throw MessagelessException(e.what());
 	}
+
 	return (newRoute);
 }
 
@@ -100,33 +110,35 @@ Routes	*setCGI(YamlMap* settings, int maxBodySize, bool defaultRoute, std::strin
 	std::string root = ((YamlScalar<std::string>*)(getFromYamlMap(settings, "root")))->getValue();
 	Routes* newRoute = new Routes(maxBodySize, defaultRoute, root, uri);
 
-	YamlList* interpreters = (YamlList*)getFromYamlMap(settings, "interpreters");
-	if (interpreters->getList().empty())
-		throw ConfigFileStructureException("interpreters");
-	std::vector<YamlNode*>::iterator itInterp;
-	for (itInterp = interpreters->getList().begin(); itInterp != interpreters->getList().end(); itInterp++)
-	{
-		YamlMap* interpConfig = (YamlMap*)(*itInterp);
-		YamlList* ext = (YamlList*)getFromYamlMap(interpConfig, "extensions");
+	try {
+		YamlList* interpreters = (YamlList*)getFromYamlMap(settings, "interpreters");
 		if (interpreters->getList().empty())
-			throw ConfigFileStructureException("extensions");
-		std::vector<YamlNode*>::iterator itExt;
-		for (itExt = ext->getList().begin(); itExt != ext->getList().end(); itExt++) {
-			YamlNode *exten = (*itExt);
-			std::string newExt = ((YamlScalar<std::string>*)exten)->getValue();
-			if (newExt == "py")
-				newRoute->setCgiFileExtension(newExt);
-			else 
-			{
-				delete newRoute;
-				throw MessagelessException("CGI extention not allowed");
+			throw ConfigFileStructureException("interpreters");
+		std::vector<YamlNode*>::iterator itInterp;
+		for (itInterp = interpreters->getList().begin(); itInterp != interpreters->getList().end(); itInterp++)
+		{
+			YamlMap* interpConfig = (YamlMap*)(*itInterp);
+			YamlList* ext = (YamlList*)getFromYamlMap(interpConfig, "extensions");
+			if (interpreters->getList().empty())
+				throw ConfigFileStructureException("extensions");
+			std::vector<YamlNode*>::iterator itExt;
+			for (itExt = ext->getList().begin(); itExt != ext->getList().end(); itExt++) {
+				std::string newExt = ((YamlScalar<std::string>*)(*itExt))->getValue();
+				if (newExt == "py")
+					newRoute->setCgiFileExtension(newExt);
+				else
+					throw MessagelessException("CGI extention not allowed");
 			}
+			std::string path = ((YamlScalar<std::string>*)getFromYamlMap(interpConfig, "path"))->getValue();
+//			falta verificar se termina com python3 ou /python3 ou python3/
+			newRoute->setUploadPath(path);
+			newRoute->setAsCgi();
 		}
-		std::string path = ((YamlScalar<std::string>*)getFromYamlMap(interpConfig, "path"))->getValue();
-		newRoute->setUploadPath(path);
-		newRoute->setAsCgi();
 	}
-	
+	catch (const std::exception& e){
+		delete newRoute;
+		throw MessagelessException(e.what());
+	}
 	return (newRoute);
 }
 
@@ -135,16 +147,24 @@ Routes	*setRedirect(YamlMap* settings, int maxBodySize, bool defaultRoute, std::
 	std::string root = "";
 	Routes* newRoute = new Routes(maxBodySize, defaultRoute, root, uri);
 
-	std::string rDirURI = ((YamlScalar<std::string>*)(getFromYamlMap(settings, "uri")))->getValue();
-	std::string rDirType = ((YamlScalar<std::string>*)(getFromYamlMap(settings, "type")))->getValue();
-	newRoute->setRedirectPath(rDirURI);
-	
-	if (rDirType == "permanent")
-		newRoute->setAsPermanentRedirect();
-	else
-		newRoute->setAsTemporaryRedirect();
-
-	return (newRoute);
+	try {
+		std::string rDirURI = ((YamlScalar<std::string>*)(getFromYamlMap(settings, "uri")))->getValue();
+		std::string rDirType = ((YamlScalar<std::string>*)(getFromYamlMap(settings, "type")))->getValue();
+		newRoute->setRedirectPath(rDirURI);
+		
+		if (rDirType == "permanent")
+			newRoute->setAsPermanentRedirect();
+		else if (rDirType == "temporary")
+			newRoute->setAsTemporaryRedirect();
+		else
+			throw MessagelessException("wrong redirection type");
+		
+		return (newRoute);
+	}
+	catch (const std::exception& e){
+		delete newRoute;
+		throw MessagelessException(e.what());
+	}
 }
 
 Routes* routeFromYaml(YamlMap* routeConfig, int maxBodySize)
@@ -174,9 +194,14 @@ Routes* routeFromYaml(YamlMap* routeConfig, int maxBodySize)
 		else
 			throw ConfigFileStructureException("type not set");
 	}
-
-	routeMethods(route, routeConfig, modules);
-	return route;
+	try {
+		routeMethods(route, routeConfig, modules);
+		return route;
+	}
+	catch (const std::exception& e){
+		delete route;
+		throw MessagelessException(e.what());
+	}
 }
 
 int	maxBodySizeFromYaml(YamlMap* serverConf)
@@ -305,7 +330,7 @@ void checkDefaultServerBlock(std::vector<ServerBlock*> &_serverBlocks)
 		std::vector<Routes*> routes = (*it)->getRoutesVector();
 		for (std::vector<Routes*>::iterator it = routes.begin(); it != routes.end(); it++)
 		{
-			if ((*it)->isDefault())
+			if ((*it)->isDefault() == true)
 				defaultRouteNbr++;
 		}
 		if (defaultRouteNbr > 1)
@@ -313,7 +338,7 @@ void checkDefaultServerBlock(std::vector<ServerBlock*> &_serverBlocks)
 		if (defaultRouteNbr == 0)
 			(*it)->getRoutesVector().front()->setAsDefaultRoute();
 		defaultRouteNbr = 0;
-		if ((*it)->isDefault())
+		if ((*it)->isDefault() == true)
 			defaultServerBlockNbr++;
 	}
 	if (defaultServerBlockNbr > 1)
@@ -351,7 +376,8 @@ Server::Server(YamlNode *parsedConf) : _maxEvents(10)
 	{
 		delete parsedConf;
 //		delete newServerBlock;
-		for (std::vector<ServerBlock*>::iterator it = _serverBlocks.begin(); it != _serverBlocks.end(); ++it)
+		close(this->_epoll_fd);
+		for (std::vector<ServerBlock*>::iterator it = _serverBlocks.begin(); it != _serverBlocks.end(); ++it) 
 			delete *it;
 		throw MessagelessException(e.what());
 	}

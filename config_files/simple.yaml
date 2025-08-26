@@ -14,7 +14,6 @@ servers:
           - type: static
             settings:
               root: ./website
-              directory_listing: false
               destination: ./teste_uploads
       - uri: /lala
         methods: [GET, POST, DELETE]
@@ -22,7 +21,7 @@ servers:
         modules:
           - type: static
             settings:
-              root: /home/pauberna
+              root: /home/adimas-d
               directory_listing: true
   - listen: 8081
     server_names: 127.0.0.1
@@ -32,9 +31,9 @@ servers:
       400: ./website/400.html
       405: ./website/405.html
     routes:
-      - uri: /oi
+      - uri: 
         methods: [GET]
-        default: true
+        default: false
         modules:
           - type: static
             settings:
@@ -50,6 +49,7 @@ servers:
               type: permanent
       - uri: /cgi-bin
         methods: [GET, POST]
+        default: true
         modules:
           - type: cgi
             settings:
