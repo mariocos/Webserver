@@ -41,13 +41,13 @@ static YamlList	*parseInLineArray(const std::string &array) {
 						int check = yamlReturnVariableType(item);
 						switch (check) {
 							case 0:
-								list->add(new YamlScalar<bool>(transformStringToBool(item)));
+								list->add(new YamlScalar<bool>(transformStringToBool(item), "bool"));
 								break;
 							case 1:
-								list->add(new YamlScalar<int>(transformStringToInt(item)));
+								list->add(new YamlScalar<int>(transformStringToInt(item), "int"));
 								break;
 							default:
-								list->add(new YamlScalar<std::string>(item));
+								list->add(new YamlScalar<std::string>(item, "string"));
 						}
 					}
 					start = pos + 1;
@@ -59,13 +59,13 @@ static YamlList	*parseInLineArray(const std::string &array) {
 				int check = yamlReturnVariableType(lastItem);
 				switch (check) {
 					case 0:
-						list->add(new YamlScalar<bool>(transformStringToBool(lastItem)));
+						list->add(new YamlScalar<bool>(transformStringToBool(lastItem), "bool"));
 						break;
 					case 1:
-						list->add(new YamlScalar<int>(transformStringToInt(lastItem)));
+						list->add(new YamlScalar<int>(transformStringToInt(lastItem), "int"));
 						break;
 					default:
-						list->add(new YamlScalar<std::string>(lastItem));
+						list->add(new YamlScalar<std::string>(lastItem, "string"));
 //					list->add(new YamlScalar(transformStringToSomething(lastItem)));
 				}
 			}
@@ -160,7 +160,7 @@ YamlNode	*YamlParser::parseMapBlock(std::vector<LineToken> &lines, size_t &index
 					map->insert(currentKey, nestedMap);
 				}
 				else 
-					map->insert(currentKey, new YamlScalar<std::string>(""));
+					map->insert(currentKey, new YamlScalar<std::string>("", "string"));
 			}
 			else {
 				if (isInLineArray(token.value)) {
@@ -171,13 +171,13 @@ YamlNode	*YamlParser::parseMapBlock(std::vector<LineToken> &lines, size_t &index
 					int check = yamlReturnVariableType(token.value);
 					switch (check) {
 						case 0:
-							map->insert(token.key, new YamlScalar<bool>(transformStringToBool(token.value)));
+							map->insert(token.key, new YamlScalar<bool>(transformStringToBool(token.value), "bool"));
 							break;
 						case 1:
-							map->insert(token.key, new YamlScalar<int>(transformStringToInt(token.value)));
+							map->insert(token.key, new YamlScalar<int>(transformStringToInt(token.value), "int"));
 							break;
 						default:
-							map->insert(token.key, new YamlScalar<std::string>(token.value));
+							map->insert(token.key, new YamlScalar<std::string>(token.value, "string"));
 					}
 				}
 //					map->insert(token.key, new YamlScalar(transformStringToSomething(token.value)));
@@ -223,13 +223,13 @@ YamlNode	*YamlParser::parseListBlock(std::vector<LineToken> &lines, size_t &inde
 					int check = yamlReturnVariableType(token.value);
 					switch (check) {
 						case 0:
-							listItemMap->insert(token.key, new YamlScalar<bool>(transformStringToBool(token.value)));
+							listItemMap->insert(token.key, new YamlScalar<bool>(transformStringToBool(token.value), "bool"));
 							break;
 						case 1:
-							listItemMap->insert(token.key, new YamlScalar<int>(transformStringToInt(token.value)));
+							listItemMap->insert(token.key, new YamlScalar<int>(transformStringToInt(token.value), "int"));
 							break;
 						default:
-							listItemMap->insert(token.key, new YamlScalar<std::string>(token.value));
+							listItemMap->insert(token.key, new YamlScalar<std::string>(token.value, "string"));
 					}
 //					listItemMap->insert(token.key, new YamlScalar(transformStringToSomething(token.value)));
 				}
@@ -252,10 +252,10 @@ YamlNode	*YamlParser::parseListBlock(std::vector<LineToken> &lines, size_t &inde
 									listItemMap->insert(childKey, nestedMap);
 								}
 								else
-									listItemMap->insert(childKey, new YamlScalar<std::string>(""));
+									listItemMap->insert(childKey, new YamlScalar<std::string>("", "string"));
 							}
 							else 
-								listItemMap->insert(childKey, new YamlScalar<std::string>(""));
+								listItemMap->insert(childKey, new YamlScalar<std::string>("", "string"));
 						}
 						else {
 							if (isInLineArray(childToken.value)) {
@@ -266,13 +266,13 @@ YamlNode	*YamlParser::parseListBlock(std::vector<LineToken> &lines, size_t &inde
 								int check = yamlReturnVariableType(childToken.value);
 								switch (check) {
 									case 0:
-										listItemMap->insert(childToken.key, new YamlScalar<bool>(transformStringToBool(childToken.value)));
+										listItemMap->insert(childToken.key, new YamlScalar<bool>(transformStringToBool(childToken.value), "bool"));
 										break;
 									case 1:
-										listItemMap->insert(childToken.key, new YamlScalar<int>(transformStringToInt(childToken.value)));
+										listItemMap->insert(childToken.key, new YamlScalar<int>(transformStringToInt(childToken.value), "int"));
 										break;
 									default:
-										listItemMap->insert(childToken.key, new YamlScalar<std::string>(childToken.value));
+										listItemMap->insert(childToken.key, new YamlScalar<std::string>(childToken.value, "string"));
 								}
 							}
 //								listItemMap->insert(childToken.key, new YamlScalar(transformStringToSomething(childToken.value)));
@@ -288,13 +288,13 @@ YamlNode	*YamlParser::parseListBlock(std::vector<LineToken> &lines, size_t &inde
 				int check = yamlReturnVariableType(token.value);
 				switch (check) {
 					case 0:
-						list->add(new YamlScalar<bool>(transformStringToBool(token.value)));
+						list->add(new YamlScalar<bool>(transformStringToBool(token.value), "bool"));
 						break;
 					case 1:
-						list->add(new YamlScalar<int>(transformStringToInt(token.value)));
+						list->add(new YamlScalar<int>(transformStringToInt(token.value), "int"));
 						break;
 					default:
-						list->add(new YamlScalar<std::string>(token.value));
+						list->add(new YamlScalar<std::string>(token.value, "string"));
 				}
 //				list->add(new YamlScalar(transformStringToSomething(token.value)));
 				index++;

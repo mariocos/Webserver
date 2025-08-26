@@ -22,11 +22,12 @@
 
 template<typename T>
 class YamlScalar : public YamlNode {
-		T	_value;
+		T			_value;
+		std::string	_type;
 	
 	public:
 		YamlScalar();
-		YamlScalar(const T);
+		YamlScalar(const T, std::string type);
 		//YamlScalar(std::string);
 		//YamlScalar(int);
 		//YamlScalar(bool);
@@ -36,6 +37,7 @@ class YamlScalar : public YamlNode {
 		bool	isMap() {return false;}
 		bool	isList() {return false;}
 		void	print() const {std::cout << _value << std::endl;}
+		std::string	getType() {return _type;}
 };
 
 template<typename T>
@@ -45,9 +47,10 @@ YamlScalar<T>::YamlScalar() {
 }
 
 template<typename T>
-YamlScalar<T>::YamlScalar(const T value) {
+YamlScalar<T>::YamlScalar(const T value, std::string type) {
 	this->setScalar();
 	_value = value;
+	_type = type;
 //	std::cout << _value << std::endl;
 }
 
