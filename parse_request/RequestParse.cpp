@@ -165,7 +165,8 @@ void	RequestParse::execute_response(int client_socket, Client *client)
 		throw Load301Exception(client_socket, client->getClientResponse(), client);
 	else if (client->getRouteTriggered()->isTemporaryRedirect() && client->getRouteTriggered()->canDoMethod(methodAsInt))
 		throw Load307Exception(client_socket, client->getClientResponse(), client);
-	else if (client->getRouteTriggered()->isListing() && !client->getClientFile()->getFile()->is_open() && client->getRouteTriggered()->canDoMethod(methodAsInt))
+	else if (client->getRouteTriggered()->isListing() && !client->getClientFile()->getFile()->is_open() \
+		&& method.compare("GET") == 0 && client->getRouteTriggered()->canDoMethod(methodAsInt))
 		throw LoadListingException(client_socket, client->getClientResponse(), client);
 	if (method.compare("GET") == 0 && client->getRouteTriggered()->canDoMethod(GET))
 		GET_response(client_socket, client);
