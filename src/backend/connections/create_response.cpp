@@ -24,14 +24,15 @@ void	findType(RequestParse *request, Response *response, Client *client)
 	fileTypes[".txt"] = "text/plain";
 	fileTypes[".pdf"] = "application/pdf";
 
-	std::string	extension = findFileExtension(request->get_path());
+	(void)request;
+	response->setPath(client->getNewPath());
+	std::string	extension = findFileExtension(response->getPath());
 	std::string	type = "application/octet-stream";
 
 	if (fileTypes.count(extension))
 		type = fileTypes.at(extension);
 
 	response->setType(type);
-	response->setPath(client->getNewPath());
 }
 
 void	createHeader(RequestParse *request, Response *response, Client *client)

@@ -192,6 +192,8 @@ std::string	Client::getNewPath()
 			newPath = this->_request->get_path().substr(this->_routeTriggered->getURI().length());
 		return (this->_routeTriggered->getRoot() + newPath);
 	}
+	else if (this->_request->get_path() == "/")
+		return (this->_routeTriggered->getRoot());
 	else
 		return (this->_routeTriggered->getRoot() + this->_request->get_path());
 }
