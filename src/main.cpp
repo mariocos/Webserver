@@ -176,7 +176,7 @@ int	main(int ac, char **av)
 			}
 			try
 			{
-			server.handle_connections();
+				server.handle_connections();
 				searchForTimeOut(server);
 			}
 			catch(const std::exception& e)

@@ -72,6 +72,7 @@ public:
 	std::string	getDomainTriggered();
 	std::string	getNewPath();
 	std::string	getURIRequested();
+	bool	doesPathHasURI();
 	RequestParse	*getClientRequest();
 	Response		*getClientResponse();
 	File			*getClientFile();

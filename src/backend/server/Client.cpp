@@ -186,15 +186,14 @@ std::string	Client::getNewPath()
 	std::string newPath;
 	if (this->_routeTriggered->getURI() != "/")
 	{
-		if (this->getURIRequested() != this->_routeTriggered->getURI())
-			newPath = this->_request->get_path().substr(this->getURIRequested().length());
+		if (this->_routeTriggered->getURI().rfind('/') == this->_routeTriggered->getURI().length())
+			newPath = this->_request->get_path().substr(this->_routeTriggered->getURI().length() - 1);
 		else
 			newPath = this->_request->get_path().substr(this->_routeTriggered->getURI().length());
-		path = this->_routeTriggered->getRoot() + "/" + newPath;
+		return (this->_routeTriggered->getRoot() + newPath);
 	}
 	else
-		path = this->_routeTriggered->getRoot() + this->_request->get_path();
-	return (path);
+		return (this->_routeTriggered->getRoot() + this->_request->get_path());
 }
 
 std::string	Client::getURIRequested()
@@ -210,6 +209,13 @@ std::string	Client::getURIRequested()
 			uri = this->_request->get_path();
 	}
 	return (uri);
+}
+
+bool	Client::doesPathHasURI()
+{
+	if (this->_request->get_path().find(this->_routeTriggered->getURI().c_str(), 0, this->_routeTriggered->getURI().length()) != std::string::npos)
+		return (true);
+	return (false);
 }
 
 RequestParse	*Client::getClientRequest()

@@ -284,7 +284,7 @@ std::string	constructListingPath(Client *client)
 	else
 	{
 		if (uri.find('/', 1) != std::string::npos)
-			path = client->getRouteTriggered()->getRoot() + requestPath.substr(uri.length() - 1);
+			path = client->getRouteTriggered()->getRoot() + requestPath.substr(uri.length());
 		else if (uri == "/")
 			path = client->getRouteTriggered()->getRoot() + requestPath;
 		else

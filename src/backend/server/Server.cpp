@@ -557,13 +557,10 @@ std::vector<Routes*>::iterator	Server::getRouteTriggered(std::string uri, int fd
 	std::vector<Routes*>::iterator	routeIt = (*it)->getRoutesVector().begin();
 	while (routeIt != (*it)->getRoutesVector().end())
 	{
-		if ((*routeIt)->getURI().rfind('/') == (*routeIt)->getURI().length() - 1 && uri == (*routeIt)->getURI())
+		if ((*routeIt)->getURI() == "/" && uri.rfind('/') == 0 && uri.find('.') != std::string::npos)
 			return (routeIt);
-		else if ((*routeIt)->getURI().rfind('/') != (*routeIt)->getURI().length() - 1)
-		{
-			if (uri == (*routeIt)->getURI() || uri == (*routeIt)->getURI() + "/")
-				return (routeIt);
-		}
+		else if (uri.find((*routeIt)->getURI()) != std::string::npos && (*routeIt)->getURI() != "/")
+			return (routeIt);
 		routeIt++;
 	}
 	return (this->getDefaultRoute(fd));
@@ -709,7 +706,10 @@ void	Server::manageConnection(epoll_event &event)
 				(*it)->resetTimer();
 				(*it)->setClientPending(true);
 				(*it)->setSocketToWriting(this->_epoll_fd);
-				(*it)->setRouteTriggered((*this->getRouteTriggered((*it)->getURIRequested(), (*it)->getSocketTriggered())));
+				(*it)->setRouteTriggered((*this->getRouteTriggered((*it)->getClientRequest()->get_path(), (*it)->getSocketTriggered())));
+				if (!(*it)->doesPathHasURI() && (*it)->getRouteTriggered() == (*this->getDefaultRoute((*it)->getSocketTriggered())) \
+					&& (*it)->getRouteTriggered()->getURI() != "/")
+					(*it)->getClientRequest()->set_path((*it)->getRouteTriggered()->getURI() + (*it)->getClientRequest()->get_path());
 			}
 			else if (event.events == EPOLLOUT)
 			{
@@ -806,6 +806,13 @@ void	Server::manageClient(std::vector<Client*>::iterator it, epoll_event	&event)
 			}
 			else if (!(*it)->getClientFile()->getFile()->is_open())
 				(*it)->resetClient(*this);
+			/* else if (!(*it)->getClientFile()->getFile()->is_open())
+			{
+				if ((*it)->getClientRequest()->get_connection() == "keep-alive")
+					(*it)->resetClient(*this);
+				else
+					clearClient(it, *this);
+			} */
 		}
 	}
 }
