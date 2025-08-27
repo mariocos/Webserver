@@ -15,6 +15,7 @@ class YamlMap : public YamlNode {
 //		void								yamlMapPrint();
 		bool								isMap();
 		bool								isList();
+		bool								isScalar();
 		YamlNode*							getMapNode(const std::string&) const;
 		unsigned int						getIndex() const;
 		std::map<std::string, YamlNode*>	&getMap();

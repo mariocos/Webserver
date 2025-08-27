@@ -31,11 +31,12 @@ class YamlScalar : public YamlNode {
 		//YamlScalar(std::string);
 		//YamlScalar(int);
 		//YamlScalar(bool);
-		~YamlScalar();
-		const T	&getValue() const;
-		void	setValue(const T);
-		bool	isMap() {return false;}
-		bool	isList() {return false;}
+		~YamlScalar() {}
+		const T	&getValue() const {return _value;}
+		void	setValue(const T value) {this->_value = value;}
+		bool	isMap() {return this->checkMap();}
+		bool	isList() {return this->checkList();}
+		bool	isScalar() {return this->checkScalar();}
 		void	print() const {std::cout << _value << std::endl;}
 		std::string	getType() {return _type;}
 };
@@ -52,17 +53,4 @@ YamlScalar<T>::YamlScalar(const T value, std::string type) {
 	_value = value;
 	_type = type;
 //	std::cout << _value << std::endl;
-}
-
-template<typename T>
-YamlScalar<T>::~YamlScalar() {}
-
-template<typename T>
-const T	&YamlScalar<T>::getValue() const {
-	return _value;
-}
-
-template<typename T>
-void	YamlScalar<T>::setValue(const T value) {
-	this->_value = value;
 }

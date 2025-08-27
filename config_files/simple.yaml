@@ -4,7 +4,7 @@ servers:
     max_body_size: 10485760
     default: true
     error_pages:
-      404: ./test_website/index1.html
+      404: ./test_website/is_an_html
       400: ./website/400.html
       405: ./website/405.html
     routes:
@@ -31,7 +31,7 @@ servers:
       400: ./website/400.html
       405: ./website/405.html
     routes:
-      - uri: 
+      - uri: /oi
         methods: [GET]
         default: false
         modules:

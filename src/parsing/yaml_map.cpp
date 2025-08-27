@@ -43,6 +43,10 @@ bool	YamlMap::isList() {
 	return (this->checkList());
 }
 
+bool	YamlMap::isScalar() {
+	return (this->checkScalar());
+}
+
 void	YamlMap::print() const {
 	std::map<std::string, YamlNode*>::const_iterator it;
     for (it = _map.begin(); it != _map.end(); ++it) {

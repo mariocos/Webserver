@@ -37,6 +37,10 @@ bool	YamlList::isList() {
 	return (this->checkList());
 }
 
+bool	YamlList::isScalar() {
+	return (this->checkScalar());
+}
+
 std::vector<YamlNode*>	&YamlList::getList() {
 	return _list;
 }
