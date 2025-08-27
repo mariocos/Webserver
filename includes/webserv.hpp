@@ -43,8 +43,8 @@
 # define YELLOW "\033[1m\033[33m"
 
 # include "Client.hpp"
-# include "../parse_request/RequestParse.hpp"
-# include "../Post_Dele/Post_master.hpp"
+# include "../src/backend/parse_request/RequestParse.hpp"
+# include "../src/backend/Post_Dele/Post_master.hpp"
 # include "Response.hpp"
 # include "Server.hpp"
 # include "Errors.hpp"

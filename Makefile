@@ -7,10 +7,10 @@ SOURCES =	src/main.cpp \
 			src/backend/server/Client.cpp src/backend/server/Errors.cpp src/backend/server/File.cpp src/backend/server/Response.cpp src/backend/server/Routes.cpp \
 			src/backend/server/Server.cpp src/backend/server/ServerBlock.cpp src/backend/server/WebSocket.cpp \
 			src/backend/connections/checkConnection.cpp src/backend/connections/create_response.cpp src/backend/connections/HoleExplorer.cpp src/backend/connections/loadErrorPages.cpp \
-			parse_request/RequestParse.cpp \
-			parse_request/request_gets.cpp \
+			src/backend/parse_request/RequestParse.cpp \
+			src/backend/parse_request/request_gets.cpp \
 			src/cgi/CgiHandler.cpp src/cgi/Cgi.cpp \
-			Post_Dele/Post_exceptions.cpp Post_Dele/post.cpp Post_Dele/del.cpp \
+			src/backend/Post_Dele/Post_exceptions.cpp src/backend/Post_Dele/post.cpp src/backend/Post_Dele/del.cpp \
 			src/parsing/yaml_parser.cpp src/parsing/yaml_list.cpp src/parsing/yaml_map.cpp src/parsing/yaml_utils.cpp
 OBJS_DIR = obj
 OBJECTS = $(addprefix $(OBJS_DIR)/, $(SOURCES:%.cpp=%.o))
