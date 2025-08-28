@@ -203,7 +203,7 @@ void	RequestParse::GET_response(int client_socket, Client *client)
 	//creating the header for the response and oppening the file requested
 	if (!client->getClientFile()->isReading() && !client->getClientFile()->isWriting())
 	{
-		findType(this, client->getClientResponse(), client);
+		findType(client->getClientResponse(), client);
 		client->getClientFile()->openFile(client->getClientResponse()->getPath().c_str(), client_socket);
 		createHeader(this, client->getClientResponse(), client);
 	}

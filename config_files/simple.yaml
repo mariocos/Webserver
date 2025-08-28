@@ -57,3 +57,13 @@ servers:
                 - name: python
                   path: /usr/bin/python3
                   extensions: [py]
+  - listen: 8083
+    server_names: localhost
+    routes:
+      - uri: /
+        methods: [GET]
+        modules:
+          - type: redirect
+            settings:
+              uri: http://localhost:8080/index.html
+              type: permanent
