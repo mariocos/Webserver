@@ -15,6 +15,7 @@ class YamlList : public YamlNode {
 		size_t					size() const;
 		bool    				isMap();
 		bool    				isList();
+		bool    				isScalar();
 //		void					yamlListPrint();
 		void					print() const;
 };

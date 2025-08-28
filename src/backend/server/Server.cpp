@@ -4,6 +4,24 @@ Server::Server()
 {
 }
 
+bool	checkIfJustDigits(const std::string &str, size_t len)
+{
+	size_t	n = 0;
+	bool	signal = false;
+	if (str[n] == '-' || str[n] == '+')
+	{
+		signal = true;
+		n++;
+	}
+	while (n < len)
+	{
+		if (!isdigit(str[n]))
+			return (false);
+		n++;
+	}
+	return (true);
+}
+
 YamlNode* getFromYamlMap(YamlNode* node, std::string key)
 {
 	YamlNode* result;
@@ -167,12 +185,32 @@ Routes	*setRedirect(YamlMap* settings, int maxBodySize, bool defaultRoute, std::
 	}
 }
 
+std::string	getUriFromYaml(YamlMap* routeConfig)
+{
+	std::map<std::string, YamlNode*>::iterator itUri = routeConfig->getMap().find("uri");
+	if (itUri == routeConfig->getMap().end() || !getFromYamlMap(routeConfig, "uri")->checkScalar())
+		throw ConfigFileStructureException("Uri not populated or wrongly populated");
+	else if (((YamlScalar<int>*)(itUri->second))->getType() == "int" || ((YamlScalar<bool>*)(itUri->second))->getType() == "bool")
+		throw ConfigFileStructureException("Uri not populated or wrongly populated");
+	else if (((YamlScalar<std::string>*)(itUri->second))->getValue().empty())
+		throw ConfigFileStructureException("Uri not populated or wrongly populated");
+	else {
+		std::string Uri = ((YamlScalar<std::string>*)(itUri->second))->getValue();
+		if (checkIfJustDigits(Uri, Uri.length()))
+			throw ConfigFileStructureException("Uri not populated or wrongly populated");
+		else if (*Uri.begin() != '/')
+			throw ConfigFileStructureException("Uri not populated or wrongly populated");
+		else
+			return (Uri);
+	}
+}
+
 Routes* routeFromYaml(YamlMap* routeConfig, int maxBodySize)
 {
 	bool	defaultRoute = isRouteDefault(routeConfig);
 
 	Routes* route;
-	std::string uri = ((YamlScalar<std::string>*)(getFromYamlMap(routeConfig, "uri")))->getValue();
+	std::string uri = getUriFromYaml(routeConfig);
 	YamlScalar<std::string>* type;
 	YamlList* modules = (YamlList*)getFromYamlMap(routeConfig, "modules");
 	if (modules->getList().empty())
@@ -207,20 +245,36 @@ Routes* routeFromYaml(YamlMap* routeConfig, int maxBodySize)
 int	maxBodySizeFromYaml(YamlMap* serverConf)
 {
 	std::map<std::string, YamlNode*>::iterator itMaxBodySize = serverConf->getMap().find("max_body_size");
-	if (itMaxBodySize != serverConf->getMap().end())
-		return ((YamlScalar<int>*)serverConf->getMap().at("max_body_size"))->getValue();
-	else
+	if (itMaxBodySize == serverConf->getMap().end())
 		return -1;
+	bool isScalar = itMaxBodySize->second->checkScalar();
+	if (isScalar == false)
+		throw ConfigFileStructureException("max_body_size not setup correctly");
+	else {
+//		std::cout << ((YamlScalar<int>*)(itMaxBodySize->second))->getType() << std::endl;
+		if (((YamlScalar<int>*)(itMaxBodySize->second))->getType() != "int")
+			throw ConfigFileStructureException("max_body_size has to be an integer");
+		else {
+			int maxBodySize = ((YamlScalar<int>*)getFromYamlMap(serverConf, "max_body_size"))->getValue();
+//			std::cout << maxBodySize << std::endl;
+			if (maxBodySize < 0)
+				throw ConfigFileStructureException("max_body_size has to be equal or bigger then 0");
+			else
+				return maxBodySize;
+		}
+	}
 }
 
 void routesFromYaml(YamlMap* serverConf, std::vector<Routes*> &routes)
 {
 	int maxBodySize = maxBodySizeFromYaml(serverConf);
 	YamlList* routesConfig = (YamlList*)getFromYamlMap(serverConf, "routes");
-	if (routesConfig->getList().empty())
-		throw ConfigFileStructureException("routes");
+
+	if (!routesConfig->checkList() || routesConfig->getList().empty())
+		throw ConfigFileStructureException("there is no route");
+
 	try {
-	std::vector<YamlNode*>::iterator itRoutes;
+		std::vector<YamlNode*>::iterator itRoutes;
 		for (itRoutes = routesConfig->getList().begin(); itRoutes != routesConfig->getList().end(); itRoutes++) {
 			YamlMap* routeConfig = (YamlMap*)(*itRoutes);
 			Routes* route = routeFromYaml(routeConfig, maxBodySize);
@@ -241,24 +295,78 @@ void	yamlErrorPages(ServerBlock *serverBlock, YamlMap* serverConf)
 {
 	YamlMap *errorPagesMap = NULL;
 	std::map<std::string, YamlNode*>::iterator itErrorPagesMap = serverConf->getMap().find("error_pages");
-	if (!getFromYamlMap(serverConf, "error_pages")->checkMap() && !getFromYamlMap(serverConf, "error_pages")->checkList())
+	if (itErrorPagesMap == serverConf->getMap().end())
 		return;
-	if (getFromYamlMap(serverConf, "error_pages")->checkList())
-		throw ConfigFileStructureException("error_pages");
-	if (itErrorPagesMap != serverConf->getMap().end())
-	{
+	else if (!getFromYamlMap(serverConf, "error_pages")->checkMap())
+		throw ConfigFileStructureException("error_pages not populated or wrongly populated");
+	else {
 		errorPagesMap = (YamlMap*)itErrorPagesMap->second;
 		std::map<std::string, YamlNode*>::iterator itErrorPages;
-		for (itErrorPages = errorPagesMap->getMap().begin(); itErrorPages != errorPagesMap->getMap().end(); itErrorPages++)
-			serverBlock->setErrorPage(atoi(itErrorPages->first.c_str()), ((YamlScalar<std::string>*)itErrorPages->second)->getValue());
+		for (itErrorPages = errorPagesMap->getMap().begin(); itErrorPages != errorPagesMap->getMap().end(); itErrorPages++) {
+			if (!checkIfJustDigits(itErrorPages->first, itErrorPages->first.length()))
+				throw ConfigFileStructureException("error_pages has to be a number between 400 and 499");
+			int errorNbr = atoi(itErrorPages->first.c_str());
+			std::string page = ((YamlScalar<std::string>*)itErrorPages->second)->getValue();
+			if (errorNbr < 400 || errorNbr > 499)
+				throw ConfigFileStructureException("error_pages has to be a number between 400 and 499");
+			if (page.empty())
+				throw ConfigFileStructureException("error_pages not defined");
+			serverBlock->setErrorPage(errorNbr, page);
+		}
+	}
+}
+
+int	getPortFromYaml(YamlMap* serverConf)
+{
+	std::map<std::string, YamlNode*>::iterator itListen = serverConf->getMap().find("listen");
+	if (itListen == serverConf->getMap().end())
+		throw ConfigFileStructureException("'listen: <port>' is mandatory");
+	bool isScalar = itListen->second->checkScalar();
+	if (isScalar == false)
+		throw ConfigFileStructureException("listen not setup correctly");
+	else {
+//		std::cout << ((YamlScalar<int>*)(itListen->second))->getType() << std::endl;
+		if (((YamlScalar<int>*)(itListen->second))->getType() != "int")
+			throw ConfigFileStructureException("listen has to be between 0 - 65535");
+		else {
+			int port = ((YamlScalar<int>*)getFromYamlMap(serverConf, "listen"))->getValue();
+//			std::cout << port << std::endl;
+			if (port >= 0 && port <= 65535)
+				return port;
+			else
+				throw ConfigFileStructureException("listen has to be between 0 - 65535");
+		}
+	}
+}
+
+std::string	getDomainNameFromYaml(YamlMap* serverConf)
+{
+	std::map<std::string, YamlNode*>::iterator itServerName = serverConf->getMap().find("server_names");
+	if(!itServerName->second->checkScalar())
+		throw ConfigFileStructureException("server_names not setup correctly");
+	else {
+//		std::cout << ((YamlScalar<int>*)(itServerName->second))->getType() << std::endl;
+		if (((YamlScalar<int>*)(itServerName->second))->getType() == "int" || ((YamlScalar<bool>*)(itServerName->second))->getType() == "bool")
+			throw ConfigFileStructureException("server_names has to be a string");
+		else if (((YamlScalar<std::string>*)(itServerName->second))->getValue().empty())
+			throw ConfigFileStructureException("server_names can't be empty");
+		else {
+			std::string str = ((YamlScalar<std::string>*)(itServerName->second))->getValue();
+			if (checkIfJustDigits(str, str.length()))
+				throw ConfigFileStructureException("server_names can't be just numbers");
+			else
+				return str;
+		}
 	}
 }
 
 ServerBlock* serverBlockFromYaml(YamlMap* serverConf)
 {
-	int port = ((YamlScalar<int>*)(getFromYamlMap(serverConf, "listen")))->getValue();
+	int port = getPortFromYaml(serverConf);
+//	((YamlScalar<int>*)(getFromYamlMap(serverConf, "listen")))->getValue();
 	int backlog = -1;
-	std::string domainName = ((YamlScalar<std::string>*)(getFromYamlMap(serverConf, "server_names")))->getValue();
+	std::string domainName = getDomainNameFromYaml(serverConf);
+//	((YamlScalar<std::string>*)(getFromYamlMap(serverConf, "server_names")))->getValue();
 	bool Default = isRouteDefault(serverConf);
 //	std::cout << "Is default: " << Default << std::endl;
 	std::vector<Routes*>	tmp;
@@ -301,6 +409,7 @@ void Server::startServerBlock(ServerBlock* newServerBlock)
 
 	servaddr.sin_family = AF_INET;
 	servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
+//	std::cout<<"PORT: "<<newServerBlock->getBlockPort()<<std::endl;
 	servaddr.sin_port = htons(newServerBlock->getBlockPort());
 	if (setsockopt(newServerBlock->getSocketFd(), SOL_SOCKET, SO_REUSEADDR, &option, sizeof(option)) == -1 \
 		|| bind(newServerBlock->getSocketFd(), (const sockaddr *)&servaddr, sizeof(servaddr)) == -1 \

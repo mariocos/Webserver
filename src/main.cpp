@@ -84,7 +84,7 @@ runtime_error(RED "No Upload Path setted for a POST route" RESET)
 }
 
 ConfigFileStructureException::ConfigFileStructureException(std::string key) :
-runtime_error(RED"Confitugation file missing key information: " + key + RESET) {}
+runtime_error(RED"Config file error: " + key + RESET) {}
 
 MessagelessException::MessagelessException(std::string msg) :
 runtime_error(msg) {}
