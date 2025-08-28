@@ -119,6 +119,8 @@ bool	File::checkFileInfo(const char *path, int client_socket)
 	}
 	if (S_ISDIR(this->_fileStats.st_mode))
 	{
+		if (errno == EACCES || errno == EPERM)
+			throw Error403Exception(client_socket, this->_client->getClientResponse(), this->_client);
 		std::string	file_path;
 		if (!this->_client->getRouteTriggered()->getDefaultFile().empty())
 			file_path = this->_client->getRouteTriggered()->getDefaultPathForDirectoryRequest();

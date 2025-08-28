@@ -118,7 +118,7 @@ void	cleanerForServerCreation(Server &server, bool print);
 
 //create_response.cpp
 std::string	findFileExtension(std::string path);
-void	findType(RequestParse *request, Response *response, Client *client);
+void	findType(Response *response, Client *client);
 void	createHeader(RequestParse *request, Response *response, Client *client);
 int 	setNonBlocking(int fd);
 void	loadPage(int client_socket, Response *response, Client *client);

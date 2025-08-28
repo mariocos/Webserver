@@ -8,7 +8,7 @@ std::string	findFileExtension(std::string path)
 	return ("");
 }
 
-void	findType(RequestParse *request, Response *response, Client *client)
+void	findType(Response *response, Client *client)
 {
 	std::map<std::string, std::string> fileTypes;
 	fileTypes[".html"] = "text/html";
@@ -24,7 +24,6 @@ void	findType(RequestParse *request, Response *response, Client *client)
 	fileTypes[".txt"] = "text/plain";
 	fileTypes[".pdf"] = "application/pdf";
 
-	(void)request;
 	response->setPath(client->getNewPath());
 	std::string	extension = findFileExtension(response->getPath());
 	std::string	type = "application/octet-stream";

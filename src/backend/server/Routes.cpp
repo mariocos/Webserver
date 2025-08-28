@@ -313,7 +313,7 @@ runtime_error("Loading Listing")
 	std::string	body = generateListingHTML(path, client);
 	if (client->getClientFile()->getFile()->is_open())
 	{
-		findType(client->getClientRequest(), client->getClientResponse(), client);
+		findType(client->getClientResponse(), client);
 		if (client->getClientResponse()->getType() == "application/octet-stream")
 			client->getClientResponse()->setType("text/plain");
 		createHeader(client->getClientRequest(), client->getClientResponse(), client);
