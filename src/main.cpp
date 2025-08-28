@@ -201,6 +201,18 @@ int	main(int ac, char **av)
 	return (0);
 }
 
+
+/*
+
+	Lista de Erros:
+		- //!Dar fix de tudo o que esteja dentro de "methods"
+		- ServerBlocks e Routes ficam todos a false se n houver nenhum true
+		- Talvez mudar o minimo de conexoes para 1 em vez de 0
+		- Limpar mapa de servers
+		- Corrigir os erros no caso de directory_listing vazio
+
+*/
+
 //command to test GET to another serverBlock besides the localhost : "curl -H "Host: webserver.com" http://localhost:8080"
 //command to test POST : "curl -X POST -d "whatever we want to send as content" -H "Host: webserver.com" http://localhost:8080/chicken-jokey"
 //command to test POST with binary : "curl -X POST --data-binary @/bin/ls -H "Host: webserver.com" http://localhost:8080/chicken-jokey"

@@ -6,7 +6,7 @@ ServerBlock::ServerBlock() : WebSocket(), _maxConnections(-1), _connections(0), 
 		_methods[i] = false;
 }
 
-ServerBlock::ServerBlock(int socket, int port, int backlog, std::string domainName, bool flag) : WebSocket(socket), _name(domainName), _maxConnections(backlog), _connections(0), _port(port), _default(flag), _isCgi(false)
+ServerBlock::ServerBlock(int socket, int port, int backlog, std::string domainName, bool flag) : WebSocket(socket), _name(domainName), _maxConnections(backlog), _connections(0), _port(port), _default(flag), _isCgi(false), _yamlHasDefault(false)
 {
 	if (domainName.empty())
 		this->_name = "localhost";
@@ -90,6 +90,11 @@ bool	ServerBlock::isDefault()
 bool	ServerBlock::isCgi()
 {
 	return (this->_isCgi);
+}
+
+bool	ServerBlock::doesYamlHasDefault()
+{
+	return (this->_yamlHasDefault);
 }
 
 std::map<int, std::string>	&ServerBlock::getErrorMap()
@@ -184,4 +189,9 @@ void	ServerBlock::setBlockRoutes(std::vector<Routes*> &routes)
 void	ServerBlock::setAsDefault()
 {
 	this->_default = true;
+}
+
+void	ServerBlock::yamlDoesHaveDefault()
+{
+	this->_yamlHasDefault = true;
 }

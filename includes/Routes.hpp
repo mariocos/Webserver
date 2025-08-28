@@ -25,6 +25,7 @@ class Routes
 		bool		_directoryListing;
 		bool		_isPermanentRedirect;
 		bool		_isTemporaryRedirect;
+		bool		_yamlHasDefault;
     public:
         Routes();
 		Routes(int maxBodySize, bool flag, std::string root, std::string uri);
@@ -46,6 +47,7 @@ class Routes
 		bool		isListing();
 		bool		isPermanentRedirect();
 		bool		isTemporaryRedirect();
+		bool		doesYamlHasDefault();
 		void		setRoot(std::string &root);
 		void		setURI(std::string &uri);
 		void		setRedirectPath(std::string &path);
@@ -60,6 +62,7 @@ class Routes
 		void		setAsPermanentRedirect();
 		void		setAsTemporaryRedirect();
 		void		setAsDefaultRoute();
+		void		yamlDoesHaveDefault();
 };
 
 std::string	generateListingHTML(std::string &dirPath, Client *client);

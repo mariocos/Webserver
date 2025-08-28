@@ -28,6 +28,7 @@ private:
 	bool		_methods[3];
 	bool		_default;
 	bool		_isCgi;
+	bool		_yamlHasDefault;
 public:
 	ServerBlock();
 	ServerBlock(int socket, int port, int backlog, std::string domainName, bool flag);
@@ -40,7 +41,8 @@ public:
 	int			getBlockPort();
 	bool		canDoMethod(int method);
 	bool		isDefault();
-	bool		isCgi();\
+	bool		isCgi();
+	bool		doesYamlHasDefault();
 	std::map<int, std::string>	&getErrorMap();
 	std::map<int, std::string>::iterator	getErrorPage(int key);
 	std::vector<Routes*>	&getRoutesVector();
@@ -56,6 +58,7 @@ public:
 	void		setBlockAsCgi();
 	void		setBlockRoutes(std::vector<Routes*> &routes);
 	void		setAsDefault();
+	void		yamlDoesHaveDefault();
 };
 
 #endif

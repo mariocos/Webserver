@@ -1,6 +1,6 @@
 #include "../../../includes/Routes.hpp"
 
-Routes::Routes() : _maxBodySize(-1), _defaultRoute(false), _isCgi(false), _directoryListing(false), _isPermanentRedirect(false), _isTemporaryRedirect(false)
+Routes::Routes() : _maxBodySize(-1), _defaultRoute(false), _isCgi(false), _directoryListing(false), _isPermanentRedirect(false), _isTemporaryRedirect(false), _yamlHasDefault(false)
 {
 	for (int i = 0; i < 3; i++)
 		this->_methods[i] = false;
@@ -10,7 +10,7 @@ Routes::Routes() : _maxBodySize(-1), _defaultRoute(false), _isCgi(false), _direc
 	this->_uploadPath = "";
 }
 
-Routes::Routes(int maxBodySize, bool flag, std::string root, std::string uri) : _root(root), _uri(uri), _maxBodySize(maxBodySize), _defaultRoute(flag), _isCgi(false), _directoryListing(false), _isPermanentRedirect(false), _isTemporaryRedirect(false)
+Routes::Routes(int maxBodySize, bool flag, std::string root, std::string uri) : _root(root), _uri(uri), _maxBodySize(maxBodySize), _defaultRoute(flag), _isCgi(false), _directoryListing(false), _isPermanentRedirect(false), _isTemporaryRedirect(false), _yamlHasDefault(false)
 {
 	if (root.rfind("/") == root.length() - 1)
 		this->_root = root.substr(0, root.length() - 1);
@@ -131,6 +131,11 @@ bool	Routes::isTemporaryRedirect()
 	return (this->_isTemporaryRedirect);
 }
 
+bool	Routes::doesYamlHasDefault()
+{
+	return (this->_yamlHasDefault);
+}
+
 void	Routes::setRoot(std::string &root)
 {
 	this->_root = root;
@@ -209,9 +214,14 @@ void	Routes::setAsTemporaryRedirect()
 	this->_isPermanentRedirect = false;
 }
 
-void		Routes::setAsDefaultRoute()
+void	Routes::setAsDefaultRoute()
 {
 	this->_defaultRoute = true;
+}
+
+void	Routes::yamlDoesHaveDefault()
+{
+	this->_yamlHasDefault = true;
 }
 
 std::string	generateListingHTML(std::string &dirPath, Client *client)
@@ -274,6 +284,7 @@ std::string	generateListingHTML(std::string &dirPath, Client *client)
 	return (html.str());
 }
 
+// afraid to touch this function, it is working tho
 std::string	constructListingPath(Client *client)
 {
 	std::string	path = "";

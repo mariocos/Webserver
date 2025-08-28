@@ -278,7 +278,7 @@ int	maxConnectionsFromYaml(YamlMap* serverConf)
 		if (((YamlScalar<int>*)(itMaxBodySize->second))->getType() != "int")
 			throw ConfigFileStructureException("max_connections has to be an integer");
 		else {
-			int maxBodySize = ((YamlScalar<int>*)getFromYamlMap(serverConf, "max_body_size"))->getValue();
+			int maxBodySize = ((YamlScalar<int>*)getFromYamlMap(serverConf, "max_connections"))->getValue();
 //			std::cout << maxBodySize << std::endl;
 			if (maxBodySize < 0)
 				throw ConfigFileStructureException("max_connections has to be equal or bigger then 0");
@@ -302,7 +302,7 @@ void routesFromYaml(YamlMap* serverConf, std::vector<Routes*> &routes)
 			YamlMap* routeConfig = (YamlMap*)(*itRoutes);
 			Routes* route = routeFromYaml(routeConfig, maxBodySize);
 			// std::cout<<"IS ROUTE CGI ? "<<route->isCgi()<<std::endl;
-			// std::cout<<"IS ROUTE DEFAULT ? "<<route->isDefault()<<std::endl;
+			std::cout<<"IS ROUTE DEFAULT ? "<<route->isDefault()<<std::endl;
 			routes.push_back(route);
 		}
 	}
@@ -499,7 +499,7 @@ Server::Server(YamlNode *parsedConf) : _maxEvents(10)
 		for (it = serverConfList->getList().begin(); it != serverConfList->getList().end(); it++) {
 			YamlMap* serverConf = (YamlMap*)(*it);
 			newServerBlock = serverBlockFromYaml(serverConf);
-			// std::cout<<"IS SERVER BLOCK DEFAULT ? "<<newServerBlock->isDefault()<<std::endl;
+			std::cout<<"IS SERVER BLOCK DEFAULT ? "<<newServerBlock->isDefault()<<std::endl;
 			startServerBlock(newServerBlock);
 			this->_serverBlocks.push_back(newServerBlock);
 			checkDefaultServerBlock(this->_serverBlocks);
