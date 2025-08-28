@@ -265,6 +265,29 @@ int	maxBodySizeFromYaml(YamlMap* serverConf)
 	}
 }
 
+int	maxConnectionsFromYaml(YamlMap* serverConf)
+{
+	std::map<std::string, YamlNode*>::iterator itMaxBodySize = serverConf->getMap().find("max_connections");
+	if (itMaxBodySize == serverConf->getMap().end())
+		return -1;
+	bool isScalar = itMaxBodySize->second->checkScalar();
+	if (isScalar == false)
+		throw ConfigFileStructureException("max_connections not setup correctly");
+	else {
+//		std::cout << ((YamlScalar<int>*)(itMaxBodySize->second))->getType() << std::endl;
+		if (((YamlScalar<int>*)(itMaxBodySize->second))->getType() != "int")
+			throw ConfigFileStructureException("max_connections has to be an integer");
+		else {
+			int maxBodySize = ((YamlScalar<int>*)getFromYamlMap(serverConf, "max_body_size"))->getValue();
+//			std::cout << maxBodySize << std::endl;
+			if (maxBodySize < 0)
+				throw ConfigFileStructureException("max_connections has to be equal or bigger then 0");
+			else
+				return maxBodySize;
+		}
+	}
+}
+
 void routesFromYaml(YamlMap* serverConf, std::vector<Routes*> &routes)
 {
 	int maxBodySize = maxBodySizeFromYaml(serverConf);
@@ -327,14 +350,14 @@ int	getPortFromYaml(YamlMap* serverConf)
 	else {
 //		std::cout << ((YamlScalar<int>*)(itListen->second))->getType() << std::endl;
 		if (((YamlScalar<int>*)(itListen->second))->getType() != "int")
-			throw ConfigFileStructureException("listen has to be between 0 - 65535");
+			throw ConfigFileStructureException("listen has to be between 1024 - 65535");
 		else {
 			int port = ((YamlScalar<int>*)getFromYamlMap(serverConf, "listen"))->getValue();
 //			std::cout << port << std::endl;
-			if (port >= 0 && port <= 65535)
+			if (port > 1023 && port <= 65535)
 				return port;
 			else
-				throw ConfigFileStructureException("listen has to be between 0 - 65535");
+				throw ConfigFileStructureException("listen has to be between 1024 - 65535");
 		}
 	}
 }
@@ -342,6 +365,8 @@ int	getPortFromYaml(YamlMap* serverConf)
 std::string	getDomainNameFromYaml(YamlMap* serverConf)
 {
 	std::map<std::string, YamlNode*>::iterator itServerName = serverConf->getMap().find("server_names");
+	if (itServerName == serverConf->getMap().end())
+		throw ConfigFileStructureException("server_names not setup");
 	if(!itServerName->second->checkScalar())
 		throw ConfigFileStructureException("server_names not setup correctly");
 	else {
@@ -364,7 +389,7 @@ ServerBlock* serverBlockFromYaml(YamlMap* serverConf)
 {
 	int port = getPortFromYaml(serverConf);
 //	((YamlScalar<int>*)(getFromYamlMap(serverConf, "listen")))->getValue();
-	int backlog = -1;
+	int backlog = maxConnectionsFromYaml(serverConf);
 	std::string domainName = getDomainNameFromYaml(serverConf);
 //	((YamlScalar<std::string>*)(getFromYamlMap(serverConf, "server_names")))->getValue();
 	bool Default = isRouteDefault(serverConf);
