@@ -205,10 +205,9 @@ int	main(int ac, char **av)
 /*
 
 	Lista de Erros:
-		- //!Dar fix de tudo o que esteja dentro de "modules"
-		- ServerBlocks e Routes ficam todos a false se n houver nenhum true
-		- Limpar mapa de servers
-		- Corrigir os erros no caso de directory_listing vazio
+		- //!Dar fix de tudo o que esteja dentro de "modules" (done)
+		- ServerBlocks e Routes ficam todos a false se n houver nenhum true (ja estava a funcionar)
+		- Corrigir os erros no caso de directory_listing vazio (done)
 
 */
 

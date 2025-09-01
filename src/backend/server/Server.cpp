@@ -108,7 +108,12 @@ bool	isRouteDefault(YamlMap* routeConfig)
 Routes	*setStatic(YamlMap* settings, int maxBodySize, bool defaultRoute, std::string uri)
 {
 	struct stat		stats;
-	std::string root = ((YamlScalar<std::string>*)(getFromYamlMap(settings, "root")))->getValue();
+	std::string root;
+
+	if (!((YamlScalar<std::string>*)(getFromYamlMap(settings, "root")))->checkScalar())
+		throw ConfigFileStructureException("Invalid root in static module");
+	else 
+		root = ((YamlScalar<std::string>*)(getFromYamlMap(settings, "root")))->getValue();
 	if (stat(root.c_str(), &stats))
 	{
 		if (errno == EACCES || errno == EPERM)
@@ -122,17 +127,15 @@ Routes	*setStatic(YamlMap* settings, int maxBodySize, bool defaultRoute, std::st
 
 	try {
 		std::map<std::string, YamlNode*>::iterator isDirList = settings->getMap().find("directory_listing");
-		if (isDirList != settings->getMap().end()) {
+		if (isDirList != settings->getMap().end() || settings->getMap().empty()) {
 //			bool dirList;
 			if (((YamlScalar<bool>*)(isDirList->second))->getType() == "bool") {
 //				dirList = ((YamlScalar<bool>*)(isDirList->second))->getValue();
 				if (((YamlScalar<bool>*)(isDirList->second))->getValue())
 					newRoute->setAsListing();
 			} 
-			else {
-				delete newRoute;
+			else 
 				throw ConfigFileStructureException("Invalid variable type in directory_listing");
-			}
 		}
 	}
 	catch (const std::exception& e){
@@ -146,16 +149,21 @@ Routes	*setStatic(YamlMap* settings, int maxBodySize, bool defaultRoute, std::st
 Routes	*setCGI(YamlMap* settings, int maxBodySize, bool defaultRoute, std::string uri)
 {
 	struct stat		stats;
-	std::string root = ((YamlScalar<std::string>*)(getFromYamlMap(settings, "root")))->getValue();
+	std::string root;
+	
+	if (!((YamlScalar<std::string>*)(getFromYamlMap(settings, "root")))->checkScalar())
+		throw ConfigFileStructureException("Invalid root in CGI module");
+	else 
+		root = ((YamlScalar<std::string>*)(getFromYamlMap(settings, "root")))->getValue();
 	if (stat(root.c_str(), &stats))
 	{
 		if (errno == EACCES || errno == EPERM)
-			throw MessagelessException("Invalid Permissions on Root");
+			throw ConfigFileStructureException("Invalid Permissions on Root");
 		else
-			throw MessagelessException("Invalid Root");
+			throw ConfigFileStructureException("Invalid Root");
 	}
 	if (S_ISDIR(stats.st_mode) && (errno == EACCES || errno == EPERM))
-		throw MessagelessException("Invalid Permissions on Root");
+		throw ConfigFileStructureException("Invalid Permissions on Root");
 	Routes* newRoute = new Routes(maxBodySize, defaultRoute, root, uri);
 
 	try {
@@ -167,7 +175,7 @@ Routes	*setCGI(YamlMap* settings, int maxBodySize, bool defaultRoute, std::strin
 		{
 			YamlMap* interpConfig = (YamlMap*)(*itInterp);
 			YamlList* ext = (YamlList*)getFromYamlMap(interpConfig, "extensions");
-			if (interpreters->getList().empty())
+			if (!ext->checkList() || ext->getList().empty())
 				throw ConfigFileStructureException("extensions");
 			std::vector<YamlNode*>::iterator itExt;
 			for (itExt = ext->getList().begin(); itExt != ext->getList().end(); itExt++) {
@@ -175,16 +183,16 @@ Routes	*setCGI(YamlMap* settings, int maxBodySize, bool defaultRoute, std::strin
 				if (newExt == "py")
 					newRoute->setCgiFileExtension(newExt);
 				else
-					throw MessagelessException("CGI extention not allowed");
+					throw ConfigFileStructureException("CGI extention not allowed");
 			}
 			std::string path = ((YamlScalar<std::string>*)getFromYamlMap(interpConfig, "path"))->getValue();
 			if (path.find("python3") != std::string::npos && path.find("python3") + 7 == path.length())
 				newRoute->setUploadPath(path);
 			else
-				throw MessagelessException("Invalid CGI path");
+				throw ConfigFileStructureException("Invalid CGI path");
 			std::string	name = ((YamlScalar<std::string>*)getFromYamlMap(interpConfig, "name"))->getValue();
 			if (name != "python")
-				throw MessagelessException("Invalid CGI name");
+				throw ConfigFileStructureException("Invalid CGI name");
 			newRoute->setAsCgi();
 		}
 	}
@@ -201,6 +209,10 @@ Routes	*setRedirect(YamlMap* settings, int maxBodySize, bool defaultRoute, std::
 	Routes* newRoute = new Routes(maxBodySize, defaultRoute, root, uri);
 
 	try {
+		if (settings->getMap().find("uri") == settings->getMap().end())
+			throw ConfigFileStructureException("no uri in redirect - modules - settings");
+		if (settings->getMap().find("type") == settings->getMap().end())
+			throw ConfigFileStructureException("no type in redirect - modules - settings");
 		std::string rDirURI = ((YamlScalar<std::string>*)(getFromYamlMap(settings, "uri")))->getValue();
 		std::string rDirType = ((YamlScalar<std::string>*)(getFromYamlMap(settings, "type")))->getValue();
 		newRoute->setRedirectPath(rDirURI);
@@ -251,13 +263,17 @@ Routes* routeFromYaml(YamlMap* routeConfig, int maxBodySize)
 	if (routeConfig->getMap().find("modules") == routeConfig->getMap().end())
 		throw ConfigFileStructureException("no modules config");
 	YamlList* modules = (YamlList*)getFromYamlMap(routeConfig, "modules");
-	if (modules->getList().empty())
-		throw ConfigFileStructureException("modules is empty");
+	if (!modules->checkList() || modules->getList().empty())
+		throw ConfigFileStructureException("modules not a list or is empty");
 	std::vector<YamlNode*>::iterator itModules;
 	for (itModules = modules->getList().begin(); itModules != modules->getList().end(); itModules++) {
 		YamlMap* module = (YamlMap*)(*itModules);
+		if (module->getMap().find("type") == module->getMap().end())
+			throw ConfigFileStructureException("no type config in modules");
 		type = (YamlScalar<std::string>*)getFromYamlMap(module, "type");
 //if para verificar o que esta escrito
+		if (module->getMap().find("settings") == module->getMap().end())
+			throw ConfigFileStructureException("no settings config in modules");
 		YamlMap* settings = (YamlMap*)getFromYamlMap(module, "settings");
 		if (type->getValue().empty())
 			throw ConfigFileStructureException("type");
@@ -500,9 +516,9 @@ void checkDefaultServerBlock(std::vector<ServerBlock*> &_serverBlocks)
 	for (std::vector<ServerBlock*>::iterator it = _serverBlocks.begin(); it != _serverBlocks.end(); it++)
 	{
 		std::vector<Routes*> routes = (*it)->getRoutesVector();
-		for (std::vector<Routes*>::iterator it = routes.begin(); it != routes.end(); it++)
+		for (std::vector<Routes*>::iterator itRoute = routes.begin(); itRoute != routes.end(); itRoute++)
 		{
-			if ((*it)->isDefault() == true)
+			if ((*itRoute)->isDefault() == true)
 				defaultRouteNbr++;
 		}
 		if (defaultRouteNbr > 1)
@@ -527,11 +543,24 @@ Server::Server(YamlNode *parsedConf) : _maxEvents(10)
 	if (this->_epoll_fd == -1)
 		throw EpollCreationException();
 
-	YamlList* serverConfList = (YamlList*)getFromYamlMap(parsedConf, "servers");
+	YamlList* serverConfList;
+	std::map<std::string, YamlNode*>::iterator itServerName = ((YamlMap*)parsedConf)->getMap().find("servers");
+	if (itServerName == ((YamlMap*)parsedConf)->getMap().end()) {
+		delete parsedConf;
+		close(this->_epoll_fd);
+		throw ConfigFileStructureException("servers not setup");
+	}
+	if(!itServerName->second->checkList()) {
+		delete parsedConf;
+		close(this->_epoll_fd);
+		throw ConfigFileStructureException("servers not setup correctly");
+	}
+	else
+		serverConfList = (YamlList*)getFromYamlMap(parsedConf, "servers");
 //	if (parsedConf->checkMap())
 //		throw ConfigFileStructureException("'-'");
-	if (parsedConf->checkList() && serverConfList->getList().empty())
-		throw ConfigFileStructureException("servers");
+//	if (parsedConf->checkList() && serverConfList->getList().empty())
+//		throw ConfigFileStructureException("servers");
 	try {
 		std::vector<YamlNode*>::iterator it;
 		for (it = serverConfList->getList().begin(); it != serverConfList->getList().end(); it++) {
@@ -553,6 +582,17 @@ Server::Server(YamlNode *parsedConf) : _maxEvents(10)
 			delete *it;
 		throw MessagelessException(e.what());
 	}
+// these are logs!!!!
+	for (std::vector<ServerBlock*>::iterator it = _serverBlocks.begin(); it != _serverBlocks.end(); it++)
+	{
+		std::cout<<"IS SERVERBLOCK    "<<(*it)->getBlockName()<<"    DEFAULT ? "<<(*it)->isDefault()<<std::endl;
+		std::vector<Routes*> routes = (*it)->getRoutesVector();
+		for (std::vector<Routes*>::iterator itRoute = routes.begin(); itRoute != routes.end(); itRoute++)
+		{
+			std::cout<<"IS ROUTE    "<<(*itRoute)->getURI()<<"    DEFAULT ? "<<(*itRoute)->isDefault()<<std::endl;
+		}
+	}
+
 	this->_events = new epoll_event[this->_maxEvents];
 }
 
