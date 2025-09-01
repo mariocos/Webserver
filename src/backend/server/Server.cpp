@@ -148,8 +148,13 @@ Routes	*setCGI(YamlMap* settings, int maxBodySize, bool defaultRoute, std::strin
 					throw MessagelessException("CGI extention not allowed");
 			}
 			std::string path = ((YamlScalar<std::string>*)getFromYamlMap(interpConfig, "path"))->getValue();
-//			falta verificar se termina com python3 ou /python3 ou python3/
-			newRoute->setUploadPath(path);
+			if (path.find("python3") != std::string::npos && path.find("python3") + 7 == path.length())
+				newRoute->setUploadPath(path);
+			else
+				throw MessagelessException("Invalid CGI path");
+			std::string	name = ((YamlScalar<std::string>*)getFromYamlMap(interpConfig, "name"))->getValue();
+			if (name != "python")
+				throw MessagelessException("Invalid CGI name");
 			newRoute->setAsCgi();
 		}
 	}

@@ -209,6 +209,7 @@ int	main(int ac, char **av)
 		- ServerBlocks e Routes ficam todos a false se n houver nenhum true
 		- Limpar mapa de servers
 		- Corrigir os erros no caso de directory_listing vazio
+		- Se alguma coisa se repetir o parsing n da erro e quando o programa fecha da leaks
 
 */
 
