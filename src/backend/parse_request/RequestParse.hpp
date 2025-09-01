@@ -19,6 +19,7 @@ private:
 	std::string	content_length;
 	std::string	connection;
 	std::string	queryString;
+	std::string	pathInfo;
 	std::string	expect_something;
 	std::string	*_buffer;
 	int			error_code;
@@ -41,6 +42,7 @@ public:
 	std::string	get_content_length();
 	std::string	get_buffer();
 	std::string	get_query_str();
+	std::string	get_path_info();
 	std::string get_content();
 	std::string	get_connection();
 	std::string	get_expect();

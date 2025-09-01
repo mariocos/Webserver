@@ -57,6 +57,11 @@ void	RequestParse::buildRequest(const char *request)
 		queryString = get_keyword(path_to_request, "?");
 		path_to_request = path_to_request.substr(0, path_to_request.find("?"));
 	}
+	if (path_to_request.find(".py/") != std::string::npos)
+	{
+		pathInfo = get_keyword(path_to_request, ".py");
+		path_to_request = path_to_request.substr(0, path_to_request.find(".py/") + 3);
+	}
 	if (ft_strstr(path_to_request.c_str(), ".."))
 		error_code = 3;
 	line1.erase(0, len + 1);
@@ -101,6 +106,11 @@ std::string	RequestParse::get_buffer()
 std::string	RequestParse::get_query_str()
 {
 	return (queryString);
+}
+
+std::string	RequestParse::get_path_info()
+{
+	return (pathInfo);
 }
 
 RequestParse::~RequestParse()

@@ -6,11 +6,12 @@ void	prepareCgi(Client *client)
 	std::string	path;
 	std::string	name;
 
-	env.push_back("REQUEST_METHOD="+ client->getClientRequest()->get_method());
+	env.push_back("REQUEST_METHOD=" + client->getClientRequest()->get_method());
 	name = client->getClientRequest()->get_path().substr(client->getClientRequest()->get_path().rfind("/") + 1);
 	env.push_back("SCRIPT_NAME="+ name);
 	path = client->getNewPath();
 	env.push_back("QUERY_STRING=" + client->getClientRequest()->get_query_str());
+	env.push_back("PATH_INFO=" + client->getClientRequest()->get_path_info());
 	if (client->getClientRequest()->get_method() == "POST")
 		env.push_back("CONTENT_LENGHT=" + transformToString(client->getClientRequest()->get_content().size()));
 	else
