@@ -46,7 +46,17 @@ void updateDestination(Routes *route, YamlList* modules)
 		std::map<std::string, YamlNode*>::iterator isDestination = settings->getMap().find("destination");
 		if (isDestination != settings->getMap().end())
 		{
+			struct stat		stats;
 			std::string path = ((YamlScalar<std::string>*)getFromYamlMap(settings, "destination"))->getValue();
+			if (stat(path.c_str(), &stats))
+			{
+				if (errno == EACCES || errno == EPERM)
+					throw ConfigFileStructureException("Invalid Permissions on Destination");
+				else
+					throw ConfigFileStructureException("Invalid Destination");
+			}
+			if (S_ISDIR(stats.st_mode) && (errno == EACCES || errno == EPERM))
+				throw ConfigFileStructureException("Invalid Permissions on Destination");
 			route->setUploadPath(path);
 		}
 	}
@@ -97,7 +107,17 @@ bool	isRouteDefault(YamlMap* routeConfig)
 
 Routes	*setStatic(YamlMap* settings, int maxBodySize, bool defaultRoute, std::string uri)
 {
+	struct stat		stats;
 	std::string root = ((YamlScalar<std::string>*)(getFromYamlMap(settings, "root")))->getValue();
+	if (stat(root.c_str(), &stats))
+	{
+		if (errno == EACCES || errno == EPERM)
+			throw MessagelessException("Invalid Permissions on Root");
+		else
+			throw MessagelessException("Invalid Root");
+	}
+	if (S_ISDIR(stats.st_mode) && (errno == EACCES || errno == EPERM))
+		throw MessagelessException("Invalid Permissions on Root");
 	Routes* newRoute = new Routes(maxBodySize, defaultRoute, root, uri);
 
 	try {
@@ -125,7 +145,17 @@ Routes	*setStatic(YamlMap* settings, int maxBodySize, bool defaultRoute, std::st
 
 Routes	*setCGI(YamlMap* settings, int maxBodySize, bool defaultRoute, std::string uri)
 {
+	struct stat		stats;
 	std::string root = ((YamlScalar<std::string>*)(getFromYamlMap(settings, "root")))->getValue();
+	if (stat(root.c_str(), &stats))
+	{
+		if (errno == EACCES || errno == EPERM)
+			throw MessagelessException("Invalid Permissions on Root");
+		else
+			throw MessagelessException("Invalid Root");
+	}
+	if (S_ISDIR(stats.st_mode) && (errno == EACCES || errno == EPERM))
+		throw MessagelessException("Invalid Permissions on Root");
 	Routes* newRoute = new Routes(maxBodySize, defaultRoute, root, uri);
 
 	try {
