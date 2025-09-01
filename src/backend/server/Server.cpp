@@ -65,7 +65,7 @@ void updateDestination(Routes *route, YamlList* modules)
 void routeMethods(Routes *route, YamlMap* routeConfig,YamlList* modules)
 {
 //	routeConfig->getMap().find("methods")->second->checkList();
-		YamlList* methods = (YamlList*)getFromYamlMap(routeConfig, "methods");
+	YamlList* methods = (YamlList*)getFromYamlMap(routeConfig, "methods");
 	if (!routeConfig->getMap().find("methods")->second->checkList() || methods->getList().empty())
 		throw ConfigFileStructureException("methods");
 
@@ -247,6 +247,9 @@ Routes* routeFromYaml(YamlMap* routeConfig, int maxBodySize)
 	Routes* route;
 	std::string uri = getUriFromYaml(routeConfig);
 	YamlScalar<std::string>* type;
+
+	if (routeConfig->getMap().find("modules") == routeConfig->getMap().end())
+		throw ConfigFileStructureException("no modules config");
 	YamlList* modules = (YamlList*)getFromYamlMap(routeConfig, "modules");
 	if (modules->getList().empty())
 		throw ConfigFileStructureException("modules is empty");

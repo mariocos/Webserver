@@ -15,6 +15,11 @@ YamlMap::~YamlMap() {
 }
 
 void	YamlMap::insert(const std::string& key, YamlNode* value) {
+	if (_map.find(key) != _map.end())
+	{
+		delete value;
+		throw YamlError("Error: Duplicated Settings");
+	}
 	_index = _map.size() + 1;
 	_map[key] = value;
 //	std::cout << key << std::endl;

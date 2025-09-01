@@ -40,6 +40,9 @@ $(OBJS_DIR)/%.o: %.cpp
 #	mkdir -p $(dir $@)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
+val:
+		make re -s && clear && valgrind --leak-check=full --track-fds=yes --show-leak-kinds=all --track-origins=yes ./webserv config_files/simple.yaml
+
 clean:
 		rm -rf $(OBJS_DIR)
 		$(MSG2)

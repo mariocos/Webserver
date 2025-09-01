@@ -1,6 +1,7 @@
 #pragma once
 
 #include "yaml_node.hpp"
+#include "yaml_utils.hpp"
 
 class YamlList;
 
