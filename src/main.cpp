@@ -207,7 +207,6 @@ int	main(int ac, char **av)
 	Lista de Erros:
 		- //!Dar fix de tudo o que esteja dentro de "methods"
 		- ServerBlocks e Routes ficam todos a false se n houver nenhum true
-		- Talvez mudar o minimo de conexoes para 1 em vez de 0
 		- Limpar mapa de servers
 		- Corrigir os erros no caso de directory_listing vazio
 

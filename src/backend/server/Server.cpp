@@ -257,8 +257,8 @@ int	maxBodySizeFromYaml(YamlMap* serverConf)
 		else {
 			int maxBodySize = ((YamlScalar<int>*)getFromYamlMap(serverConf, "max_body_size"))->getValue();
 //			std::cout << maxBodySize << std::endl;
-			if (maxBodySize < 0)
-				throw ConfigFileStructureException("max_body_size has to be equal or bigger then 0");
+			if (maxBodySize < 1)
+				throw ConfigFileStructureException("max_body_size has to be bigger then 0");
 			else
 				return maxBodySize;
 		}
@@ -280,8 +280,8 @@ int	maxConnectionsFromYaml(YamlMap* serverConf)
 		else {
 			int maxBodySize = ((YamlScalar<int>*)getFromYamlMap(serverConf, "max_connections"))->getValue();
 //			std::cout << maxBodySize << std::endl;
-			if (maxBodySize < 0)
-				throw ConfigFileStructureException("max_connections has to be equal or bigger then 0");
+			if (maxBodySize < 1)
+				throw ConfigFileStructureException("max_connections has to be bigger then 0");
 			else
 				return maxBodySize;
 		}
