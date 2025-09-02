@@ -24,16 +24,14 @@ bool	checkIfJustDigits(const std::string &str, size_t len)
 
 YamlNode* getFromYamlMap(YamlNode* node, std::string key)
 {
-	YamlNode* result;
-	try
-	{
-		result = ((YamlMap*) node)->getMap().at(key);
-	}
-	catch(const std::exception& e)
-	{
+	YamlMap*	map = dynamic_cast<YamlMap*>(node);
+	if (!map)
+		throw ConfigFileStructureException("Empty " + key);
+	if (map->getMap().find(key) == map->getMap().end())
 		throw ConfigFileStructureException(key);
-	}
-	
+	YamlNode*	result = map->getMap().find(key)->second;
+	if (!result)
+		throw ConfigFileStructureException(key);
 	return result;
 }
 
@@ -164,7 +162,7 @@ Routes	*setCGI(YamlMap* settings, int maxBodySize, bool defaultRoute, std::strin
 
 	try {
 		YamlList* interpreters = (YamlList*)getFromYamlMap(settings, "interpreters");
-		if (interpreters->getList().empty())
+		if (!interpreters->checkList() || interpreters->getList().empty())
 			throw ConfigFileStructureException("interpreters");
 		std::vector<YamlNode*>::iterator itInterp;
 		for (itInterp = interpreters->getList().begin(); itInterp != interpreters->getList().end(); itInterp++)

@@ -205,8 +205,8 @@ int	main(int ac, char **av)
 /*
 
 	Lista de Erros:
-		- Settings vazio da conditional jump
-		- Interpreters vazio da segfault
+		- Settings vazio da conditional jump (acho que esta fixed)
+		- Interpreters vazio da segfault (acho que esta tambem)
 		- Se tentar dar set a outro serverBlock como default ele da caca (acho que esta mas vou testar mais)
 
 */
