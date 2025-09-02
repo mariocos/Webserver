@@ -101,10 +101,6 @@ bool	isRouteDefault(YamlMap* routeConfig)
 	return (defaultRoute);
 }
 
-//void	setDirListing(YamlMap* settings) {
-//
-//}
-
 Routes	*setStatic(YamlMap* settings, int maxBodySize, bool defaultRoute, std::string uri)
 {
 	struct stat		stats;
@@ -305,12 +301,10 @@ int	maxBodySizeFromYaml(YamlMap* serverConf)
 	if (isScalar == false)
 		throw ConfigFileStructureException("max_body_size not setup correctly");
 	else {
-//		std::cout << ((YamlScalar<int>*)(itMaxBodySize->second))->getType() << std::endl;
 		if (((YamlScalar<int>*)(itMaxBodySize->second))->getType() != "int")
 			throw ConfigFileStructureException("max_body_size has to be an integer");
 		else {
 			int maxBodySize = ((YamlScalar<int>*)getFromYamlMap(serverConf, "max_body_size"))->getValue();
-//			std::cout << maxBodySize << std::endl;
 			if (maxBodySize < 1)
 				throw ConfigFileStructureException("max_body_size has to be bigger then 0");
 			else
@@ -328,12 +322,10 @@ int	maxConnectionsFromYaml(YamlMap* serverConf)
 	if (isScalar == false)
 		throw ConfigFileStructureException("max_connections not setup correctly");
 	else {
-//		std::cout << ((YamlScalar<int>*)(itMaxBodySize->second))->getType() << std::endl;
 		if (((YamlScalar<int>*)(itMaxBodySize->second))->getType() != "int")
 			throw ConfigFileStructureException("max_connections has to be an integer");
 		else {
 			int maxBodySize = ((YamlScalar<int>*)getFromYamlMap(serverConf, "max_connections"))->getValue();
-//			std::cout << maxBodySize << std::endl;
 			if (maxBodySize < 1)
 				throw ConfigFileStructureException("max_connections has to be bigger then 0");
 			else
@@ -355,8 +347,6 @@ void routesFromYaml(YamlMap* serverConf, std::vector<Routes*> &routes)
 		for (itRoutes = routesConfig->getList().begin(); itRoutes != routesConfig->getList().end(); itRoutes++) {
 			YamlMap* routeConfig = (YamlMap*)(*itRoutes);
 			Routes* route = routeFromYaml(routeConfig, maxBodySize);
-			// std::cout<<"IS ROUTE CGI ? "<<route->isCgi()<<std::endl;
-			std::cout<<"IS ROUTE DEFAULT ? "<<route->isDefault()<<std::endl;
 			routes.push_back(route);
 		}
 	}
@@ -402,12 +392,10 @@ int	getPortFromYaml(YamlMap* serverConf)
 	if (isScalar == false)
 		throw ConfigFileStructureException("listen not setup correctly");
 	else {
-//		std::cout << ((YamlScalar<int>*)(itListen->second))->getType() << std::endl;
 		if (((YamlScalar<int>*)(itListen->second))->getType() != "int")
 			throw ConfigFileStructureException("listen has to be between 1024 - 65535");
 		else {
 			int port = ((YamlScalar<int>*)getFromYamlMap(serverConf, "listen"))->getValue();
-//			std::cout << port << std::endl;
 			if (port > 1023 && port <= 65535)
 				return port;
 			else
@@ -447,7 +435,6 @@ ServerBlock* serverBlockFromYaml(YamlMap* serverConf)
 	std::string domainName = getDomainNameFromYaml(serverConf);
 //	((YamlScalar<std::string>*)(getFromYamlMap(serverConf, "server_names")))->getValue();
 	bool Default = isRouteDefault(serverConf);
-//	std::cout << "Is default: " << Default << std::endl;
 	std::vector<Routes*>	tmp;
 	ServerBlock* newServerBlock = NULL;
 
@@ -566,7 +553,6 @@ Server::Server(YamlNode *parsedConf) : _maxEvents(10)
 		for (it = serverConfList->getList().begin(); it != serverConfList->getList().end(); it++) {
 			YamlMap* serverConf = (YamlMap*)(*it);
 			newServerBlock = serverBlockFromYaml(serverConf);
-			std::cout<<"IS SERVER BLOCK DEFAULT ? "<<newServerBlock->isDefault()<<std::endl;
 			startServerBlock(newServerBlock);
 			this->_serverBlocks.push_back(newServerBlock);
 			checkDefaultServerBlock(this->_serverBlocks);

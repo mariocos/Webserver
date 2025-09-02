@@ -205,9 +205,10 @@ int	main(int ac, char **av)
 /*
 
 	Lista de Erros:
-		- //!Dar fix de tudo o que esteja dentro de "modules" (done)
-		- ServerBlocks e Routes ficam todos a false se n houver nenhum true (ja estava a funcionar)
-		- Corrigir os erros no caso de directory_listing vazio (done)
+		- Settings vazio da conditional jump
+		- Interpreters vazio da segfault
+		- Routes duplicadas nao dao erro
+		- Se tentar dar set a outro serverBlock como default ele da caca
 
 */
 
