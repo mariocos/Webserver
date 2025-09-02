@@ -767,7 +767,7 @@ std::vector<Routes*>::iterator	Server::getRouteTriggered(std::string uri, int fd
 	std::vector<Routes*>::iterator	routeIt = (*it)->getRoutesVector().begin();
 	while (routeIt != (*it)->getRoutesVector().end())
 	{
-		if ((*routeIt)->getURI() == "/" && uri.rfind('/') == 0)
+		if ((*routeIt)->getURI() == "/" && uri.rfind('/') == 0 && uri.find('.') != std::string::npos)
 			return (routeIt);
 		else if (uri.find((*routeIt)->getURI()) != std::string::npos && (*routeIt)->getURI() != "/")
 			return (routeIt);
