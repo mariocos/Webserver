@@ -334,6 +334,20 @@ int	maxConnectionsFromYaml(YamlMap* serverConf)
 	}
 }
 
+void	checkURIDuplicates(std::vector<Routes*> &routes, Routes *route)
+{
+	std::vector<Routes*>::iterator	it = routes.begin();
+	while (it != routes.end())
+	{
+		if ((*it)->getURI() == route->getURI())
+		{
+			delete route;
+			throw ConfigFileStructureException("URI is duplicated");
+		}
+		it++;
+	}
+}
+
 void routesFromYaml(YamlMap* serverConf, std::vector<Routes*> &routes)
 {
 	int maxBodySize = maxBodySizeFromYaml(serverConf);
@@ -347,6 +361,7 @@ void routesFromYaml(YamlMap* serverConf, std::vector<Routes*> &routes)
 		for (itRoutes = routesConfig->getList().begin(); itRoutes != routesConfig->getList().end(); itRoutes++) {
 			YamlMap* routeConfig = (YamlMap*)(*itRoutes);
 			Routes* route = routeFromYaml(routeConfig, maxBodySize);
+			checkURIDuplicates(routes, route);
 			routes.push_back(route);
 		}
 	}
@@ -475,7 +490,6 @@ void Server::startServerBlock(ServerBlock* newServerBlock)
 
 	servaddr.sin_family = AF_INET;
 	servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
-//	std::cout<<"PORT: "<<newServerBlock->getBlockPort()<<std::endl;
 	servaddr.sin_port = htons(newServerBlock->getBlockPort());
 	if (setsockopt(newServerBlock->getSocketFd(), SOL_SOCKET, SO_REUSEADDR, &option, sizeof(option)) == -1 \
 		|| bind(newServerBlock->getSocketFd(), (const sockaddr *)&servaddr, sizeof(servaddr)) == -1 \
@@ -555,9 +569,9 @@ Server::Server(YamlNode *parsedConf) : _maxEvents(10)
 			newServerBlock = serverBlockFromYaml(serverConf);
 			startServerBlock(newServerBlock);
 			this->_serverBlocks.push_back(newServerBlock);
-			checkDefaultServerBlock(this->_serverBlocks);
 			printLog("INFO", newServerBlock, NULL, NULL, 0, "");
 		}
+		checkDefaultServerBlock(this->_serverBlocks);
 	}
 	catch(const std::exception& e)
 	{

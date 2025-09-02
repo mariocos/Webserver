@@ -207,8 +207,7 @@ int	main(int ac, char **av)
 	Lista de Erros:
 		- Settings vazio da conditional jump
 		- Interpreters vazio da segfault
-		- Routes duplicadas nao dao erro
-		- Se tentar dar set a outro serverBlock como default ele da caca
+		- Se tentar dar set a outro serverBlock como default ele da caca (acho que esta mas vou testar mais)
 
 */
 
