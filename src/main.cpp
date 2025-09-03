@@ -129,20 +129,8 @@ int	main(int ac, char **av)
 	}
 	try
 	{
-//		std::vector<int>	ports;
-//		ports.push_back(4243);
-//		ports.push_back(8080);
-//		ports.push_back(3000);
-//		ports.push_back(2424);
-//		std::vector<std::string>	names;
-//		names.push_back("localhost");
-//		names.push_back("webserver.com");
-//		names.push_back("127.0.0.1");
-//		names.push_back("script");
-//		Server	server(ports, names, 20);
         YamlParser parser;
         YamlNode* root = NULL;
-//           std::vector<ServerBlock*>	Servers = NULL;
 		std::string filePath;
 		if (av[1])
 			filePath = av[1];
@@ -161,7 +149,7 @@ int	main(int ac, char **av)
 		Server server = Server(root);
 		delete root;
 		if (fileName.empty())
-			printLog("INFO", NULL, NULL, NULL, 1, "default.yaml");
+			printLog("INFO", NULL, NULL, NULL, 1, "simple.yaml");
 		else
 			printLog("INFO", NULL, NULL, NULL, 1, fileName);
 		run = true;
@@ -203,7 +191,6 @@ int	main(int ac, char **av)
 
 
 /*
-
 	Lista de Erros:
 */
 

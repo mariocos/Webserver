@@ -1047,13 +1047,6 @@ void	Server::manageClient(std::vector<Client*>::iterator it, epoll_event	&event)
 			}
 			else if (!(*it)->getClientFile()->getFile()->is_open())
 				(*it)->resetClient(*this);
-			/* else if (!(*it)->getClientFile()->getFile()->is_open())
-			{
-				if ((*it)->getClientRequest()->get_connection() == "keep-alive")
-					(*it)->resetClient(*this);
-				else
-					clearClient(it, *this);
-			} */
 		}
 	}
 }

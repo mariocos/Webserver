@@ -10,18 +10,9 @@ Response::Response() : _response(), _path(""), _type("text/plain"), _totalRespon
 	}
 }
 
-//Response::Response(const Response &copy)
-//{
-//}
-
 Response::~Response()
 {
 }
-
-//Response&	Response::operator=(const Response &copy)
-//{
-//	return (*this);
-//}
 
 std::vector<uint8_t>	&Response::getResponse()
 {

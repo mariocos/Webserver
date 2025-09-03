@@ -24,8 +24,6 @@ private:
 	int			_statusCode;
 public:
 	Response();
-	//Response(const Response &copy);
-	//Response& operator=(const Response &copy);
 	~Response();
 	std::vector<uint8_t> &getResponse();
 	std::string	getPath();

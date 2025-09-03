@@ -14,12 +14,6 @@ body {
 	color: orange;
 }
 
-body.error-page {
-	background-color: white;
-	text-align: center;
-	margin: auto;
-}
-
 .buttons {
     margin-top: 20px;
 	display: flex;

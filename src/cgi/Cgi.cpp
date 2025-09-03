@@ -200,7 +200,6 @@ void	Cgi::writeCgiResponse(Client *client)
 	else
 		client->getClientResponse()->addToResponse("Connection: close\r\n");
 	client->getClientResponse()->addToResponse("Content-Length: " + client->getClientResponse()->getResponseLenghtAsString() + "\r\n\r\n");
-	//std::cout<<"response head:\n"<<std::string(client->getClientResponse()->getResponse().begin(), client->getClientResponse()->getResponse().end());
 	client->getClientResponse()->addToBytesToSend(client->getClientResponse()->getResponse().size());
 	sendMsgToSocket(client->getSocketFd(), client->getClientResponse()->getResponse().size(), client, client->getClientResponse());
 	client->getClientResponse()->clearResponse();

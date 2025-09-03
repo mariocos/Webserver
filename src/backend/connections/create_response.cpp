@@ -48,7 +48,6 @@ void	createHeader(RequestParse *request, Response *response, Client *client)
 	response->addToResponse("Content-Length: " + response->getResponseLenghtAsString() + "\r\n\r\n");
 	response->addToBytesToSend(response->getResponse().size());
 	sendMsgToSocket(client->getSocketFd(), response->getResponse().size(), client, response);
-	//std::cout<<"response head:\n"<<std::string(response->getResponse().begin(), response->getResponse().end());
 	response->clearResponse();
 	client->getClientFile()->setReading(true);
 	client->getClientFile()->setWriting(false);
