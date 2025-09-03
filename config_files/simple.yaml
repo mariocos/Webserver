@@ -1,71 +1,15 @@
 servers:
   - listen: 8080
     server_names: localhost
-    max_connections: 3
-    max_body_size: 10485760
     default: true
     error_pages:
-      404: ./test_website/is_an_html
-      400: ./website/400.html
-      405: ./website/405.html
+      404: ./website/404.html
     routes:
       - uri: /
-        methods: [GET, POST, DELETE]
+        methods: [GET]
         default: true
-        modules:
-          - type: static
-            settings:
-              root: ./website
-              destination: ./teste_uploads
-              index: index.html
-      - uri: /lala/directory/something
-        methods: [GET, POST, DELETE]
         modules:
           - type: static
             settings:
               root: /home/pauberna
               directory_listing: true
-  - listen: 8081
-    server_names: 127.0.0.1
-    max_body_size: 10485760
-    error_pages:
-      404: ./website/404.html
-      400: ./website/400.html
-      405: ./website/405.html
-    routes:
-      - uri: /
-        methods: [GET]
-        default: true
-        modules:
-          - type: static
-            settings:
-              root: ./test_website
-              directory_listing: true
-              destination: ./teste_uploads
-      - uri: /redirect-me
-        methods: [GET]
-        modules:
-          - type: redirect
-            settings:
-              uri: https://www.amazon.com
-              type: permanent
-      - uri: /cgi-bin
-        methods: [GET, POST]
-        modules:
-          - type: cgi
-            settings:
-              root: ./website/cgi-bin
-              interpreters:
-                - name: python
-                  path: /usr/bin/python3
-                  extensions: [py]
-  - listen: 8083
-    server_names: localhost
-    routes:
-      - uri: /
-        methods: [GET]
-        modules:
-          - type: redirect
-            settings:
-              uri: http://localhost:8080/
-              type: permanent
