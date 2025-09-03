@@ -22,12 +22,10 @@ try:
 except Exception as e:
     print(f"<p>Error reading directory: {e}</p>")
 
-print("<button onclick=\"window.location.href='../index.html'\">Go to the Dummy Page</button>")
-
 print("""
 <script>
 function deleteFile(filename) {
-    fetch(`/find-this/deleteFile.py?filename=${encodeURIComponent(filename)}`)
+    fetch(`/cgi-bin/deleteFile.py?filename=${encodeURIComponent(filename)}`)
         .then(res => res.text())
         .then(data => {
             alert(data);

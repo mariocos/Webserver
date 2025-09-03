@@ -66,7 +66,6 @@ void updateDestination(Routes *route, YamlList* modules)
 
 void routeMethods(Routes *route, YamlMap* routeConfig,YamlList* modules)
 {
-//	routeConfig->getMap().find("methods")->second->checkList();
 	YamlList* methods = (YamlList*)getFromYamlMap(routeConfig, "methods");
 	if (!routeConfig->getMap().find("methods")->second->checkList() || methods->getList().empty())
 		throw ConfigFileStructureException("methods");
@@ -126,17 +125,13 @@ Routes	*setStatic(YamlMap* settings, int maxBodySize, bool defaultRoute, std::st
 	try {
 		std::map<std::string, YamlNode*>::iterator isDirList = settings->getMap().find("directory_listing");
 		if (isDirList != settings->getMap().end() || settings->getMap().empty()) {
-//			bool dirList;
 			if (((YamlScalar<bool>*)(isDirList->second))->getType() == "bool") {
-//				dirList = ((YamlScalar<bool>*)(isDirList->second))->getValue();
 				if (((YamlScalar<bool>*)(isDirList->second))->getValue())
 					newRoute->setAsListing();
 			} 
 			else 
 				throw ConfigFileStructureException("Invalid variable type in directory_listing");
 		}
-
-		//searching "index:"
 		std::map<std::string, YamlNode*>::iterator indexIt = settings->getMap().find("index");
 		if (indexIt != settings->getMap().end() || settings->getMap().empty()) {
 			if (((YamlScalar<bool>*)(indexIt->second))->getType() == "bool")
@@ -454,7 +449,6 @@ std::string	getDomainNameFromYaml(YamlMap* serverConf)
 	if(!itServerName->second->checkScalar())
 		throw ConfigFileStructureException("server_names not setup correctly");
 	else {
-//		std::cout << ((YamlScalar<int>*)(itServerName->second))->getType() << std::endl;
 		if (((YamlScalar<int>*)(itServerName->second))->getType() == "int" || ((YamlScalar<bool>*)(itServerName->second))->getType() == "bool")
 			throw ConfigFileStructureException("server_names has to be a string");
 		else if (((YamlScalar<std::string>*)(itServerName->second))->getValue().empty())
@@ -472,10 +466,8 @@ std::string	getDomainNameFromYaml(YamlMap* serverConf)
 ServerBlock* serverBlockFromYaml(YamlMap* serverConf)
 {
 	int port = getPortFromYaml(serverConf);
-//	((YamlScalar<int>*)(getFromYamlMap(serverConf, "listen")))->getValue();
 	int backlog = maxConnectionsFromYaml(serverConf);
 	std::string domainName = getDomainNameFromYaml(serverConf);
-//	((YamlScalar<std::string>*)(getFromYamlMap(serverConf, "server_names")))->getValue();
 	bool Default = isRouteDefault(serverConf);
 	std::vector<Routes*>	tmp;
 	ServerBlock* newServerBlock = NULL;
@@ -499,12 +491,6 @@ ServerBlock* serverBlockFromYaml(YamlMap* serverConf)
 		delete newServerBlock;
 		throw MessagelessException(e.what());
 	}
-//	TODO set the error pages defined in the config file
-//	newServerBlock->setErrorPage(400, "website/400.html");
-//	newServerBlock->setErrorPage(403, "website/403.html");
-//	newServerBlock->setErrorPage(404, "website/404.html");
-//	newServerBlock->setErrorPage(405, "website/405.html");
-//	newServerBlock->setErrorPage(413, "website/413.html");
 
 	return newServerBlock;
 }
@@ -585,10 +571,6 @@ Server::Server(YamlNode *parsedConf) : _maxEvents(10)
 	}
 	else
 		serverConfList = (YamlList*)getFromYamlMap(parsedConf, "servers");
-//	if (parsedConf->checkMap())
-//		throw ConfigFileStructureException("'-'");
-//	if (parsedConf->checkList() && serverConfList->getList().empty())
-//		throw ConfigFileStructureException("servers");
 	try {
 		std::vector<YamlNode*>::iterator it;
 		for (it = serverConfList->getList().begin(); it != serverConfList->getList().end(); it++) {
@@ -605,7 +587,6 @@ Server::Server(YamlNode *parsedConf) : _maxEvents(10)
 	catch(const std::exception& e)
 	{
 		delete parsedConf;
-//		delete newServerBlock;
 		close(this->_epoll_fd);
 		for (std::vector<ServerBlock*>::iterator it = _serverBlocks.begin(); it != _serverBlocks.end(); ++it) 
 			delete *it;
@@ -622,131 +603,6 @@ Server::Server(YamlNode *parsedConf) : _maxEvents(10)
 		}
 	} */
 
-	this->_events = new epoll_event[this->_maxEvents];
-}
-
-Server::Server(std::vector<int> ports, std::vector<std::string> names, int backlog) : _maxEvents(backlog)
-{
-	int	option = 1;
-	struct sockaddr_in servaddr;
-	struct epoll_event	event;
-	ServerBlock	*newServerBlock;
-	Routes		*newRoute;
-
-	this->_epoll_fd = epoll_create(1);
-	if (this->_epoll_fd == -1)
-		throw EpollCreationException();
-
-	for (size_t i = 0; i < ports.size(); i++)
-	{
-		std::vector<Routes*>	tmp;
-		if (names[i] == "localhost")
-			newServerBlock = new ServerBlock(socket(AF_INET, SOCK_STREAM, 0), ports[i], -1, names[i], true);
-		else
-			newServerBlock = new ServerBlock(socket(AF_INET, SOCK_STREAM, 0), ports[i], -1, names[i], false);
-		if (newServerBlock->getSocketFd() == -1)
-		{
-			delete newServerBlock;
-			close(this->_epoll_fd);
-			throw SocketCreationException(*this);
-		}
-		servaddr.sin_family = AF_INET;
-		servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
-		servaddr.sin_port = htons(newServerBlock->getBlockPort());
-		if (setsockopt(newServerBlock->getSocketFd(), SOL_SOCKET, SO_REUSEADDR, &option, sizeof(option)) == -1 \
-			|| bind(newServerBlock->getSocketFd(), (const sockaddr *)&servaddr, sizeof(servaddr)) == -1 \
-			|| listen(newServerBlock->getSocketFd(), newServerBlock->getBlockMaxConnections()) == -1)
-		{
-			delete newServerBlock;
-			close(this->_epoll_fd);
-			throw SocketBindException(*this);
-		}
-		event.events = EPOLLIN;
-		event.data.fd = newServerBlock->getSocketFd();
-		if (epoll_ctl(this->_epoll_fd, EPOLL_CTL_ADD, event.data.fd, &event) == -1)
-		{
-			delete newServerBlock;
-			close(this->_epoll_fd);
-			throw EpollCtlException(*this);
-		}
-
-		// TODO set the error pages defined in the config file
-		newServerBlock->setErrorPage(400, "website/400.html");
-		newServerBlock->setErrorPage(403, "website/403.html");
-		newServerBlock->setErrorPage(404, "website/404.html");
-		newServerBlock->setErrorPage(405, "website/405.html");
-		newServerBlock->setErrorPage(413, "website/413.html");
-
-		// TODO implement this as long as the routes list size
-		// for (size_t n = 0; i < list.size(); n++)
-		// {
-		// 		newRoute = new Routes(-1, false, "/", "/");
-		// 		tmp.push_back(newRoute);
-		// }
-		// newServerBlock->setBlockRoutes(tmp);
-		// this->_serverBlocks.push_back(newServerBlock);
-
-		// PUT THIS inside the for loop when i get the route list size
-		for (size_t n = 0; n < 5; n++)
-		{
-			if (n == 0)
-			{
-				newRoute = new Routes(-1, true, "website", "/");
-				newRoute->setMethod(GET, true);
-				newRoute->setMethod(POST, true);
-				newRoute->setMethod(DELETE, true);
-				std::string	file = "dummy.html";
-				std::string	uploadPath = "./upload";
-				newRoute->setDefaultFileForDirectory(file);
-				newRoute->setUploadPath(uploadPath);
-			}
-			else if (n == 1)
-			{
-				newRoute = new Routes(-1, false, "website/cgi-bin", "/find-this");
-				newRoute->setMethod(GET, true);
-				newRoute->setMethod(POST, true);
-				newRoute->setMethod(DELETE, false);
-				std::string	extension = "py";
-				std::string	uploadPath = "./upload";
-				newRoute->setCgiFileExtension(extension);
-				newRoute->setUploadPath(uploadPath);
-			}
-			else if (n == 2)
-			{
-				newRoute = new Routes(-1, false, "/home/pauberna/Desktop/projetos_42", "/projects/");
-				newRoute->setAsListing();
-				newRoute->setMethod(GET, true);
-			}
-			else if (n == 3)
-			{
-				newRoute = new Routes(-1, false, "website", "/google");
-				newRoute->setAsPermanentRedirect();
-				std::string path = "https://google.com";
-				newRoute->setRedirectPath(path);
-				newRoute->setMethod(GET, true);
-			}
-			else
-			{
-				newRoute = new Routes(-1, false, "website", "/redirect");
-				newRoute->setAsTemporaryRedirect();
-				std::string path = "https://youtube.com";
-				newRoute->setRedirectPath(path);
-				newRoute->setMethod(GET, true);
-			}
-			if (ports[i] == 2424 && n != 0)
-				newRoute->setAsCgi();
-			tmp.push_back(newRoute);
-			if (newRoute->canDoMethod(POST) && !newRoute->isCgi() && newRoute->getUploadPath().empty())
-			{
-				delete newServerBlock;
-				throw NoUploadPathException(*this, tmp);
-			}
-		}
-		newServerBlock->setBlockRoutes(tmp);
-		printLog("INFO", newServerBlock, NULL, NULL, 0, "");
-		printLog("INFO", newServerBlock, NULL, NULL, 1, "");
-		this->_serverBlocks.push_back(newServerBlock);
-	}
 	this->_events = new epoll_event[this->_maxEvents];
 }
 

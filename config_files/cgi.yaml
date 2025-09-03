@@ -1,0 +1,26 @@
+servers:
+  - listen: 8081
+    server_names: 127.0.0.1
+    max_body_size: 10485760
+    error_pages:
+      404: ./website/404.html
+      400: ./website/400.html
+      405: ./website/405.html
+    routes:
+      - uri: /
+        methods: [GET, POST, DELETE]
+        default: true
+        modules:
+          - type: static
+            settings:
+              root: ./test_website
+      - uri: /cgi-bin
+        methods: [GET, POST, DELETE]
+        modules:
+          - type: cgi
+            settings:
+              root: ./website/cgi-bin
+              interpreters:
+                - name: python
+                  path: /usr/bin/python3
+                  extensions: [py]
