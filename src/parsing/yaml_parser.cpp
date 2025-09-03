@@ -14,6 +14,8 @@ static std::string	trim(const std::string &str) {
 	size_t end = str.size();
 	while (end > start && std::isspace(str[end - 1]))
 		end--;
+	if (str.find("#") != std::string::npos)
+		end = str.find("#");
 	return (str.substr(start, end - start));
 }
 
@@ -93,7 +95,7 @@ std::vector<LineToken>	YamlParser::tokenizer(const std::string &filePath) {
 	}
 
 	while (std::getline(file, line)) {
-		if (line.empty() || trim(line).empty())
+		if (line.empty() || trim(line).empty() || line[0] == '#')
 			continue;
 		LineToken	lineTokens;
 		lineTokens.indent = countIndent(line);
