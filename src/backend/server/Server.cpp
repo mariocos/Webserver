@@ -44,7 +44,7 @@ void updateDestination(Routes *route, YamlList* modules)
 			throw ConfigFileStructureException("Empty module");
 		YamlMap* settings = dynamic_cast<YamlMap*>(getFromYamlMap(module, "settings"));
 		if (!settings)
-			throw ConfigFileStructureException("Empty settings");		
+			throw ConfigFileStructureException("Empty settings");	
 		std::map<std::string, YamlNode*>::iterator isDestination = settings->getMap().find("destination");
 		if (isDestination != settings->getMap().end())
 		{
@@ -593,7 +593,7 @@ Server::Server(YamlNode *parsedConf) : _maxEvents(10)
 		throw MessagelessException(e.what());
 	}
 // these are logs!!!!
-	for (std::vector<ServerBlock*>::iterator it = _serverBlocks.begin(); it != _serverBlocks.end(); it++)
+	/* for (std::vector<ServerBlock*>::iterator it = _serverBlocks.begin(); it != _serverBlocks.end(); it++)
 	{
 		std::cout<<"IS SERVERBLOCK    "<<(*it)->getBlockName()<<"    DEFAULT ? "<<(*it)->isDefault()<<std::endl;
 		std::vector<Routes*> routes = (*it)->getRoutesVector();
@@ -601,7 +601,7 @@ Server::Server(YamlNode *parsedConf) : _maxEvents(10)
 		{
 			std::cout<<"IS ROUTE    "<<(*itRoute)->getURI()<<"    DEFAULT ? "<<(*itRoute)->isDefault()<<std::endl;
 		}
-	}
+	} */
 
 	this->_events = new epoll_event[this->_maxEvents];
 }

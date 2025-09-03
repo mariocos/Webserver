@@ -113,7 +113,7 @@ std::vector<LineToken>	YamlParser::tokenizer(const std::string &filePath) {
 				lineTokens.value = trim(trimmedLine.substr(pos + 1));
 			}
 			else
-				lineTokens.value = trimmedLine;
+				throw YamlError("Need to have \":\"");
 		}
 		else {
 			size_t	pos = trimmedLine.find(':');
@@ -121,10 +121,8 @@ std::vector<LineToken>	YamlParser::tokenizer(const std::string &filePath) {
 				lineTokens.key = trim(trimmedLine.substr(0, pos));
 				lineTokens.value = trim(trimmedLine.substr(pos + 1));
 			}
-			else {
-				lineTokens.key = trimmedLine;
-				lineTokens.value = "";
-			}
+			else
+				throw YamlError("Need to have \":\"");
 		}
 		tokens.push_back(lineTokens);
 	}

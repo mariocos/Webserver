@@ -205,10 +205,6 @@ int	main(int ac, char **av)
 /*
 
 	Lista de Erros:
-		- Settings vazio da conditional jump (acho que esta fixed)
-		- Se tentar dar set a outro serverBlock como default ele da caca (acho que esta mas vou testar mais)
-		- Grande parte das coisas que precisem de ter ":" a frente e que n tenham n dao erro, os que encontrei foram:
-			max_connections, max_body_size, default(ServerBlocks e Rotas), error_pages, routes, modules, settings, destination, directory_listing, interpreters
 */
 
 //command to test GET to another serverBlock besides the localhost : "curl -H "Host: webserver.com" http://localhost:8080"
