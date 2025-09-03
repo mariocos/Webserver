@@ -16,7 +16,7 @@ servers:
           - type: static
             settings:
               root: ./website
-              destination: ./teste_uploads
+              destination: ./uploads
               index: index.html
       - uri: /directory/listing
         methods: [GET]
@@ -41,7 +41,7 @@ servers:
             settings:
               root: ./test_website
               directory_listing: true
-              destination: ./teste_uploads
+              destination: ./uploads
       - uri: /redirect-me
         methods: [GET]
         modules:
@@ -55,6 +55,7 @@ servers:
           - type: cgi
             settings:
               root: ./website/cgi-bin
+              directory_listing: true
               interpreters:
                 - name: python
                   path: /usr/bin/python3
