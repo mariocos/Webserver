@@ -17,6 +17,7 @@ servers:
             settings:
               root: ./website
               destination: ./teste_uploads
+              index: index.html
       - uri: /lala/directory/something
         methods: [GET, POST, DELETE]
         modules:
@@ -66,5 +67,5 @@ servers:
         modules:
           - type: redirect
             settings:
-              uri: http://localhost:8080/index.html
+              uri: http://localhost:8080/
               type: permanent

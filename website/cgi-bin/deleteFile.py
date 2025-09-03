@@ -5,7 +5,7 @@ import os
 import requests
 
 # URL pattern for deleting files, assuming your server accepts DELETE requests at /delete/{filename}
-SERVER_DELETE_URL_TEMPLATE = "http://script:2424/{}"
+SERVER_DELETE_URL_TEMPLATE = "http://127.0.0.1:8081/cgi-bin/{}"
 
 print("Content-Type: text/html")
 print()

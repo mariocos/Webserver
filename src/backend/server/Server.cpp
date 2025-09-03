@@ -135,6 +135,25 @@ Routes	*setStatic(YamlMap* settings, int maxBodySize, bool defaultRoute, std::st
 			else 
 				throw ConfigFileStructureException("Invalid variable type in directory_listing");
 		}
+
+		//searching "index:"
+		std::map<std::string, YamlNode*>::iterator indexIt = settings->getMap().find("index");
+		if (indexIt != settings->getMap().end() || settings->getMap().empty()) {
+			if (((YamlScalar<bool>*)(indexIt->second))->getType() == "bool")
+				throw ConfigFileStructureException("Invalid variable type in index");
+			else if (((YamlScalar<int>*)(indexIt->second))->getType() == "int")
+				throw ConfigFileStructureException("Invalid variable type in index");
+			else {
+				YamlScalar<std::string>*	file = dynamic_cast<YamlScalar<std::string>*>(indexIt->second);
+				if (!file || file->getValue().empty())
+					throw ConfigFileStructureException("Empty Index");
+				std::string	fileName = file->getValue();
+				if (fileName.find('/') == std::string::npos)
+					newRoute->setDefaultFileForDirectory(fileName);
+				else
+					throw ConfigFileStructureException("Index can only be the name of a file");
+			}
+		}
 	}
 	catch (const std::exception& e){
 		delete newRoute;

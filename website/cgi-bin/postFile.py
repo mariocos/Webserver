@@ -5,7 +5,7 @@ import os
 import sys
 import requests
 
-UPLOAD_BASE_URL = "http://script:2424" 
+UPLOAD_BASE_URL = "http://127.0.0.1:8081/cgi-bin" 
 
 print("Content-Type: text/html")
 print()
