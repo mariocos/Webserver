@@ -39,8 +39,12 @@ void updateDestination(Routes *route, YamlList* modules)
 {
 	std::vector<YamlNode*>::iterator itModules;
 	for (itModules = modules->getList().begin(); itModules != modules->getList().end(); itModules++) {
-		YamlMap* module = (YamlMap*)(*itModules);
-		YamlMap* settings = (YamlMap*)getFromYamlMap(module, "settings");
+		YamlMap* module = dynamic_cast<YamlMap*>(*itModules);
+		if (!module)
+			throw ConfigFileStructureException("Empty module");
+		YamlMap* settings = dynamic_cast<YamlMap*>(getFromYamlMap(module, "settings"));
+		if (!settings)
+			throw ConfigFileStructureException("Empty settings");		
 		std::map<std::string, YamlNode*>::iterator isDestination = settings->getMap().find("destination");
 		if (isDestination != settings->getMap().end())
 		{
@@ -167,7 +171,9 @@ Routes	*setCGI(YamlMap* settings, int maxBodySize, bool defaultRoute, std::strin
 		std::vector<YamlNode*>::iterator itInterp;
 		for (itInterp = interpreters->getList().begin(); itInterp != interpreters->getList().end(); itInterp++)
 		{
-			YamlMap* interpConfig = (YamlMap*)(*itInterp);
+			YamlMap* interpConfig = dynamic_cast<YamlMap*>(*itInterp);
+			if (!interpConfig)
+				throw ConfigFileStructureException("Empty interpreters");
 			YamlList* ext = (YamlList*)getFromYamlMap(interpConfig, "extensions");
 			if (!ext->checkList() || ext->getList().empty())
 				throw ConfigFileStructureException("extensions");
@@ -261,14 +267,16 @@ Routes* routeFromYaml(YamlMap* routeConfig, int maxBodySize)
 		throw ConfigFileStructureException("modules not a list or is empty");
 	std::vector<YamlNode*>::iterator itModules;
 	for (itModules = modules->getList().begin(); itModules != modules->getList().end(); itModules++) {
-		YamlMap* module = (YamlMap*)(*itModules);
-		if (module->getMap().find("type") == module->getMap().end())
+		YamlMap* module = dynamic_cast<YamlMap*>(*itModules);
+		if (!module || module->getMap().find("type") == module->getMap().end())
 			throw ConfigFileStructureException("no type config in modules");
 		type = (YamlScalar<std::string>*)getFromYamlMap(module, "type");
 //if para verificar o que esta escrito
 		if (module->getMap().find("settings") == module->getMap().end())
 			throw ConfigFileStructureException("no settings config in modules");
-		YamlMap* settings = (YamlMap*)getFromYamlMap(module, "settings");
+		YamlMap* settings = dynamic_cast<YamlMap*>(getFromYamlMap(module, "settings"));
+		if (!settings)
+			throw ConfigFileStructureException("settings");
 		if (type->getValue().empty())
 			throw ConfigFileStructureException("type");
 		else if (type->getValue() == "static")
@@ -357,7 +365,9 @@ void routesFromYaml(YamlMap* serverConf, std::vector<Routes*> &routes)
 	try {
 		std::vector<YamlNode*>::iterator itRoutes;
 		for (itRoutes = routesConfig->getList().begin(); itRoutes != routesConfig->getList().end(); itRoutes++) {
-			YamlMap* routeConfig = (YamlMap*)(*itRoutes);
+			YamlMap* routeConfig = dynamic_cast<YamlMap*>(*itRoutes);
+			if (!routeConfig)
+				throw ConfigFileStructureException("Empty route");
 			Routes* route = routeFromYaml(routeConfig, maxBodySize);
 			checkURIDuplicates(routes, route);
 			routes.push_back(route);
@@ -563,7 +573,9 @@ Server::Server(YamlNode *parsedConf) : _maxEvents(10)
 	try {
 		std::vector<YamlNode*>::iterator it;
 		for (it = serverConfList->getList().begin(); it != serverConfList->getList().end(); it++) {
-			YamlMap* serverConf = (YamlMap*)(*it);
+			YamlMap* serverConf = dynamic_cast<YamlMap*>(*it);
+			if (!serverConf)
+				throw ConfigFileStructureException("Empty ServerBlock");
 			newServerBlock = serverBlockFromYaml(serverConf);
 			startServerBlock(newServerBlock);
 			this->_serverBlocks.push_back(newServerBlock);
