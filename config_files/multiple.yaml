@@ -60,6 +60,19 @@ servers:
                 - name: python
                   path: /usr/bin/python3
                   extensions: [py]
+  - listen: 8082
+    #IP: da maquina
+    server_names: 10.12.6.10
+    routes:
+      - uri: /
+        methods: [GET]
+        modules:
+          - type: static
+            settings:
+              root: ./website
+              destination: ./uploads
+              index: index.html
+
   - listen: 8083
     server_names: localhost
     routes:
