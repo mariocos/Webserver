@@ -23,7 +23,7 @@ servers:
         modules:
           - type: static
             settings:
-              root: /home/pauberna
+              root: /home/adimas-d
               directory_listing: true
   - listen: 8081
     server_names: 127.0.0.1
@@ -61,8 +61,7 @@ servers:
                   path: /usr/bin/python3
                   extensions: [py]
   - listen: 8082
-    #IP: da maquina
-    server_names: 10.12.6.10
+    server_names: 10.12.6.10 #IP da maquina
     routes:
       - uri: /
         methods: [GET]
