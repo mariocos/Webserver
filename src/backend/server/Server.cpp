@@ -114,12 +114,12 @@ Routes	*setStatic(YamlMap* settings, int maxBodySize, bool defaultRoute, std::st
 	if (stat(root.c_str(), &stats))
 	{
 		if (errno == EACCES || errno == EPERM)
-			throw MessagelessException("Invalid Permissions on Root");
+			throw ConfigFileStructureException("Invalid Permissions on Root");
 		else
-			throw MessagelessException("Invalid Root");
+			throw ConfigFileStructureException("Invalid Root");
 	}
 	if (S_ISDIR(stats.st_mode) && (errno == EACCES || errno == EPERM))
-		throw MessagelessException("Invalid Permissions on Root");
+		throw ConfigFileStructureException("Invalid Permissions on Root");
 	Routes* newRoute = new Routes(maxBodySize, defaultRoute, root, uri);
 
 	try {
@@ -236,7 +236,7 @@ Routes	*setRedirect(YamlMap* settings, int maxBodySize, bool defaultRoute, std::
 		else if (rDirType == "temporary")
 			newRoute->setAsTemporaryRedirect();
 		else
-			throw MessagelessException("wrong redirection type");
+			throw ConfigFileStructureException("wrong redirection type");
 		
 		return (newRoute);
 	}
@@ -322,7 +322,7 @@ int	maxBodySizeFromYaml(YamlMap* serverConf)
 		throw ConfigFileStructureException("max_body_size not setup correctly");
 	else {
 		if (((YamlScalar<int>*)(itMaxBodySize->second))->getType() != "int")
-			throw ConfigFileStructureException("max_body_size has to be an integer");
+			throw ConfigFileStructureException("max_body_size has to be a posetive integer");
 		else {
 			int maxBodySize = ((YamlScalar<int>*)getFromYamlMap(serverConf, "max_body_size"))->getValue();
 			if (maxBodySize < 1)

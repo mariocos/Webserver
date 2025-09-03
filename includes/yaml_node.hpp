@@ -7,6 +7,8 @@
 # include <fstream>
 # include <cstdlib>
 # include <sstream>
+# include <climits>
+
 //# include "yaml_utils.hpp"
 
 class YamlNode {

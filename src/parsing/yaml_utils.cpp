@@ -18,7 +18,7 @@ bool	checkIntYaml(const std::string &str, size_t len)
 			break ;
 		n++;
 	}
-	if (n == len && ((signal == true && len < 11) || (signal == false && len < 10)))
+	if (n == len && ((signal == true && len <= 11) || (signal == false && len <= 10)))
 		return (true);
 	return (false);
 }
@@ -67,6 +67,11 @@ bool	transformStringToBool(const std::string &value)
 
 int	transformStringToInt(const std::string &value)
 {
+	long lnbr = std::atol(value.c_str());
+	if (lnbr > INT_MAX)
+		throw YamlError("Found a bigger then integer valeu.");
+	if (lnbr < INT_MIN)
+		throw YamlError("Found a smaller then integer valeu.");
 	return (std::atoi(value.c_str()));
 }
 
