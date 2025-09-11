@@ -6,7 +6,7 @@ A HTTP/1.1 Web Server made in C++ 98.
 
 - YAML configuration
 - HTTP/1.1 protocol support
-- Multiple Server binding suport
+- Multiple Server binding support
 - Custom error pages
 - GET, POST and DELETE methods supported
 - Static file serving
@@ -67,3 +67,4 @@ More examples of configurations in the config_files folder.
 ## License
 
 This project is part of the 42 school curriculum.
+
