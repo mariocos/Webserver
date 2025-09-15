@@ -64,7 +64,4 @@ More examples of configurations in the config_files folder.
 - [Paulo Ribeiro](https://github.com/PBjr2002)
 - [André Santos](https://github.com/DeblinPT)
 
-## License
-
-This project is part of the 42 school curriculum.
 
